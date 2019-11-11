@@ -8,6 +8,13 @@
     <artifactId>acled-spring-crawler</artifactId>
     <version>1.0</version>
 
+    <parent>
+        <groupId>uk.ac.susx.tag</groupId>
+        <artifactId>tag-dist</artifactId>
+        <version>1.0.8</version>
+        <relativePath>../tag-dist/pom.xml</relativePath>
+    </parent>
+
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
