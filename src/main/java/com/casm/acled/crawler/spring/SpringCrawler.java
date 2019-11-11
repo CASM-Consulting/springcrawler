@@ -5,11 +5,15 @@ import com.casm.acled.configuration.ObjectMapperConfiguration;
 import com.casm.acled.crawler.ACLEDPostProcessor;
 import com.casm.acled.crawler.ACLEDScraperPreProcessor;
 import com.casm.acled.dao.entities.ArticleDAO;
+import com.casm.acled.dao.util.ImportJSON;
 import com.norconex.collector.http.crawler.HttpCrawlerConfig;
 import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
 import org.camunda.bpm.spring.boot.starter.rest.CamundaBpmRestJerseyAutoConfiguration;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.Banner;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
@@ -29,6 +33,14 @@ public class SpringCrawler implements CommandLineRunner {
 
     @Autowired
     private ArticleDAO articleDAO;
+
+
+    public static void main(String[] args) {
+        SpringApplication app = new SpringApplication(SpringCrawler.class);
+        app.setBannerMode(Banner.Mode.OFF);
+        app.setWebApplicationType(WebApplicationType.NONE);
+        app.run(args);
+    }
 
     @Override
     public void run(String[] args) throws Exception {
