@@ -1,4 +1,4 @@
-package uk.ac.casm.spring.crawler.exception;
+package com.casm.acled.crawler;
 
 public class ScraperNotFoundException extends Exception {
 

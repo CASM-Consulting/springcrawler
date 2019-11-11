@@ -1,4 +1,4 @@
-package uk.ac.casm.spring.crawler;
+package com.casm.acled.crawler;
 
 import com.google.gson.Gson;
 import com.norconex.collector.http.doc.HttpDocument;
@@ -12,7 +12,6 @@ import org.apache.nutch.parse.forum.splitter.GeneralSplitterFactory;
 import org.apache.nutch.parse.forum.splitter.IForumSplitter;
 import org.apache.nutch.splitter.utils.POJOHTMLMatcherDefinition;
 import org.jsoup.Jsoup;
-import uk.ac.casm.spring.crawler.exception.ScraperNotFoundException;
 
 import java.io.*;
 import java.net.MalformedURLException;
