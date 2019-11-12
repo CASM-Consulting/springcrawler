@@ -38,6 +38,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 @EnableAutoConfiguration(exclude={CamundaBpmAutoConfiguration.class, CamundaBpmRestJerseyAutoConfiguration.class, ValidationAutoConfiguration.class})
@@ -63,9 +66,16 @@ public class SpringCrawler implements CommandLineRunner {
 
     @Override
     public void run(String[] args) throws Exception {
+
+        List<String> splitArgs = new ArrayList<>();
+        for(String arg : args){
+            splitArgs.addAll(Arrays.asList(arg.split("\\s+")));
+        }
+        String[] corrArgs = splitArgs.toArray(new String[splitArgs.size()]);
+
         CrawlerArguments ca = new CrawlerArguments();
         JCommander.newBuilder()
-                .addObject(ca)
+                .addObject(corrArgs)
                 .build()
                 .parse(args);
 

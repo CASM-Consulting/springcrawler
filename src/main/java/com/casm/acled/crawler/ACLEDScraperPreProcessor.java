@@ -83,7 +83,7 @@ public class ACLEDScraperPreProcessor implements IHttpDocumentProcessor {
         LinkedList<Post> newspages = splitter.split(Jsoup.parse(page.getHtml()));
         if(newspages.size() > 0) {
             Post newspage = newspages.get(0);
-            
+
             if(newspage.containsKey(article)) {
                 page.setArticle(newspage.get(article).get(0));
             }
