@@ -38,7 +38,13 @@ public class ACLEDScraperPreProcessor implements IHttpDocumentProcessor {
 
     public ACLEDScraperPreProcessor(Path scraperLocation) {
 
-        scraperJson = new HashMap<String, GeneralSplitterFactory>();
+        scraperJson = new HashMap<>();
+        gson = new Gson();
+        initScrapers(scraperLocation);
+
+    }
+
+    private void initScrapers(Path scraperLocation) {
         File[] scrapers = scraperLocation.toFile().listFiles(new FilenameFilter() {
             @Override
             public boolean accept(File dir, String name) {
@@ -47,40 +53,37 @@ public class ACLEDScraperPreProcessor implements IHttpDocumentProcessor {
         });
         for(File file : scrapers){
             try {
-
                 Map<String, List<Map<String, String>>> scraperDefs = buildScraperDefinition(GeneralSplitterFactory.getTagSetFromJson(file.toPath()));
                 scraperJson.put(file.getName(), new GeneralSplitterFactory(scraperDefs));
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
-
-        gson = new Gson();
-
     }
+
 
     public WebPage scrape_page(WebPage page) throws ScraperNotFoundException, MalformedURLException {
 
 
         URL url = new URL(page.getUrl());
         String domain = (url.getHost().startsWith("www")) ? url.getHost().substring(4) : url.getHost();
-        GeneralSplitterFactory factory = scraperJson.get(domain);
+        GeneralSplitterFactory factory = scraperJson.get(domain.split("\\.")[0]);
         if(factory == null){
             throw new ScraperNotFoundException(domain);
         }
 
         IForumSplitter splitter = factory.create();
 
-        Post article = splitter.split(Jsoup.parse(page.html)).getFirst();
+        Post newspage = splitter.split(Jsoup.parse(page.html)).getFirst();
 
-        if(article.containsKey(article)) {
-            page.setArticle(article.get(article).get(0));
+        if(newspage.containsKey(article)) {
+            page.setArticle(newspage.get(article).get(0));
         }
-        if (article.containsKey(title)){
-            page.setTitle(article.get(title).get(0));
+        if (newspage.containsKey(title)){
+            page.setTitle(newspage.get(title).get(0));
         }
-        if(article.containsKey(date)){
-            page.setDate(article.get(date).get(0));
+        if(newspage.containsKey(date)){
+            page.setDate(newspage.get(date).get(0));
         }
 
 
