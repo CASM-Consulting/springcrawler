@@ -72,18 +72,14 @@ public class SpringCrawler implements CommandLineRunner {
         for(String arg : args){
             splitArgs.addAll(Arrays.asList(arg.split("\\s+")));
         }
-
-        for(String arg : splitArgs) {
-            logger.info("INFO: " + arg);
-        }
-
+        
         String[] corrArgs = splitArgs.toArray(new String[splitArgs.size()]);
 
         CrawlerArguments ca = new CrawlerArguments();
         JCommander.newBuilder()
-                .addObject(corrArgs)
+                .addObject(ca)
                 .build()
-                .parse(args);
+                .parse(corrArgs);
 
         SingleSeedCollector cc = new SingleSeedCollector(ca.userAgent,new File(ca.crawldb), Utils.getDomain(ca.seeds.get(0)),
                 ca.depth, ca.urlFilter,ca.threadsPerSeed,ca.ignoreRobots,
