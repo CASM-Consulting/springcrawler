@@ -8,6 +8,11 @@
     <artifactId>acled-spring-crawler</artifactId>
     <version>1.0</version>
 
+    <properties>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+    </properties>
+
     <parent>
         <groupId>uk.ac.susx.tag</groupId>
         <artifactId>tag-dist</artifactId>
@@ -45,7 +50,7 @@
                             <addClasspath>true</addClasspath>
                             <classpathPrefix>libs/</classpathPrefix>
                             <mainClass>
-                                org.baeldung.executable.ExecutableMavenJar
+                                com.casm.acled.crawler.spring.SpringCrawler
                             </mainClass>
                         </manifest>
                     </archive>
@@ -53,11 +58,6 @@
             </plugin>
         </plugins>
     </build>
-
-    <properties>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
-    </properties>
 
     <dependencies>
 

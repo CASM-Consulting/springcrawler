@@ -4,6 +4,7 @@ import com.beust.jcommander.JCommander;
 import com.casm.acled.configuration.ObjectMapperConfiguration;
 import com.casm.acled.crawler.ACLEDPostProcessor;
 import com.casm.acled.crawler.ACLEDScraperPreProcessor;
+import com.casm.acled.crawler.utils.Utils;
 import com.casm.acled.dao.entities.ArticleDAO;
 import com.casm.acled.dao.util.ImportJSON;
 import com.norconex.collector.http.crawler.HttpCrawlerConfig;
@@ -50,7 +51,7 @@ public class SpringCrawler implements CommandLineRunner {
                 .build()
                 .parse(args);
 
-        SingleSeedCollector cc = new SingleSeedCollector(ca.userAgent,new File(ca.crawldb), ca.id,
+        SingleSeedCollector cc = new SingleSeedCollector(ca.userAgent,new File(ca.crawldb), Utils.getDomain(ca.seeds.get(0)),
                 ca.depth, ca.urlFilter,ca.threadsPerSeed,ca.ignoreRobots,
                 ca.ignoreSitemap, ca.polite,
                 ca.seeds.get(0));

@@ -1,5 +1,6 @@
 package com.casm.acled.crawler;
 
+import com.casm.acled.crawler.utils.Utils;
 import com.google.gson.Gson;
 import com.norconex.collector.http.doc.HttpDocument;
 import com.norconex.collector.http.doc.HttpMetadata;
@@ -65,8 +66,7 @@ public class ACLEDScraperPreProcessor implements IHttpDocumentProcessor {
     public WebPage scrape_page(WebPage page) throws ScraperNotFoundException, MalformedURLException {
 
 
-        URL url = new URL(page.getUrl());
-        String domain = (url.getHost().startsWith("www")) ? url.getHost().substring(4) : url.getHost();
+        String domain = Utils.getDomain(page.getUrl());
         GeneralSplitterFactory factory = scraperJson.get(domain.split("\\.")[0]);
         if(factory == null){
             throw new ScraperNotFoundException(domain);
