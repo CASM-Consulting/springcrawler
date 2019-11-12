@@ -72,25 +72,18 @@ public class ACLEDScraperPreProcessor implements IHttpDocumentProcessor {
 
         String domain = Utils.getDomain(page.getUrl());
 
-        logger.info("log domain = " + domain.split("\\.")[0]);
         GeneralSplitterFactory factory = scraperJson.get(domain.split("\\.")[0]);
-        logger.info("scraper = " + factory.toString());
         if(factory == null){
+            logger.warn("No logger was found for the domain " + domain);
             throw new ScraperNotFoundException(domain);
         }
 
-        logger.info("Found scraper for " + page.getUrl());
-
         IForumSplitter splitter = factory.create();
-
-        logger.info("Splitter created: " + page.getUrl());
-
 
         LinkedList<Post> newspages = splitter.split(Jsoup.parse(page.getHtml()));
         if(newspages.size() > 0) {
             Post newspage = newspages.get(0);
-            logger.info("article = " + newspage.get(article).get(0));
-
+            
             if(newspage.containsKey(article)) {
                 page.setArticle(newspage.get(article).get(0));
             }
