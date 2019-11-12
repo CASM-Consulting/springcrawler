@@ -72,6 +72,11 @@ public class SpringCrawler implements CommandLineRunner {
         for(String arg : args){
             splitArgs.addAll(Arrays.asList(arg.split("\\s+")));
         }
+
+        for(String arg : splitArgs) {
+            logger.info("INFO: " + arg);
+        }
+
         String[] corrArgs = splitArgs.toArray(new String[splitArgs.size()]);
 
         CrawlerArguments ca = new CrawlerArguments();
