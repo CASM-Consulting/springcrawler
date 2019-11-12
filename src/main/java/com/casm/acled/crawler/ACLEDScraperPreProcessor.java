@@ -13,33 +13,34 @@ import org.apache.nutch.parse.forum.splitter.GeneralSplitterFactory;
 import org.apache.nutch.parse.forum.splitter.IForumSplitter;
 import org.apache.nutch.splitter.utils.POJOHTMLMatcherDefinition;
 import org.jsoup.Jsoup;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import uk.ac.susx.tag.norconex.controller.ContinuousController;
 
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Path;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class ACLEDScraperPreProcessor implements IHttpDocumentProcessor {
+
+    protected static final Logger logger = LoggerFactory.getLogger(ACLEDScraperPreProcessor.class);
 
     public static final String SCRAPERS = "casm.jqm.scrapers";
     public static final String SCRAPEDJSON = "scraped.json";
 
-    public static final String article = "article";
-    public static final String title = "title";
-    public static final String date = "date";
+    public static final String article = "field.name/article";
+    public static final String title = "field.name/title";
+    public static final String date = "field.name/date";
 
-    private Map<String, GeneralSplitterFactory> scraperJson;
+    private static Map<String, GeneralSplitterFactory> scraperJson = new HashMap<>();
     private final Gson gson;
 
 
 
     public ACLEDScraperPreProcessor(Path scraperLocation) {
 
-        scraperJson = new HashMap<>();
         gson = new Gson();
         initScrapers(scraperLocation);
 
@@ -49,13 +50,16 @@ public class ACLEDScraperPreProcessor implements IHttpDocumentProcessor {
         File[] scrapers = scraperLocation.toFile().listFiles(new FilenameFilter() {
             @Override
             public boolean accept(File dir, String name) {
-                return name.endsWith("json");
+                boolean accepted = (name.endsWith("json")) ? true : false;
+                return accepted;
             }
         });
         for(File file : scrapers){
             try {
                 Map<String, List<Map<String, String>>> scraperDefs = buildScraperDefinition(GeneralSplitterFactory.getTagSetFromJson(file.toPath()));
-                scraperJson.put(file.getName(), new GeneralSplitterFactory(scraperDefs));
+                logger.info("Adding scraper: " + file.getName());
+                scraperJson.put(file.getName().replace(".json",""), new GeneralSplitterFactory(scraperDefs));
+                logger.info("Added scraper for: " + file.getName() + " " + scraperJson.get(file.getName().replace(".json","")));
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -67,23 +71,35 @@ public class ACLEDScraperPreProcessor implements IHttpDocumentProcessor {
 
 
         String domain = Utils.getDomain(page.getUrl());
+
+        logger.info("log domain = " + domain.split("\\.")[0]);
         GeneralSplitterFactory factory = scraperJson.get(domain.split("\\.")[0]);
+        logger.info("scraper = " + factory.toString());
         if(factory == null){
             throw new ScraperNotFoundException(domain);
         }
 
+        logger.info("Found scraper for " + page.getUrl());
+
         IForumSplitter splitter = factory.create();
 
-        Post newspage = splitter.split(Jsoup.parse(page.html)).getFirst();
+        logger.info("Splitter created: " + page.getUrl());
 
-        if(newspage.containsKey(article)) {
-            page.setArticle(newspage.get(article).get(0));
-        }
-        if (newspage.containsKey(title)){
-            page.setTitle(newspage.get(title).get(0));
-        }
-        if(newspage.containsKey(date)){
-            page.setDate(newspage.get(date).get(0));
+
+        LinkedList<Post> newspages = splitter.split(Jsoup.parse(page.getHtml()));
+        if(newspages.size() > 0) {
+            Post newspage = newspages.get(0);
+            logger.info("article = " + newspage.get(article).get(0));
+
+            if(newspage.containsKey(article)) {
+                page.setArticle(newspage.get(article).get(0));
+            }
+            if (newspage.containsKey(title)){
+                page.setTitle(newspage.get(title).get(0));
+            }
+            if(newspage.containsKey(date)){
+                page.setDate(newspage.get(date).get(0));
+            }
         }
 
 
@@ -96,7 +112,7 @@ public class ACLEDScraperPreProcessor implements IHttpDocumentProcessor {
      * @param matcherList
      * @return
      */
-    public Map<String, List<Map<String, String>>> buildScraperDefinition(List<POJOHTMLMatcherDefinition> matcherList) {
+    public static Map<String, List<Map<String, String>>> buildScraperDefinition(List<POJOHTMLMatcherDefinition> matcherList) {
 
         Map<String, List<Map<String, String>>> fields = new HashMap<>();
         for(POJOHTMLMatcherDefinition matcher : matcherList) {
@@ -133,14 +149,18 @@ public class ACLEDScraperPreProcessor implements IHttpDocumentProcessor {
             try {
                 scrape_page(webPage);
             } catch (ScraperNotFoundException e) {
-                // todo: Error handling
+                logger.warn("Scraper not found for article ");
             } catch (MalformedURLException e) {
-                // todo: Error handling
+                logger.warn("Malformed url exception");
             }
 
-            String json = gson.toJson(webPage);
+            String json = gson.toJson(webPage,WebPage.class);
 
-            doc.getMetadata().put(SCRAPEDJSON, Collections.singletonList(json));
+            if(webPage.getArticle() != null && webPage.getArticle().length() > 0) {
+                List<String> pages = new ArrayList<>();
+                pages.add(json);
+                doc.getMetadata().put(SCRAPEDJSON, pages);
+            }
 
         }
 
