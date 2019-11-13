@@ -6,6 +6,8 @@ import com.casm.acled.crawler.ACLEDPostProcessor;
 import com.casm.acled.crawler.ACLEDScraperPreProcessor;
 import com.casm.acled.crawler.utils.Utils;
 import com.casm.acled.dao.entities.ArticleDAO;
+import com.casm.acled.dao.entities.SourceDAO;
+import com.casm.acled.dao.entities.SourceListDAO;
 import com.casm.acled.dao.util.ImportJSON;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.norconex.collector.http.crawler.HttpCrawlerConfig;
@@ -56,6 +58,10 @@ public class SpringCrawler implements CommandLineRunner {
 
     @Autowired
     private ArticleDAO articleDAO;
+    @Autowired
+    private SourceDAO sourceDAO;
+    @Autowired
+    private SourceListDAO sourceListDAO;
 
 
     public static void main(String[] args) {
@@ -87,7 +93,7 @@ public class SpringCrawler implements CommandLineRunner {
                 ca.seeds.get(0));
 
         HttpCrawlerConfig config = cc.getConfiguration();
-        config.setPostImportProcessors(new ACLEDPostProcessor(articleDAO));
+        config.setPostImportProcessors(new ACLEDPostProcessor(articleDAO, sourceDAO, sourceListDAO));
         config.setPreImportProcessors(new ACLEDScraperPreProcessor(Paths.get(ca.scrapers)));
 
         ImporterConfig ic = new ImporterConfig();
