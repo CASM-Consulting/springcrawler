@@ -44,9 +44,9 @@ public class ACLEDPostProcessor implements IHttpDocumentProcessor {
 
         try {
             Map<String, String> data = om.readValue(scrapedJson, Map.class);
-            String articleText = data.get("article");
-            String title = data.get("title");
-            String date = data.get("date");
+            String articleText = data.get(ACLEDScraperPreProcessor.article);
+            String title = data.get(ACLEDScraperPreProcessor.title);
+            String date = data.get(ACLEDScraperPreProcessor.date);
 
             String url = doc.getReference();
 
@@ -64,7 +64,8 @@ public class ACLEDPostProcessor implements IHttpDocumentProcessor {
                     .put(Article.URL, url);
 
 
-            Optional<Source> source = sourceDAO.getByUnique(Source.LINK, url);
+            String seed = doc.getMetadata().get(ACLEDScraperPreProcessor.LINK).get(0);
+            Optional<Source> source = sourceDAO.getByUnique(Source.LINK, seed);
 
             if(source.isPresent()) {
 

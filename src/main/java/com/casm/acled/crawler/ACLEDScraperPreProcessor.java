@@ -34,15 +34,18 @@ public class ACLEDScraperPreProcessor implements IHttpDocumentProcessor {
     public static final String title = "field.name/title";
     public static final String date = "field.name/date";
 
+    public static final String LINK = "casm.jqm.link";
+
     private static Map<String, GeneralSplitterFactory> scraperJson = new HashMap<>();
     private final Gson gson;
+    private final String seed;
 
 
-
-    public ACLEDScraperPreProcessor(Path scraperLocation) {
+    public ACLEDScraperPreProcessor(Path scraperLocation, String seed) {
 
         gson = new Gson();
         initScrapers(scraperLocation);
+        this.seed = seed;
 
     }
 
@@ -153,6 +156,10 @@ public class ACLEDScraperPreProcessor implements IHttpDocumentProcessor {
                 List<String> pages = new ArrayList<>();
                 pages.add(json);
                 doc.getMetadata().put(SCRAPEDJSON, pages);
+
+                List<String> links = new ArrayList<>();
+                links.add(seed);
+                doc.getMetadata().put(LINK, links);
             }
 
         }
