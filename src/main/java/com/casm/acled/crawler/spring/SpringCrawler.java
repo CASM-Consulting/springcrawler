@@ -95,7 +95,7 @@ public class SpringCrawler implements CommandLineRunner {
 
         HttpCrawlerConfig config = cc.getConfiguration();
         config.setPostImportProcessors(new ACLEDPostProcessor(articleDAO, sourceDAO, sourceListDAO));
-        config.setPreImportProcessors(new ACLEDScraperPreProcessor(Paths.get(ca.scrapers)));
+        config.setPreImportProcessors(new ACLEDScraperPreProcessor(Paths.get(ca.scrapers),ca.seeds.get(0)));
 
         ImporterConfig ic = new ImporterConfig();
 
