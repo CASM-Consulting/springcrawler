@@ -16,6 +16,7 @@ import com.norconex.importer.handler.ImporterHandlerException;
 import com.norconex.importer.handler.filter.IDocumentFilter;
 import com.norconex.importer.handler.filter.OnMatch;
 import com.norconex.importer.handler.filter.impl.EmptyMetadataFilter;
+import com.norconex.importer.handler.filter.impl.RegexMetadataFilter;
 import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
 import org.camunda.bpm.spring.boot.starter.rest.CamundaBpmRestJerseyAutoConfiguration;
 import org.hibernate.validator.HibernateValidatorConfiguration;
@@ -93,7 +94,9 @@ public class SpringCrawler implements CommandLineRunner {
         ImporterConfig ic = new ImporterConfig();
 
         EmptyMetadataFilter emptyArticle = new EmptyMetadataFilter(OnMatch.EXCLUDE,ACLEDScraperPreProcessor.SCRAPEDJSON);
-        ic.setPostParseHandlers(emptyArticle);
+        String regex = ".+(kill|massacre|death|died|dead|bomb|bombed|bombing|rebel|attack|attacked|riot|battle|protest|clash|demonstration|strike|wound|injure|casualty|displace|unrest|casualties|vigilante|torture|march|rape).+";
+        RegexMetadataFilter regexFilter = new RegexMetadataFilter(ACLEDScraperPreProcessor.SCRAPEDJSON,regex);
+        ic.setPostParseHandlers(emptyArticle,regexFilter);
 
         config.setImporterConfig(ic);
 
