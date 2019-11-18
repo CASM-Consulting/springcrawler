@@ -176,6 +176,11 @@
             <version>42.2.6</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.ocpsoft.prettytime</groupId>
+            <artifactId>prettytime-nlp</artifactId>
+            <version>4.0.2.Final</version>
+        </dependency>
     </dependencies>
 
 

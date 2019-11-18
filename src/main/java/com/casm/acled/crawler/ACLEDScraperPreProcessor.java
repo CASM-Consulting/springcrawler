@@ -34,6 +34,10 @@ public class ACLEDScraperPreProcessor implements IHttpDocumentProcessor {
     public static final String title = "field.name/title";
     public static final String date = "field.name/date";
 
+    public static final String metaDATE = "date";
+    public static final String metaTITLE = "title";
+    public static final String metaARTICLE = "article";
+
     public static final String LINK = "casm.jqm.link";
 
     private static Map<String, GeneralSplitterFactory> scraperJson = new HashMap<>();

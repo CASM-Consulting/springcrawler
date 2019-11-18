@@ -392,5 +392,6 @@
     <orderEntry type="library" name="Maven: net.bytebuddy:byte-buddy:1.9.12" level="project" />
     <orderEntry type="library" name="Maven: org.jboss.spec.javax.transaction:jboss-transaction-api_1.2_spec:1.1.1.Final" level="project" />
     <orderEntry type="library" name="Maven: org.postgresql:postgresql:42.2.6" level="project" />
+    <orderEntry type="library" name="Maven: org.ocpsoft.prettytime:prettytime-nlp:4.0.2.Final" level="project" />
   </component>
 </module>
