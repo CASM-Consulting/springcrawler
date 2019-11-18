@@ -2,11 +2,13 @@ package com.casm.acled.crawler.spring;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.SearchStrategy;
 import org.springframework.boot.autoconfigure.jmx.ParentAwareNamingStrategy;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.jmx.export.annotation.AnnotationJmxAttributeSource;
 import org.springframework.jmx.export.naming.ObjectNamingStrategy;
 
@@ -16,6 +18,9 @@ import java.util.UUID;
 
 @Configuration
 public class HikariConfiguration extends HikariConfig {
+
+    @Autowired
+    Environment environment;
 
     @Bean
     public DataSource dataSource() throws SQLException {
