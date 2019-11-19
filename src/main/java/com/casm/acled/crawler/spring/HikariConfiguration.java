@@ -19,6 +19,7 @@ import java.util.UUID;
 @Configuration
 //@PropertySource(value= {"classpath:application.properties"})
 public class HikariConfiguration extends HikariConfig {
+
     {
         this.setJdbcUrl("jdbc:postgresql://127.0.0.1:5432/postgres");
         this.setUsername("postgres");
@@ -40,7 +41,8 @@ public class HikariConfiguration extends HikariConfig {
     @Primary
     public DataSource dataSource() throws SQLException {
         HikariDataSource dataSource = new HikariDataSource(this);
-//        dataSource.setPoolName("dataSource_" + UUID.randomUUID().toString());
+        dataSource.setPoolName("dataSource_" + "flimflam");
+        //UUID.randomUUID().toString()
         return dataSource;
     }
 
