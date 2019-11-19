@@ -35,6 +35,7 @@ public class HikariConfiguration extends HikariConfig {
     @Primary
     public DataSource dataSource() throws SQLException {
         this.setJdbcUrl("jdbc:postgresql://127.0.0.1:5432/postgres");
+        this.setUsername("postgres");
         HikariDataSource dataSource = new HikariDataSource(this);
         dataSource.setPoolName("dataSource_" + UUID.randomUUID().toString());
         return dataSource;
@@ -47,5 +48,5 @@ public class HikariConfiguration extends HikariConfig {
         namingStrategy.setDefaultDomain("domain_" + UUID.randomUUID().toString());
         return namingStrategy;
     }
-    
+
 }
