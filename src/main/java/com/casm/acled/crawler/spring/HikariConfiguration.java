@@ -18,17 +18,18 @@ import javax.sql.DataSource;
 import java.sql.SQLException;
 import java.util.UUID;
 
-@EnableMBeanExport(registration= RegistrationPolicy.IGNORE_EXISTING)
+//@EnableMBeanExport(registration= RegistrationPolicy.IGNORE_EXISTING)
 @Configuration
 public class HikariConfiguration extends HikariConfig {
 
-    @Autowired
-    Environment environment;
+//    @Autowired
+//    Environment environment;
 
     @Bean
     public DataSource dataSource() throws SQLException {
         HikariDataSource dataSource = new HikariDataSource(this);
         dataSource.setPoolName("dataSource_" + UUID.randomUUID().toString());
+        dataSource.setJdbcUrl("jdbc:postgresql://127.0.0.1:5432");
         return dataSource;
     }
 
