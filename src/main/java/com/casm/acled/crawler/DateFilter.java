@@ -26,19 +26,19 @@ import java.util.Map;
 
 public class DateFilter extends AbstractDocumentFilter {
 
-    public static final int DEFAULT = 24;
+    public static final int DEFAULT = 48;
     public Date threshold;
     private PrettyTimeParser parser;
 
-    public void DateFilter(Date threshold) {
-        this.threshold = threshold;
-        parser = new PrettyTimeParser();
-    }
 
-    public void DateFilter() {
+    public DateFilter() {
         this(new DateTime().minusHours(DEFAULT).toDate());
     }
 
+    public DateFilter(Date threshold) {
+        this.threshold = threshold;
+        parser = new PrettyTimeParser();
+    }
 
     @Override
     protected boolean isDocumentMatched(String reference, InputStream input, ImporterMetadata metadata, boolean parsed) throws ImporterHandlerException {

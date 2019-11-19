@@ -8,14 +8,17 @@ import org.springframework.boot.autoconfigure.condition.SearchStrategy;
 import org.springframework.boot.autoconfigure.jmx.ParentAwareNamingStrategy;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.EnableMBeanExport;
 import org.springframework.core.env.Environment;
 import org.springframework.jmx.export.annotation.AnnotationJmxAttributeSource;
 import org.springframework.jmx.export.naming.ObjectNamingStrategy;
+import org.springframework.jmx.support.RegistrationPolicy;
 
 import javax.sql.DataSource;
 import java.sql.SQLException;
 import java.util.UUID;
 
+@EnableMBeanExport(registration= RegistrationPolicy.IGNORE_EXISTING)
 @Configuration
 public class HikariConfiguration extends HikariConfig {
 
