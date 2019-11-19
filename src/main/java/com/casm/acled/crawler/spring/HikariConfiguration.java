@@ -34,11 +34,11 @@ public class HikariConfiguration extends HikariConfig {
 //        config.setDriverClassName("org.postgresql.Driver");
 //    }
 
-    @Autowired
-    Environment environment;
+//    @Autowired
+//    Environment environment;
 
     @Bean
-    @Primary
+//    @Primary
     public DataSource dataSource() throws SQLException {
         HikariDataSource dataSource = new HikariDataSource(this);
         dataSource.setPoolName("dataSource_" + "flimflam");
