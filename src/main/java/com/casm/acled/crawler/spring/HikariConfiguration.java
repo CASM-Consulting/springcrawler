@@ -29,7 +29,10 @@ public class HikariConfiguration extends HikariConfig {
     public DataSource dataSource() throws SQLException {
         HikariDataSource dataSource = new HikariDataSource(this);
         dataSource.setPoolName("dataSource_" + UUID.randomUUID().toString());
-        dataSource.setJdbcUrl("jdbc:postgresql://127.0.0.1:5432");
+        dataSource.setJdbcUrl("jdbc:postgresql://127.0.0.1:5432/postgres");
+        dataSource.setUsername("postgres");
+        dataSource.setPassword("postgres");
+        dataSource.setDriverClassName("org.postgresql.Driver");
         return dataSource;
     }
 
