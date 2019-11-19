@@ -19,8 +19,17 @@ import java.util.UUID;
 
 //@EnableMBeanExport(registration= RegistrationPolicy.IGNORE_EXISTING)
 @Configuration
-@PropertySource(value= {"classpath:application.properties"})
+//@PropertySource(value= {"classpath:application.properties"})
 public class HikariConfiguration extends HikariConfig {
+
+    private static HikariConfig config = new HikariConfig();
+
+    {
+        config.setJdbcUrl("jdbc:postgresql://127.0.0.1:5432/postgres");
+        config.setUsername("postgres");
+        config.setPassword("postgres");
+        config.setDriverClassName("org.postgresql.Driver");
+    }
 
     @Autowired
     Environment environment;
@@ -28,15 +37,11 @@ public class HikariConfiguration extends HikariConfig {
     @Bean
     @Primary
     public DataSource dataSource() throws SQLException {
-        HikariDataSource dataSource = new HikariDataSource(this);
+        HikariDataSource dataSource = new HikariDataSource(config);
         dataSource.setPoolName("dataSource_" + UUID.randomUUID().toString());
-        dataSource.setJdbcUrl("jdbc:postgresql://127.0.0.1:5432/postgres");
-        dataSource.setUsername("postgres");
-        dataSource.setPassword("postgres");
-        dataSource.setDriverClassName("org.postgresql.Driver");
         return dataSource;
     }
-    
+
     @Bean
     @ConditionalOnMissingBean(value = ObjectNamingStrategy.class, search = SearchStrategy.CURRENT)
     public ParentAwareNamingStrategy objectNamingStrategy() {
