@@ -9,6 +9,7 @@ import org.springframework.boot.autoconfigure.jmx.ParentAwareNamingStrategy;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.EnableMBeanExport;
+import org.springframework.context.annotation.Primary;
 import org.springframework.core.env.Environment;
 import org.springframework.jmx.export.annotation.AnnotationJmxAttributeSource;
 import org.springframework.jmx.export.naming.ObjectNamingStrategy;
@@ -22,10 +23,11 @@ import java.util.UUID;
 @Configuration
 public class HikariConfiguration extends HikariConfig {
 
-//    @Autowired
-//    Environment environment;
+    @Autowired
+    Environment environment;
 
     @Bean
+    @Primary
     public DataSource dataSource() throws SQLException {
         HikariDataSource dataSource = new HikariDataSource(this);
         dataSource.setPoolName("dataSource_" + UUID.randomUUID().toString());
