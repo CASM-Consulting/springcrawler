@@ -51,7 +51,7 @@ import java.util.Map;
 // We need the special object mapper, though.
 @Import(ObjectMapperConfiguration.class)
 // And we also need the DAOs.
-@ComponentScan(basePackages={"com.casm.acled.dao"})
+@ComponentScan(basePackages={"com.casm.acled"})
 public class SpringCrawler implements CommandLineRunner {
 
     protected static final Logger logger = LoggerFactory.getLogger(ACLEDScraperPreProcessor.class);
