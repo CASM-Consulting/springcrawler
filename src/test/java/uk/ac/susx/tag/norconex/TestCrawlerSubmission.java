@@ -1,5 +1,6 @@
 package uk.ac.susx.tag.norconex;
 
+import com.casm.acled.crawler.ACLEDScraperPreProcessor;
 import com.enioka.jqm.api.JobRequest;
 import org.junit.Assert;
 import org.junit.Test;
@@ -33,9 +34,9 @@ public class TestCrawlerSubmission {
 
     public static JobRequest createJobRequest(){
 
-        JobRequest jobRequest = JobRequest.create("CrawlerDef","jp242");
+        JobRequest jobRequest = JobRequest.create("SpringCollector","jp242");
 
-        String seed = "http://www.taglaboratory.org/";
+        String seed = "https://www.thepeninsulaqatar.com/";
         jobRequest.setKeyword1(seed);
 
         String domain = "test-host";
@@ -49,9 +50,9 @@ public class TestCrawlerSubmission {
 
         jobRequest.addParameter(SingleSeedCollector.SEED, SingleSeedCollector.SEED + " " + seed);
 
-        jobRequest.addParameter(SingleSeedCollector.CRAWLB, SingleSeedCollector.CRAWLB + " " + "/var/www/acled/jqm/crawl-databases/malaymail");
+        jobRequest.addParameter(SingleSeedCollector.CRAWLB, SingleSeedCollector.CRAWLB + " " + "/Users/jp242/Documents/Projects/JQM-Crawling/crawl-databases");
 
-        jobRequest.addParameter(SingleSeedCollector.DEPTH, SingleSeedCollector.DEPTH + " " + "3");
+        jobRequest.addParameter(SingleSeedCollector.DEPTH, SingleSeedCollector.DEPTH + " " + "1");
 
         jobRequest.addParameter(SingleSeedCollector.POLITENESS, SingleSeedCollector.POLITENESS + " " + "350");
 
@@ -61,10 +62,13 @@ public class TestCrawlerSubmission {
 
         jobRequest.addParameter(SingleSeedCollector.USERAGENT, SingleSeedCollector.USERAGENT + " " + "http://www.taglaboratory.org/");
 
+        jobRequest.addParameter(SingleSeedCollector.FILTER, SingleSeedCollector.FILTER + " " + ".*");
+
         jobRequest.addParameter(SingleSeedCollector.SITEMAP, SingleSeedCollector.SITEMAP + " " + "true");
 
         jobRequest.addParameter(SingleSeedCollector.ROBOTS, SingleSeedCollector.ROBOTS + " " + "true");
 
+        jobRequest.addParameter("casm.jqm.scraping.scrapers", "casm.jqm.scraping.scrapers" + " " + "/Users/jp242/Documents/Projects/JQM-Crawling/example_scrapers");
 
         return jobRequest;
 
