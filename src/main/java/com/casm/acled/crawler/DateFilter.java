@@ -53,7 +53,7 @@ public class DateFilter extends AbstractDocumentFilter {
             Map<String, String> data = om.readValue(meta.get(0), Map.class);
             if(data.containsKey(ACLEDScraperPreProcessor.metaDATE)){
                 String date = data.get(ACLEDScraperPreProcessor.metaDATE);
-                List<Date> dates = parser.parse(date);
+                List<Date> dates = parseDate(date);
                 return !dates.get(0).before(threshold);
             }
         } catch (JsonParseException e) {
@@ -63,19 +63,21 @@ public class DateFilter extends AbstractDocumentFilter {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-
         return true;
 
     }
 
+    public List<Date> parseDate(String date) {
+        return parser.parse(date);
+    }
+
     @Override
     protected void saveFilterToXML(EnhancedXMLStreamWriter writer) throws XMLStreamException {
-        // NA MATE
+        // NAH MATE
     }
 
     @Override
     protected void loadFilterFromXML(XMLConfiguration xml) throws IOException {
-        // NA MATE
+        // NAH MATE
     }
 }
