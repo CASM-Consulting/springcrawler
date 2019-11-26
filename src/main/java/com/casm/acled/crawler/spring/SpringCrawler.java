@@ -5,6 +5,7 @@ import com.casm.acled.configuration.ObjectMapperConfiguration;
 import com.casm.acled.crawler.ACLEDMetadataPreProcessor;
 import com.casm.acled.crawler.ACLEDPostProcessor;
 import com.casm.acled.crawler.ACLEDScraperPreProcessor;
+import com.casm.acled.crawler.DateFilter;
 import com.casm.acled.crawler.utils.Utils;
 import com.casm.acled.dao.entities.ArticleDAO;
 import com.casm.acled.dao.entities.SourceDAO;
@@ -94,15 +95,19 @@ public class SpringCrawler implements CommandLineRunner {
         if(!ca.index){
             Map<String,List<String>> map = new HashMap<>();
             map.put(ACLEDMetadataPreProcessor.LINK, Arrays.asList(ca.seeds.get(0)));
+            map.put(CrawlerArguments.SOURCENAME, Arrays.asList(ca.source));
+            map.put(CrawlerArguments.COUNTRIES, Arrays.asList(ca.countries));
             config.setPreImportProcessors(new ACLEDScraperPreProcessor(Paths.get(ca.scrapers)),new ACLEDMetadataPreProcessor(map));
             config.setPostImportProcessors(new ACLEDPostProcessor(articleDAO, sourceDAO, sourceListDAO));
         }
 
         ImporterConfig ic = new ImporterConfig();
 
+        // Set the various document filters
         EmptyMetadataFilter emptyArticle = new EmptyMetadataFilter(OnMatch.EXCLUDE,ACLEDScraperPreProcessor.SCRAPEDJSON);
         RegexMetadataFilter regexFilter = new RegexMetadataFilter(ACLEDScraperPreProcessor.SCRAPEDJSON, Utils.KEYWORDS);
-        ic.setPostParseHandlers(emptyArticle,regexFilter);
+        DateFilter df = new DateFilter();
+        ic.setPostParseHandlers(emptyArticle,regexFilter,df);
 
         config.setImporterConfig(ic);
 
