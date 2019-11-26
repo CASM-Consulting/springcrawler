@@ -29,8 +29,7 @@ public class DateFilter extends AbstractDocumentFilter {
     public static final int DEFAULT = 48;
     public Date threshold;
     private PrettyTimeParser parser;
-
-
+    
     public DateFilter() {
         this(new DateTime().minusHours(DEFAULT).toDate());
     }

@@ -2,6 +2,7 @@ package com.casm.acled.crawler.spring;
 
 import com.beust.jcommander.JCommander;
 import com.casm.acled.configuration.ObjectMapperConfiguration;
+import com.casm.acled.crawler.ACLEDMetadataPreProcessor;
 import com.casm.acled.crawler.ACLEDPostProcessor;
 import com.casm.acled.crawler.ACLEDScraperPreProcessor;
 import com.casm.acled.crawler.utils.Utils;
@@ -42,10 +43,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @EnableAutoConfiguration(exclude={HibernateJpaAutoConfiguration.class,CamundaBpmAutoConfiguration.class, CamundaBpmRestJerseyAutoConfiguration.class, ValidationAutoConfiguration.class})
 // We need the special object mapper, though.
@@ -94,14 +92,16 @@ public class SpringCrawler implements CommandLineRunner {
 
         HttpCrawlerConfig config = cc.getConfiguration();
         if(!ca.index){
+            Map<String,List<String>> map = new HashMap<>();
+            map.put(ACLEDMetadataPreProcessor.LINK, Arrays.asList(ca.seeds.get(0)));
+            config.setPreImportProcessors(new ACLEDScraperPreProcessor(Paths.get(ca.scrapers)),new ACLEDMetadataPreProcessor(map));
             config.setPostImportProcessors(new ACLEDPostProcessor(articleDAO, sourceDAO, sourceListDAO));
-            config.setPreImportProcessors(new ACLEDScraperPreProcessor(Paths.get(ca.scrapers),ca.seeds.get(0)));
         }
 
         ImporterConfig ic = new ImporterConfig();
 
         EmptyMetadataFilter emptyArticle = new EmptyMetadataFilter(OnMatch.EXCLUDE,ACLEDScraperPreProcessor.SCRAPEDJSON);
-        RegexMetadataFilter regexFilter = new RegexMetadataFilter(ACLEDScraperPreProcessor.SCRAPEDJSON,Utils.KEYWORDS);
+        RegexMetadataFilter regexFilter = new RegexMetadataFilter(ACLEDScraperPreProcessor.SCRAPEDJSON, Utils.KEYWORDS);
         ic.setPostParseHandlers(emptyArticle,regexFilter);
 
         config.setImporterConfig(ic);
