@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.ac.susx.tag.norconex.controller.ContinuousController;
 
+import javax.rmi.CORBA.Util;
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -63,11 +64,14 @@ public class ACLEDScraperPreProcessor implements IHttpDocumentProcessor {
         });
         for(File file : scrapers){
             try {
-                Map<String, List<Map<String, String>>> scraperDefs = buildScraperDefinition(GeneralSplitterFactory.getTagSetFromJson(file.toPath()));
-                logger.info("Adding scraper: " + file.getName());
+                String processed = Utils.processJSON(file);
+                Map<String, List<Map<String, String>>> scraperDefs = buildScraperDefinition(GeneralSplitterFactory.parseJsonTagSet(processed));
+                logger.info("Adding scraper: " + file.getParentFile().getName());
                 scraperJson.put(file.getName().replace(".json",""), new GeneralSplitterFactory(scraperDefs));
                 logger.info("Added scraper for: " + file.getName() + " " + scraperJson.get(file.getName().replace(".json","")));
             } catch (IOException e) {
+                e.printStackTrace();
+            } catch (IncorrectScraperJSONException e) {
                 e.printStackTrace();
             }
         }
