@@ -11,9 +11,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.norconex.collector.http.doc.HttpDocument;
 import com.norconex.collector.http.processor.IHttpDocumentProcessor;
 import org.apache.http.client.HttpClient;
-import org.camunda.bpm.engine.spring.annotations.BusinessKey;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 import com.casm.acled.dao.entities.ArticleDAO;
 
 
@@ -64,7 +61,7 @@ public class ACLEDPostProcessor implements IHttpDocumentProcessor {
                     .put(Article.URL, url);
 
 
-            String seed = doc.getMetadata().get(ACLEDScraperPreProcessor.LINK).get(0);
+            String seed = doc.getMetadata().get(ACLEDMetadataPreProcessor.LINK).get(0);
             Optional<Source> source = sourceDAO.getByUnique(Source.LINK, seed);
 
             if(source.isPresent()) {

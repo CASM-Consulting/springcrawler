@@ -21,6 +21,7 @@ import com.norconex.importer.handler.filter.IDocumentFilter;
 import com.norconex.importer.handler.filter.OnMatch;
 import com.norconex.importer.handler.filter.impl.EmptyMetadataFilter;
 import com.norconex.importer.handler.filter.impl.RegexMetadataFilter;
+import com.norconex.importer.handler.tagger.impl.KeepOnlyTagger;
 import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
 import org.camunda.bpm.spring.boot.starter.rest.CamundaBpmRestJerseyAutoConfiguration;
 import org.hibernate.validator.HibernateValidatorConfiguration;
@@ -50,7 +51,7 @@ import java.util.*;
 // We need the special object mapper, though.
 @Import(ObjectMapperConfiguration.class)
 // And we also need the DAOs.
-@ComponentScan(basePackages={"com.casm.acled"})
+@ComponentScan(basePackages={"com.casm.acled.dao"})
 public class SpringCrawler implements CommandLineRunner {
 
     protected static final Logger logger = LoggerFactory.getLogger(ACLEDScraperPreProcessor.class);
@@ -93,6 +94,7 @@ public class SpringCrawler implements CommandLineRunner {
 
         HttpCrawlerConfig config = cc.getConfiguration();
         if(!ca.index){
+            logger.info("INFO: The web content with be scraped and produced to the database.");
             Map<String,List<String>> map = new HashMap<>();
             map.put(ACLEDMetadataPreProcessor.LINK, Arrays.asList(ca.seeds.get(0)));
             map.put(CrawlerArguments.SOURCENAME, Arrays.asList(ca.source));
@@ -112,6 +114,16 @@ public class SpringCrawler implements CommandLineRunner {
         config.setImporterConfig(ic);
 
         cc.setConfiguration(config);
+
+
+//        KeepOnlyTagger keeper = new KeepOnlyTagger();
+//        keeper.addField("reference");
+//        keeper.addField("crawldate");
+//        keeper.addField(ACLEDMetadataPreProcessor.CRAWLDATE);
+//        keeper.addField(ACLEDMetadataPreProcessor.DEPTH);
+//        keeper.addField(ACLEDMetadataPreProcessor.LINK);
+//        keeper.addField(ACLEDMetadataPreProcessor.UPDATED);
+        //Need to add hash field as well.
 
         try {
             cc.start();

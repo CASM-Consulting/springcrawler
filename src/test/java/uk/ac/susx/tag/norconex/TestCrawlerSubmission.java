@@ -36,7 +36,7 @@ public class TestCrawlerSubmission {
 
         JobRequest jobRequest = JobRequest.create("SpringCollector","jp242");
 
-        String seed = "https://www.thepeninsulaqatar.com/";
+        String seed = "http://www.taglaboratory.org//";
         jobRequest.setKeyword1(seed);
 
         String domain = "test-host";
