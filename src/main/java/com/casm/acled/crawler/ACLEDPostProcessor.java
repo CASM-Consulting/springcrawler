@@ -12,6 +12,8 @@ import com.norconex.collector.http.doc.HttpDocument;
 import com.norconex.collector.http.processor.IHttpDocumentProcessor;
 import org.apache.http.client.HttpClient;
 import com.casm.acled.dao.entities.ArticleDAO;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 import java.io.IOException;
@@ -21,6 +23,7 @@ import java.util.Optional;
 
 public class ACLEDPostProcessor implements IHttpDocumentProcessor {
 
+    protected static final Logger logger = LoggerFactory.getLogger(DateFilter.class);
 
     private final ArticleDAO articleDAO;
     private final SourceDAO sourceDAO;
@@ -78,7 +81,7 @@ public class ACLEDPostProcessor implements IHttpDocumentProcessor {
 
 
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error("Failed to import page to spring: " + doc.getReference() + " " + e.getMessage());
         }
 
     }
