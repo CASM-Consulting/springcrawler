@@ -15,7 +15,6 @@ import org.apache.nutch.splitter.utils.POJOHTMLMatcherDefinition;
 import org.jsoup.Jsoup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.ac.susx.tag.norconex.controller.ContinuousController;
 
 import javax.rmi.CORBA.Util;
 import java.io.*;

@@ -46,7 +46,7 @@ public class TestScraped {
 
     @Test
     public void TestScraper(){
-        String url = "https://www.greaterkashmir.com/news/pir-panjal/two-civilians-killed-9-injured-in-pak-shelling-along-loc-in-j-ks-poonch/";
+        String url = "https://www.greaterkashmir.com/news/kashmir/nine-arrested-for-threatening-businessmen-with-violence-in-kashmir/";
         Path scraper = Paths.get("/Users/jp242/Documents/Projects/ACLED/ManualScrapers/demo-scrapers/greaterkashmircom/job.json");
 
         try {
@@ -59,9 +59,9 @@ public class TestScraped {
 //            }
 //            Map<String, List<Map<String, String>>> tags = buildScraperDefinition(tagset);
 //            GeneralSplitterFactory splitterFact = new GeneralSplitterFactory(tags);
-            Document doc = Jsoup.connect(url).userAgent("Mozilla").get();
+            Document doc = Jsoup.connect(url).timeout(10000).userAgent("Mozilla").get();
             LinkedList<Post> splitDoc = tagset.create().split(doc);
-            System.out.println(splitDoc.getFirst().get(ACLEDScraperPreProcessor.date));
+            System.out.println(splitDoc.getFirst().get(ACLEDScraperPreProcessor.title));
             System.out.println(splitDoc.size());
         } catch (IOException e) {
             e.printStackTrace();
