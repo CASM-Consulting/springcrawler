@@ -30,7 +30,7 @@ public class DateFilter extends AbstractDocumentFilter {
 
     protected static final Logger logger = LoggerFactory.getLogger(DateFilter.class);
 
-    public static final int DEFAULT = 48;
+    public static final int DEFAULT = 24;
     public Date threshold;
     private PrettyTimeParser parser;
 
