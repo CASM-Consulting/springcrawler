@@ -61,7 +61,7 @@ public class DateFilter extends AbstractDocumentFilter {
                 String date = data.get(ACLEDScraperPreProcessor.metaDATE);
                 List<Date> dates = parseDate(date);
                 if(dates.size() > 0) {
-                    return !dates.get(0).before(threshold);
+                    return dates.get(0).after(threshold);
                 }
             }
             return false;
