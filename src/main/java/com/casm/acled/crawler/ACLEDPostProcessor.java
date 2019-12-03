@@ -75,6 +75,8 @@ public class ACLEDPostProcessor implements IHttpDocumentProcessor {
 
             if(source.isPresent()) {
 
+                logger.error("INFO: Source present");
+
                 article = article.put(Article.SOURCE_ID, source.get().id());
 
                 List<SourceList> lists = sourceListDAO.bySource(source.get());
@@ -83,6 +85,9 @@ public class ACLEDPostProcessor implements IHttpDocumentProcessor {
                     articleDAO.create(article.businessKey(bk));
 
                 }
+            }
+            else{
+                logger.error("INFO: Source not present");
             }
 
 
