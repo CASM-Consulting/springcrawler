@@ -11,7 +11,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.norconex.collector.http.doc.HttpDocument;
 import com.norconex.collector.http.processor.IHttpDocumentProcessor;
 import org.apache.http.client.HttpClient;
+
+import org.camunda.bpm.engine.spring.annotations.BusinessKey;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
 import com.casm.acled.dao.entities.ArticleDAO;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,7 +29,7 @@ import java.util.Optional;
 
 public class ACLEDPostProcessor implements IHttpDocumentProcessor {
 
-    protected static final Logger logger = LoggerFactory.getLogger(DateFilter.class);
+    protected static final Logger logger = LoggerFactory.getLogger(ACLEDPostProcessor.class);
 
     private final ArticleDAO articleDAO;
     private final SourceDAO sourceDAO;
@@ -44,9 +50,9 @@ public class ACLEDPostProcessor implements IHttpDocumentProcessor {
 
         try {
             Map<String, String> data = om.readValue(scrapedJson, Map.class);
-            String articleText = data.get(ACLEDScraperPreProcessor.metaARTICLE);
-            String title = data.get(ACLEDScraperPreProcessor.metaTITLE);
-            String date = data.get(ACLEDScraperPreProcessor.metaDATE);
+            String articleText = data.get("article");
+            String title = data.get("title");
+            String date = data.get("date");
 
             String url = doc.getReference();
 
