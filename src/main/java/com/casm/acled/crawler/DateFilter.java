@@ -15,6 +15,8 @@ import com.norconex.importer.handler.filter.AbstractDocumentFilter;
 import com.norconex.commons.lang.xml.EnhancedXMLStreamWriter;
 import org.joda.time.DateTime;
 import org.ocpsoft.prettytime.nlp.PrettyTimeParser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 // java
 import javax.xml.stream.XMLStreamException;
@@ -25,6 +27,8 @@ import java.util.List;
 import java.util.Map;
 
 public class DateFilter extends AbstractDocumentFilter {
+
+    protected static final Logger logger = LoggerFactory.getLogger(DateFilter.class);
 
     public static final int DEFAULT = 48;
     public Date threshold;
@@ -44,8 +48,11 @@ public class DateFilter extends AbstractDocumentFilter {
 
         List<String> meta = metadata.get(ACLEDScraperPreProcessor.SCRAPEDJSON);
         if(meta == null || meta.size() <= 0) {
-            return true;
+            logger.info("INFO: No metadata found for url: " + reference);
+            return false;
         }
+
+        logger.info("INFO: filtering article by date: " + reference);
 
         ObjectMapper om = new ObjectMapper();
         try{
@@ -53,14 +60,17 @@ public class DateFilter extends AbstractDocumentFilter {
             if(data.containsKey(ACLEDScraperPreProcessor.metaDATE)){
                 String date = data.get(ACLEDScraperPreProcessor.metaDATE);
                 List<Date> dates = parseDate(date);
-                return !dates.get(0).before(threshold);
+                if(dates.size() > 0) {
+                    return !dates.get(0).before(threshold);
+                }
             }
+            return false;
         } catch (JsonParseException e) {
-            e.printStackTrace();
+            logger.error("Error parsing date: " + reference);
         } catch (JsonMappingException e) {
-            e.printStackTrace();
+            logger.error("Error parsing date: " + reference);
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error("Error parsing date: " + reference);
         }
         return true;
 

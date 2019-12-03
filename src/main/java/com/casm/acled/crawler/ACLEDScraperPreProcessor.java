@@ -21,8 +21,10 @@ import javax.rmi.CORBA.Util;
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class ACLEDScraperPreProcessor implements IHttpDocumentProcessor {
 
@@ -39,32 +41,43 @@ public class ACLEDScraperPreProcessor implements IHttpDocumentProcessor {
     public static final String metaTITLE = "title";
     public static final String metaARTICLE = "article";
 
-    private static Map<String, GeneralSplitterFactory> scraperJson = new HashMap<>();
+    public static Map<String, GeneralSplitterFactory> scraperJson = new HashMap<>();
     private final Gson gson;
 
 
     public ACLEDScraperPreProcessor(Path scraperLocation) {
 
         gson = new Gson();
-        initScrapers(scraperLocation);
+        try {
+            initScrapers(scraperLocation);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
     }
 
-    private void initScrapers(Path scraperLocation) {
-        File[] scrapers = scraperLocation.toFile().listFiles(new FilenameFilter() {
-            @Override
-            public boolean accept(File dir, String name) {
-                boolean accepted = (name.endsWith("json")) ? true : false;
-                return accepted;
-            }
-        });
-        for(File file : scrapers){
+    private void initScrapers(Path scraperLocation) throws IOException {
+
+        List<Path> scrapers = Files.walk(scraperLocation)
+                .filter(file -> file.getFileName().toString().equals("job.json"))
+                .collect(Collectors.toList());
+//        File[] scrapers = scraperLocation.toFile().listFiles(new FilenameFilter() {
+//            @Override
+//            public boolean accept(File dir, String name) {
+//                boolean accepted = (name.endsWith("json")) ? true : false;
+//                return accepted;
+//            }
+//        });
+        System.out.println(scrapers.size());
+        for(Path path : scrapers){
             try {
+                File file = path.toFile();
                 String processed = Utils.processJSON(file);
                 Map<String, List<Map<String, String>>> scraperDefs = buildScraperDefinition(GeneralSplitterFactory.parseJsonTagSet(processed));
                 logger.info("Adding scraper: " + file.getParentFile().getName());
-                scraperJson.put(file.getName().replace(".json",""), new GeneralSplitterFactory(scraperDefs));
-                logger.info("Added scraper for: " + file.getName() + " " + scraperJson.get(file.getName().replace(".json","")));
+                scraperJson.put(file.getParentFile().getName(), new GeneralSplitterFactory(scraperDefs));
+                logger.info("Added scraper for: " + file.getParentFile().getName() + " " + scraperJson.get(file.getParentFile().getName().replace(".json","")));
+                System.out.println("Added scraper for: " + file.getParentFile().getName() + " " + scraperJson.get(file.getParentFile().getName().replace(".json","")));
             } catch (IOException e) {
                 e.printStackTrace();
             } catch (IncorrectScraperJSONException e) {
@@ -79,9 +92,9 @@ public class ACLEDScraperPreProcessor implements IHttpDocumentProcessor {
 
         String domain = Utils.getDomain(page.getUrl());
 
-        GeneralSplitterFactory factory = scraperJson.get(domain.split("\\.")[0]);
+        GeneralSplitterFactory factory = scraperJson.get(domain.replaceAll("\\.",""));
         if(factory == null){
-            logger.warn("No logger was found for the domain " + domain);
+            logger.error("No scraper was found for the domain " + domain.replace("\\.",""));
             throw new ScraperNotFoundException(domain);
         }
 
