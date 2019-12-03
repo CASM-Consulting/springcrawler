@@ -110,7 +110,7 @@ public class SpringCrawler implements CommandLineRunner {
         EmptyMetadataFilter emptyArticle = new EmptyMetadataFilter(OnMatch.EXCLUDE,ACLEDScraperPreProcessor.SCRAPEDJSON);
         RegexMetadataFilter regexFilter = new RegexMetadataFilter(ACLEDScraperPreProcessor.SCRAPEDJSON, Utils.KEYWORDS);
         DateFilter df = new DateFilter();
-//        ic.setPostParseHandlers(emptyArticle,regexFilter,df);
+        ic.setPostParseHandlers(emptyArticle,regexFilter,df);
 
         config.setImporterConfig(ic);
 
