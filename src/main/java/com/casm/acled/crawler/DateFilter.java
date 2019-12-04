@@ -42,7 +42,7 @@ public class DateFilter extends AbstractDocumentFilter {
     public DateFilter(Date threshold) {
         this.threshold = threshold;
         parser = new PrettyTimeParser();
-        this.setOnMatch(OnMatch.INCLUDE);
+        this.setOnMatch(OnMatch.EXCLUDE);
     }
 
     @Override
@@ -51,7 +51,7 @@ public class DateFilter extends AbstractDocumentFilter {
         List<String> meta = metadata.get(ACLEDScraperPreProcessor.SCRAPEDJSON);
         if(meta == null || meta.size() <= 0) {
             logger.error("INFO: No metadata found for url: " + reference);
-            return false;
+            return true;
         }
 
         ObjectMapper om = new ObjectMapper();
@@ -62,12 +62,12 @@ public class DateFilter extends AbstractDocumentFilter {
                 List<Date> dates = parseDate(date);
                 logger.error("INFO: filtering article by date: " + reference + " date: " + date + " " + threshold.toString()
                         + " article date: " + dates.get(0).toString() + "after?: " + dates.get(0).after(threshold));
-
-                return dates.get(0).after(threshold);
+                return dates.get(0).before(threshold);
+//                return dates.get(0).after(threshold);
 //                logger.error("ERROR: article did not pass date filter: threshold - " + threshold.toString()
 //                        + " article date: " + dates.get(0).toString());
             }
-            return false;
+            return true;
         } catch (JsonParseException e) {
             logger.error("Error parsing date: " + reference);
         } catch (JsonMappingException e) {
@@ -75,7 +75,7 @@ public class DateFilter extends AbstractDocumentFilter {
         } catch (IOException e) {
             logger.error("Error parsing date: " + reference);
         }
-        return false;
+        return true;
 
     }
 

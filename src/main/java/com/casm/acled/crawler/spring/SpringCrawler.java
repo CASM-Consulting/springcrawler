@@ -13,6 +13,7 @@ import com.casm.acled.dao.entities.SourceListDAO;
 import com.norconex.collector.http.crawler.HttpCrawlerConfig;
 import com.norconex.importer.ImporterConfig;
 import com.norconex.importer.handler.filter.OnMatch;
+import com.norconex.importer.handler.filter.impl.DateMetadataFilter;
 import com.norconex.importer.handler.filter.impl.EmptyMetadataFilter;
 import com.norconex.importer.handler.filter.impl.RegexMetadataFilter;
 import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
@@ -103,6 +104,7 @@ public class SpringCrawler implements CommandLineRunner {
         DateFilter df = new DateFilter();
         ic.setPostParseHandlers(emptyArticle,regexFilter,df);
         config.setImporterConfig(ic);
+        
 
         cc.setConfiguration(config);
 
