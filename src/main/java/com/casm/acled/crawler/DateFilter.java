@@ -59,7 +59,7 @@ public class DateFilter extends AbstractDocumentFilter {
                 String date = data.get(ACLEDScraperPreProcessor.metaDATE);
                 List<Date> dates = parseDate(date);
                 logger.error("INFO: filtering article by date: " + reference + " date: " + threshold.toString()
-                        + " article date: " + dates.get(0).toString());
+                        + " article date: " + dates.get(0).toString() + "after?: " + dates.get(0).after(threshold));
                 if(dates.size() > 0) {
                     return dates.get(0).after(threshold);
                 }
