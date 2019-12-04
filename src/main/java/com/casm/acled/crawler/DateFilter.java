@@ -62,9 +62,8 @@ public class DateFilter extends AbstractDocumentFilter {
                 List<Date> dates = parseDate(date);
                 logger.error("INFO: filtering article by date: " + reference + " date: " + date + " " + threshold.toString()
                         + " article date: " + dates.get(0).toString() + "after?: " + dates.get(0).after(threshold));
-                if(dates.size() > 0) {
-                    return dates.get(0).after(threshold);
-                }
+
+                return dates.get(0).after(threshold);
 //                logger.error("ERROR: article did not pass date filter: threshold - " + threshold.toString()
 //                        + " article date: " + dates.get(0).toString());
             }
