@@ -48,11 +48,11 @@ public class DateFilter extends AbstractDocumentFilter {
 
         List<String> meta = metadata.get(ACLEDScraperPreProcessor.SCRAPEDJSON);
         if(meta == null || meta.size() <= 0) {
-            logger.info("INFO: No metadata found for url: " + reference);
+            logger.error("INFO: No metadata found for url: " + reference);
             return false;
         }
 
-        logger.info("INFO: filtering article by date: " + reference);
+        logger.error("INFO: filtering article by date: " + reference);
 
         ObjectMapper om = new ObjectMapper();
         try{
