@@ -52,14 +52,14 @@ public class DateFilter extends AbstractDocumentFilter {
             return false;
         }
 
-        logger.error("INFO: filtering article by date: " + reference);
-
         ObjectMapper om = new ObjectMapper();
         try{
             Map<String, String> data = om.readValue(meta.get(0), Map.class);
             if(data.containsKey(ACLEDScraperPreProcessor.metaDATE)){
                 String date = data.get(ACLEDScraperPreProcessor.metaDATE);
                 List<Date> dates = parseDate(date);
+                logger.error("INFO: filtering article by date: " + reference + " date: " + threshold.toString()
+                        + " article date: " + dates.get(0).toString());
                 if(dates.size() > 0) {
                     return dates.get(0).after(threshold);
                 }
