@@ -65,8 +65,8 @@ public class DateFilter extends AbstractDocumentFilter {
                 if(dates.size() > 0) {
                     return dates.get(0).after(threshold);
                 }
-                logger.error("ERROR: article did not pass date filter: threshold - " + threshold.toString()
-                        + " article date: " + dates.get(0).toString());
+//                logger.error("ERROR: article did not pass date filter: threshold - " + threshold.toString()
+//                        + " article date: " + dates.get(0).toString());
             }
             return false;
         } catch (JsonParseException e) {
@@ -76,7 +76,7 @@ public class DateFilter extends AbstractDocumentFilter {
         } catch (IOException e) {
             logger.error("Error parsing date: " + reference);
         }
-        return true;
+        return false;
 
     }
 
