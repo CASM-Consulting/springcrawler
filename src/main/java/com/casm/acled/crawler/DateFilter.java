@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 // apache commons
+import com.norconex.importer.handler.filter.OnMatch;
 import org.apache.commons.configuration.XMLConfiguration;
 
 // norconex
@@ -41,6 +42,7 @@ public class DateFilter extends AbstractDocumentFilter {
     public DateFilter(Date threshold) {
         this.threshold = threshold;
         parser = new PrettyTimeParser();
+        this.setOnMatch(OnMatch.INCLUDE);
     }
 
     @Override
