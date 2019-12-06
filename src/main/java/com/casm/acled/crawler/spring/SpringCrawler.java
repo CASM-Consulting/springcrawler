@@ -85,6 +85,8 @@ public class SpringCrawler implements CommandLineRunner {
                 ca.seeds.get(0));
 
         HttpCrawlerConfig config = cc.getConfiguration();
+
+        // Only performs this step when we are wanted to produce to a table
         if(!ca.index){
             logger.info("INFO: The web content with be scraped and produced to the database.");
             Map<String,List<String>> map = new HashMap<>();
@@ -94,17 +96,17 @@ public class SpringCrawler implements CommandLineRunner {
             config.setPreImportProcessors(new ACLEDScraperPreProcessor(Paths.get(ca.scrapers)),new ACLEDMetadataPreProcessor(map));
             //,new ACLEDMetadataPreProcessor(map)
             config.setPostImportProcessors(new ACLEDPostProcessor(articleDAO, sourceDAO, sourceListDAO));
+            ImporterConfig ic = new ImporterConfig();
+
+            // Set the various document filters
+            EmptyMetadataFilter emptyArticle = new EmptyMetadataFilter(OnMatch.EXCLUDE,ACLEDScraperPreProcessor.SCRAPEDJSON);
+            RegexMetadataFilter regexFilter = new RegexMetadataFilter(ACLEDScraperPreProcessor.SCRAPEDJSON, Utils.KEYWORDS);
+            DateFilter df = new DateFilter();
+            ic.setPostParseHandlers(emptyArticle, df,regexFilter);
+            config.setImporterConfig(ic);
         }
 
-        ImporterConfig ic = new ImporterConfig();
 
-        // Set the various document filters
-        EmptyMetadataFilter emptyArticle = new EmptyMetadataFilter(OnMatch.EXCLUDE,ACLEDScraperPreProcessor.SCRAPEDJSON);
-        RegexMetadataFilter regexFilter = new RegexMetadataFilter(ACLEDScraperPreProcessor.SCRAPEDJSON, Utils.KEYWORDS);
-        DateFilter df = new DateFilter();
-        ic.setPostParseHandlers(emptyArticle,regexFilter,df);
-        config.setImporterConfig(ic);
-        
 
         cc.setConfiguration(config);
 

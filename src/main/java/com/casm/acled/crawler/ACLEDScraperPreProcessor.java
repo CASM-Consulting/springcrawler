@@ -103,17 +103,19 @@ public class ACLEDScraperPreProcessor implements IHttpDocumentProcessor {
         if(newspages.size() > 0) {
             Post newspage = newspages.get(0);
 
-            if(newspage.containsKey(article)) {
+            if(newspage.containsKey(article) && newspage.get(article).get(0).length() > 0) {
                 page.setArticle(newspage.get(article).get(0));
             }
-            if (newspage.containsKey(title)){
+            else {
+                return page;
+            }
+            if (newspage.containsKey(title) && newspage.get(title).get(0).length() > 0){
                 page.setTitle(newspage.get(title).get(0));
             }
-            if(newspage.containsKey(date)){
+            if(newspage.containsKey(date) && newspage.get(date).get(0).length() > 0){
                 page.setDate(newspage.get(date).get(0));
             }
         }
-
 
         return page;
 
