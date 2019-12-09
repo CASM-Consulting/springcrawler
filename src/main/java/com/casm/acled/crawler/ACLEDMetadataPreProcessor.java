@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+// Adds a number of meta-data to a url
 public class ACLEDMetadataPreProcessor implements IHttpDocumentProcessor {
 
     public static final String CRAWLDATE = "acled.jqm.date";

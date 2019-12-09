@@ -1,6 +1,8 @@
 package com.casm.acled.crawler.spring;
 
 import com.beust.jcommander.JCommander;
+
+// acled
 import com.casm.acled.configuration.ObjectMapperConfiguration;
 import com.casm.acled.crawler.ACLEDMetadataPreProcessor;
 import com.casm.acled.crawler.ACLEDPostProcessor;
@@ -10,17 +12,29 @@ import com.casm.acled.crawler.utils.Utils;
 import com.casm.acled.dao.entities.ArticleDAO;
 import com.casm.acled.dao.entities.SourceDAO;
 import com.casm.acled.dao.entities.SourceListDAO;
+
+// norconex
 import com.norconex.collector.http.crawler.HttpCrawlerConfig;
 import com.norconex.importer.ImporterConfig;
 import com.norconex.importer.handler.filter.OnMatch;
-import com.norconex.importer.handler.filter.impl.DateMetadataFilter;
 import com.norconex.importer.handler.filter.impl.EmptyMetadataFilter;
 import com.norconex.importer.handler.filter.impl.RegexMetadataFilter;
+
+//camunda
 import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
 import org.camunda.bpm.spring.boot.starter.rest.CamundaBpmRestJerseyAutoConfiguration;
-import org.ocpsoft.prettytime.shade.net.fortuna.ical4j.model.DateTime;
+
+// logging
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+// java
+import java.io.File;
+import java.net.URISyntaxException;
+import java.nio.file.Paths;
+import java.util.*;
+
+// spring
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.Banner;
 import org.springframework.boot.CommandLineRunner;
@@ -31,13 +45,9 @@ import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfigurat
 import org.springframework.boot.autoconfigure.validation.ValidationAutoConfiguration;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
+
 import uk.ac.susx.tag.norconex.jobqueuemanager.CrawlerArguments;
 import uk.ac.susx.tag.norconex.jobqueuemanager.SingleSeedCollector;
-
-import java.io.File;
-import java.net.URISyntaxException;
-import java.nio.file.Paths;
-import java.util.*;
 
 @EnableAutoConfiguration(exclude={HibernateJpaAutoConfiguration.class,CamundaBpmAutoConfiguration.class, CamundaBpmRestJerseyAutoConfiguration.class, ValidationAutoConfiguration.class})
 // We need the special object mapper, though.
@@ -86,7 +96,7 @@ public class SpringCrawler implements CommandLineRunner {
 
         HttpCrawlerConfig config = cc.getConfiguration();
 
-        // Only performs this step when we are wanted to produce to a table
+        // Only performs this step when we are wanting to produce to a table
         if(!ca.index){
             logger.info("INFO: The web content with be scraped and produced to the database.");
             Map<String,List<String>> map = new HashMap<>();
@@ -94,7 +104,6 @@ public class SpringCrawler implements CommandLineRunner {
             map.put(CrawlerArguments.SOURCENAME, Arrays.asList(ca.source));
             map.put(CrawlerArguments.COUNTRIES, Arrays.asList(ca.countries));
             config.setPreImportProcessors(new ACLEDScraperPreProcessor(Paths.get(ca.scrapers)),new ACLEDMetadataPreProcessor(map));
-            //,new ACLEDMetadataPreProcessor(map)
             config.setPostImportProcessors(new ACLEDPostProcessor(articleDAO, sourceDAO, sourceListDAO));
             ImporterConfig ic = new ImporterConfig();
 
@@ -106,19 +115,7 @@ public class SpringCrawler implements CommandLineRunner {
             config.setImporterConfig(ic);
         }
 
-
-
         cc.setConfiguration(config);
-
-
-//        KeepOnlyTagger keeper = new KeepOnlyTagger();
-//        keeper.addField("reference");
-//        keeper.addField("crawldate");
-//        keeper.addField(ACLEDMetadataPreProcessor.CRAWLDATE);
-//        keeper.addField(ACLEDMetadataPreProcessor.DEPTH);
-//        keeper.addField(ACLEDMetadataPreProcessor.LINK);
-//        keeper.addField(ACLEDMetadataPreProcessor.UPDATED);
-        //Need to add hash field as well.
 
         try {
             cc.start();

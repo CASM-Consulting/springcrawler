@@ -17,13 +17,16 @@ import com.casm.acled.crawler.IncorrectScraperJSONException;
 
 public class Utils {
 
+    // keyword query specific to potential articles of interest to ACLED
     public static String KEYWORDS = ".+(?:kill|massacre|death|died|dead|bomb|bombed|bombing|rebel|attack|attacked|riot|battle|protest|clash|demonstration|strike|wound|injure|casualty|displace|unrest|casualties|vigilante|torture|march|rape).+";
 
+    // Returns the originating domain of a given url - minus any trailing 'www'
     public static String getDomain(String urlString) throws MalformedURLException {
         URL url = new URL(urlString);
         return (url.getHost().startsWith("www")) ? url.getHost().substring(4) : url.getHost();
     }
 
+    // Processes a M52 job json to scraper rules
     public static String processJobJSON(String json) throws IncorrectScraperJSONException {
         JSONObject jobj = new JSONObject(json);
         try {
@@ -33,11 +36,13 @@ public class Utils {
         }
     }
 
+
     public static String processScraperJSON(String json){
         // BUG FOUND - NEED TO USE job.json!!
         return null;
     }
 
+    // returns a web scraper based on a job spect of last_scrape file
     public static String processJSON(File scraperLocation) throws IOException, IncorrectScraperJSONException {
         String json = Files.toString(scraperLocation, Charset.defaultCharset());
         return (scraperLocation.getName().equals("last_scrape.json")) ? processScraperJSON(json) : processJobJSON(json);

@@ -1,5 +1,6 @@
 package com.casm.acled.crawler;
 
+// casm
 import com.casm.acled.camunda.BusinessKeys;
 import com.casm.acled.dao.entities.SourceDAO;
 import com.casm.acled.dao.entities.SourceListDAO;
@@ -7,26 +8,33 @@ import com.casm.acled.entities.EntityVersions;
 import com.casm.acled.entities.article.Article;
 import com.casm.acled.entities.source.Source;
 import com.casm.acled.entities.sourcelist.SourceList;
+
+// json
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+// norconex
 import com.norconex.collector.http.doc.HttpDocument;
 import com.norconex.collector.http.processor.IHttpDocumentProcessor;
+
+// http
 import org.apache.http.client.HttpClient;
 
-import org.camunda.bpm.engine.spring.annotations.BusinessKey;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
+// casm
 import com.casm.acled.dao.entities.ArticleDAO;
 
+// logging
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
+// java
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+/**
+ * Commits the scraped data produced by @ACLEDScraperPreProcessor to the relevant fields in acled_article
+ */
 public class ACLEDPostProcessor implements IHttpDocumentProcessor {
 
     protected static final Logger logger = LoggerFactory.getLogger(ACLEDPostProcessor.class);
@@ -83,13 +91,11 @@ public class ACLEDPostProcessor implements IHttpDocumentProcessor {
                 for(SourceList list : lists) {
                     String bk = BusinessKeys.generate(list.get(SourceList.LIST_NAME));
                     articleDAO.create(article.businessKey(bk));
-
                 }
             }
             else{
                 logger.error("INFO: Source not present");
             }
-
 
         } catch (IOException e) {
             logger.error("Failed to import page to spring: " + doc.getReference() + " " + e.getMessage());
