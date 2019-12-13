@@ -14,6 +14,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 // norconex
 import com.norconex.collector.http.doc.HttpDocument;
+import com.norconex.collector.http.doc.HttpMetadata;
 import com.norconex.collector.http.processor.IHttpDocumentProcessor;
 
 // http
@@ -92,6 +93,7 @@ public class ACLEDPostProcessor implements IHttpDocumentProcessor {
                     String bk = BusinessKeys.generate(list.get(SourceList.LIST_NAME));
                     articleDAO.create(article.businessKey(bk));
                 }
+
             }
             else{
                 logger.error("INFO: Source not present");

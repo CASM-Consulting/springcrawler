@@ -22,8 +22,8 @@ public class TestSpringCrawler {
     @Test
     public void TestSpringCrawler() {
         SpringCrawler  sc = new SpringCrawler();
-        String seed = "https://www.gulftoday.ae/news/2019/10/11/former-ukraine-envoy-scheduled-to-testify-in-trump-impeachment-probe";
-        int depth = 0;
+        String seed = "https://www.gulftoday.ae";
+        int depth = 3;
         CrawlerArguments ca = new CrawlerArguments();
         ca.seeds = Arrays.asList(seed);
         ca.crawldb= "/Users/jp242/Desktop";

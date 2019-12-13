@@ -32,8 +32,8 @@ public class ACLEDMetadataPreProcessor implements IHttpDocumentProcessor {
 
     @Override
     public void processDocument(HttpClient httpClient, HttpDocument doc) {
-        metadata.put(UPDATED,Arrays.asList(String.valueOf(doc.getMetadata().getBoolean(HttpMetadata.COLLECTOR_IS_CRAWL_NEW))));
-        metadata.put(DEPTH, Arrays.asList(String.valueOf(doc.getMetadata().getInt(HttpMetadata.COLLECTOR_DEPTH))));
+//        metadata.put(UPDATED,Arrays.asList(String.valueOf(doc.getMetadata().getBoolean(HttpMetadata.COLLECTOR_IS_CRAWL_NEW))));
+//        metadata.put(DEPTH, Arrays.asList(String.valueOf(doc.getMetadata().getInt(HttpMetadata.COLLECTOR_DEPTH))));
         metadata.put(CRAWLDATE, Arrays.asList(DateTime.now().toString()));
         doc.getMetadata().putAll(metadata);
     }

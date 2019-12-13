@@ -15,12 +15,15 @@ import com.casm.acled.dao.entities.SourceListDAO;
 
 // norconex
 import com.norconex.collector.http.crawler.HttpCrawlerConfig;
+import com.norconex.collector.http.doc.HttpMetadata;
 import com.norconex.importer.ImporterConfig;
 import com.norconex.importer.handler.filter.OnMatch;
 import com.norconex.importer.handler.filter.impl.EmptyMetadataFilter;
 import com.norconex.importer.handler.filter.impl.RegexMetadataFilter;
 
 //camunda
+import com.norconex.importer.handler.tagger.impl.KeepOnlyTagger;
+import org.apache.tools.ant.taskdefs.condition.Http;
 import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
 import org.camunda.bpm.spring.boot.starter.rest.CamundaBpmRestJerseyAutoConfiguration;
 
@@ -105,13 +108,14 @@ public class SpringCrawler implements CommandLineRunner {
             map.put(CrawlerArguments.COUNTRIES, Arrays.asList(ca.countries));
             config.setPreImportProcessors(new ACLEDScraperPreProcessor(Paths.get(ca.scrapers)),new ACLEDMetadataPreProcessor(map));
             config.setPostImportProcessors(new ACLEDPostProcessor(articleDAO, sourceDAO, sourceListDAO));
-            ImporterConfig ic = new ImporterConfig();
 
+            ImporterConfig ic = new ImporterConfig();
             // Set the various document filters
             EmptyMetadataFilter emptyArticle = new EmptyMetadataFilter(OnMatch.EXCLUDE,ACLEDScraperPreProcessor.SCRAPEDJSON);
             RegexMetadataFilter regexFilter = new RegexMetadataFilter(ACLEDScraperPreProcessor.SCRAPEDJSON, Utils.KEYWORDS);
             DateFilter df = new DateFilter();
             ic.setPostParseHandlers(emptyArticle, df,regexFilter);
+//            ic.setPostParseHandlers(emptyArticle, df,regexFilter, buildKeepOnly());
             config.setImporterConfig(ic);
         }
 
@@ -122,5 +126,31 @@ public class SpringCrawler implements CommandLineRunner {
         } catch (URISyntaxException e) {
             throw new RuntimeException("The provided URL was invalid");
         }
+    }
+
+    /**
+     * Removes all non-essential metadata fields to reduce index size
+     * @return
+     */
+    private static KeepOnlyTagger buildKeepOnly() {
+        KeepOnlyTagger kop = new KeepOnlyTagger();
+        // date, depth and seen before info
+        kop.addField(HttpMetadata.COLLECTOR_DEPTH);
+        kop.addField(HttpMetadata.COLLECTOR_IS_CRAWL_NEW);
+        kop.addField(HttpMetadata.DOC_IMPORTED_DATE);
+        // change and recrawl info
+        kop.addField(HttpMetadata.COLLECTOR_SM_CHANGE_FREQ);
+        kop.addField(HttpMetadata.COLLECTOR_SM_PRORITY);
+        kop.addField(HttpMetadata.COLLECTOR_SM_LASTMOD);
+        // checksum info
+        kop.addField(HttpMetadata.COLLECTOR_CHECKSUM_METADATA);
+        kop.addField(HttpMetadata.COLLECTOR_CHECKSUM_DOC);
+        // references
+        kop.addField(HttpMetadata.DOC_REFERENCE);
+        kop.addField(HttpMetadata.DOC_EMBEDDED_PARENT_REFERENCE);
+        // acled meta
+        kop.addField(ACLEDMetadataPreProcessor.LINK);
+        kop.addField(ACLEDMetadataPreProcessor.CRAWLDATE);
+        return kop;
     }
 }
