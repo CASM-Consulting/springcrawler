@@ -17,11 +17,15 @@ import com.casm.acled.dao.entities.SourceListDAO;
 import com.norconex.collector.http.crawler.HttpCrawlerConfig;
 import com.norconex.collector.http.doc.HttpMetadata;
 import com.norconex.importer.ImporterConfig;
+import com.norconex.importer.handler.IImporterHandler;
 import com.norconex.importer.handler.filter.OnMatch;
 import com.norconex.importer.handler.filter.impl.EmptyMetadataFilter;
 import com.norconex.importer.handler.filter.impl.RegexMetadataFilter;
 
 //camunda
+import com.norconex.importer.handler.tagger.AbstractDocumentTagger;
+import com.norconex.importer.handler.tagger.impl.CurrentDateTagger;
+import com.norconex.importer.handler.tagger.impl.DebugTagger;
 import com.norconex.importer.handler.tagger.impl.KeepOnlyTagger;
 import org.apache.tools.ant.taskdefs.condition.Http;
 import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
@@ -99,6 +103,10 @@ public class SpringCrawler implements CommandLineRunner {
 
         HttpCrawlerConfig config = cc.getConfiguration();
 
+        logger.error("Starting config");
+        ImporterConfig ic = new ImporterConfig();
+        List<IImporterHandler> handlers = new ArrayList<>();
+
         // Only performs this step when we are wanting to produce to a table
         if(!ca.index){
             logger.info("INFO: The web content with be scraped and produced to the database.");
@@ -106,18 +114,27 @@ public class SpringCrawler implements CommandLineRunner {
             map.put(ACLEDMetadataPreProcessor.LINK, Arrays.asList(ca.seeds.get(0)));
             map.put(CrawlerArguments.SOURCENAME, Arrays.asList(ca.source));
             map.put(CrawlerArguments.COUNTRIES, Arrays.asList(ca.countries));
-            config.setPreImportProcessors(new ACLEDScraperPreProcessor(Paths.get(ca.scrapers)),new ACLEDMetadataPreProcessor(map));
+            config.setPreImportProcessors(new ACLEDScraperPreProcessor(Paths.get(ca.scrapers)));
             config.setPostImportProcessors(new ACLEDPostProcessor(articleDAO, sourceDAO, sourceListDAO));
 
-            ImporterConfig ic = new ImporterConfig();
             // Set the various document filters
             EmptyMetadataFilter emptyArticle = new EmptyMetadataFilter(OnMatch.EXCLUDE,ACLEDScraperPreProcessor.SCRAPEDJSON);
             RegexMetadataFilter regexFilter = new RegexMetadataFilter(ACLEDScraperPreProcessor.SCRAPEDJSON, Utils.KEYWORDS);
             DateFilter df = new DateFilter();
-            ic.setPostParseHandlers(emptyArticle, df,regexFilter);
-//            ic.setPostParseHandlers(emptyArticle, df,regexFilter, buildKeepOnly());
-            config.setImporterConfig(ic);
+            CurrentDateTagger date = new CurrentDateTagger();
+
+            handlers.add(emptyArticle);
+            handlers.add(regexFilter);
+            handlers.add(df);
+            handlers.add(date);
         }
+
+        // appended to list last to avoid errors
+        KeepOnlyTagger kop = buildKeepOnly();
+        handlers.add(kop);
+
+        ic.setPostParseHandlers(handlers.toArray(new IImporterHandler[handlers.size()]));
+        config.setImporterConfig(ic);
 
         cc.setConfiguration(config);
 
@@ -134,7 +151,7 @@ public class SpringCrawler implements CommandLineRunner {
      */
     private static KeepOnlyTagger buildKeepOnly() {
         KeepOnlyTagger kop = new KeepOnlyTagger();
-        // date, depth and seen before info
+        //  date, depth and seen before info
         kop.addField(HttpMetadata.COLLECTOR_DEPTH);
         kop.addField(HttpMetadata.COLLECTOR_IS_CRAWL_NEW);
         kop.addField(HttpMetadata.DOC_IMPORTED_DATE);
@@ -150,7 +167,6 @@ public class SpringCrawler implements CommandLineRunner {
         kop.addField(HttpMetadata.DOC_EMBEDDED_PARENT_REFERENCE);
         // acled meta
         kop.addField(ACLEDMetadataPreProcessor.LINK);
-        kop.addField(ACLEDMetadataPreProcessor.CRAWLDATE);
         return kop;
     }
 }
