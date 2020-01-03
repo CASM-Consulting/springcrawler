@@ -16,6 +16,7 @@ import com.casm.acled.dao.entities.SourceListDAO;
 // norconex
 import com.norconex.collector.http.crawler.HttpCrawlerConfig;
 import com.norconex.collector.http.doc.HttpMetadata;
+import com.norconex.collector.http.recrawl.impl.GenericRecrawlableResolver;
 import com.norconex.importer.ImporterConfig;
 import com.norconex.importer.handler.IImporterHandler;
 import com.norconex.importer.handler.filter.OnMatch;
@@ -96,10 +97,13 @@ public class SpringCrawler implements CommandLineRunner {
                 .build()
                 .parse(corrArgs);
 
+        // add the protocol
+        String seed = (ca.seeds.get(0).startsWith("http://")) ? ca.seeds.get(0) : ("http://" + ca.seeds.get(0));
+
         SingleSeedCollector cc = new SingleSeedCollector(ca.userAgent,new File(ca.crawldb), Utils.getDomain(ca.seeds.get(0)),
                 ca.depth, ca.urlFilter,ca.threadsPerSeed,ca.ignoreRobots,
                 ca.ignoreSitemap, ca.polite,
-                ca.seeds.get(0));
+                seed);
 
         HttpCrawlerConfig config = cc.getConfiguration();
 
@@ -136,7 +140,15 @@ public class SpringCrawler implements CommandLineRunner {
         ic.setPostParseHandlers(handlers.toArray(new IImporterHandler[handlers.size()]));
         config.setImporterConfig(ic);
 
-        cc.setConfiguration(config);
+//        GenericRecrawlableResolver grr = new GenericRecrawlableResolver();
+//        GenericRecrawlableResolver.MinFrequency minFreq = new GenericRecrawlableResolver.MinFrequency();
+//        minFreq.setCaseSensitive(false);
+//        minFreq.setApplyTo();
+//        grr.setMinFrequencies();
+//        config.setRecrawlableResolver();
+
+//        public class CleanUP implements CrawlerC
+//        config.setCrawlDataStoreFactory();
 
         try {
             cc.start();

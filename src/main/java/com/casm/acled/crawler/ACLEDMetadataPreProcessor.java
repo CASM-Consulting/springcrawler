@@ -36,5 +36,6 @@ public class ACLEDMetadataPreProcessor implements IHttpDocumentProcessor {
 //        metadata.put(DEPTH, Arrays.asList(String.valueOf(doc.getMetadata().getInt(HttpMetadata.COLLECTOR_DEPTH))));
         metadata.put(CRAWLDATE, Arrays.asList(DateTime.now().toString()));
         doc.getMetadata().putAll(metadata);
+        doc.getMetadata().getDocumentUrls();
     }
 }

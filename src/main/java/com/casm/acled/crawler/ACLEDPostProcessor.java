@@ -14,7 +14,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 // norconex
 import com.norconex.collector.http.doc.HttpDocument;
-import com.norconex.collector.http.doc.HttpMetadata;
 import com.norconex.collector.http.processor.IHttpDocumentProcessor;
 
 // http
