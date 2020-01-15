@@ -33,6 +33,7 @@ import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
 import org.camunda.bpm.spring.boot.starter.rest.CamundaBpmRestJerseyAutoConfiguration;
 
 // logging
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -124,7 +125,9 @@ public class SpringCrawler implements CommandLineRunner {
             // Set the various document filters
             EmptyMetadataFilter emptyArticle = new EmptyMetadataFilter(OnMatch.EXCLUDE,ACLEDScraperPreProcessor.SCRAPEDJSON);
             RegexMetadataFilter regexFilter = new RegexMetadataFilter(ACLEDScraperPreProcessor.SCRAPEDJSON, Utils.KEYWORDS);
-            DateFilter df = new DateFilter();
+
+            int week = 168;
+            DateFilter df = new DateFilter(new DateTime().minusHours(week).toDate());
             CurrentDateTagger date = new CurrentDateTagger();
 
             handlers.add(emptyArticle);
