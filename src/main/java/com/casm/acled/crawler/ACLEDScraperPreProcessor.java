@@ -15,6 +15,7 @@ import org.apache.nutch.splitter.utils.POJOHTMLMatcherDefinition;
 import org.jsoup.Jsoup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.apache.commons.lang.StringEscapeUtils;
 
 import javax.rmi.CORBA.Util;
 import java.io.*;
@@ -91,9 +92,9 @@ public class ACLEDScraperPreProcessor implements IHttpDocumentProcessor {
 
         String domain = Utils.getDomain(page.getUrl());
 
-        GeneralSplitterFactory factory = scraperJson.get(domain.replaceAll("\\.",""));
+        GeneralSplitterFactory factory = scraperJson.get(domain.replaceAll(StringEscapeUtils.escapeJava("."),""));
         if(factory == null){
-            logger.error("No scraper was found for the domain " + domain.replace("\\.",""));
+            logger.error("No scraper was found for the domain " + domain.replaceAll(StringEscapeUtils.escapeJava("."),""));
             throw new ScraperNotFoundException(domain);
         }
 
