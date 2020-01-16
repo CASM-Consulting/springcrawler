@@ -99,12 +99,12 @@ public class SpringCrawler implements CommandLineRunner {
                 .parse(corrArgs);
 
         // add the protocol
-        String seed = (ca.seeds.get(0).startsWith("http://")) ? ca.seeds.get(0) : ("http://" + ca.seeds.get(0));
+//        String seed = (ca.seeds.get(0).startsWith("http")) ? ca.seeds.get(0) : ("http://" + ca.seeds.get(0));
 
         SingleSeedCollector cc = new SingleSeedCollector(ca.userAgent,new File(ca.crawldb), Utils.getDomain(ca.seeds.get(0)),
                 ca.depth, ca.urlFilter,ca.threadsPerSeed,ca.ignoreRobots,
                 ca.ignoreSitemap, ca.polite,
-                seed);
+                ca.seeds.get(0));
 
         HttpCrawlerConfig config = cc.getConfiguration();
 
