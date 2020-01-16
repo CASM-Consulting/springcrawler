@@ -92,9 +92,9 @@ public class ACLEDScraperPreProcessor implements IHttpDocumentProcessor {
 
         String domain = Utils.getDomain(page.getUrl());
 
-        GeneralSplitterFactory factory = scraperJson.get(domain.replaceAll(StringEscapeUtils.escapeJava("."),""));
+        GeneralSplitterFactory factory = scraperJson.get(domain.replaceAll("\\.",""));
         if(factory == null){
-            logger.error("No scraper was found for the domain " + domain.replaceAll(StringEscapeUtils.escapeJava("."),""));
+            logger.error("No scraper was found for the domain " + domain.replaceAll("\\.",""));
             throw new ScraperNotFoundException(domain);
         }
 
