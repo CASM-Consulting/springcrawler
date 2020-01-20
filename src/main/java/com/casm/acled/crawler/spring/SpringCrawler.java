@@ -119,7 +119,14 @@ public class SpringCrawler implements CommandLineRunner {
             map.put(ACLEDMetadataPreProcessor.LINK, Arrays.asList(ca.seeds.get(0)));
             map.put(CrawlerArguments.SOURCENAME, Arrays.asList(ca.source));
             map.put(CrawlerArguments.COUNTRIES, Arrays.asList(ca.countries));
-            config.setPreImportProcessors(new ACLEDScraperPreProcessor(Paths.get(ca.scrapers)));
+
+            // single scraper definition overrides scraper directory
+            if(ca.scraper != null) {
+                config.setPreImportProcessors(new ACLEDScraperPreProcessor(Paths.get(ca.scraper)));
+            }
+            else {
+                config.setPreImportProcessors(new ACLEDScraperPreProcessor(Paths.get(ca.scrapers)));
+            }
             config.setPostImportProcessors(new ACLEDPostProcessor(articleDAO, sourceDAO, sourceListDAO));
 
             // Set the various document filters

@@ -1,30 +1,37 @@
 package com.casm.acled.crawler;
 
-import com.casm.acled.crawler.utils.Utils;
+// gson
 import com.google.gson.Gson;
-import com.norconex.collector.http.doc.HttpDocument;
-import com.norconex.collector.http.doc.HttpMetadata;
-import com.norconex.collector.http.processor.IHttpDocumentProcessor;
-import com.norconex.commons.lang.file.ContentType;
+
+// crawling imports
 import org.apache.commons.io.IOUtils;
 import org.apache.http.client.HttpClient;
 import org.apache.nutch.parse.filter.Post;
 import org.apache.nutch.parse.forum.splitter.GeneralSplitterFactory;
 import org.apache.nutch.parse.forum.splitter.IForumSplitter;
 import org.apache.nutch.splitter.utils.POJOHTMLMatcherDefinition;
+import com.norconex.collector.http.doc.HttpDocument;
+import com.norconex.collector.http.doc.HttpMetadata;
+import com.norconex.collector.http.processor.IHttpDocumentProcessor;
+import com.norconex.commons.lang.file.ContentType;
+
+// jsoup
 import org.jsoup.Jsoup;
+
+// logging imports
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.apache.commons.lang.StringEscapeUtils;
 
-import javax.rmi.CORBA.Util;
+// java imports
 import java.io.*;
 import java.net.MalformedURLException;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
+
+// utils for domain resolution etc..
+import com.casm.acled.crawler.utils.Utils;
 
 public class ACLEDScraperPreProcessor implements IHttpDocumentProcessor {
 
@@ -41,7 +48,12 @@ public class ACLEDScraperPreProcessor implements IHttpDocumentProcessor {
     public static final String metaTITLE = "title";
     public static final String metaARTICLE = "article";
 
-    public static Map<String, GeneralSplitterFactory> scraperJson = new HashMap<>();
+    // Used if you wish the pre-processor to contain all scrapers.
+    public static Map<String, GeneralSplitterFactory> scrapersJson = new HashMap<>();
+
+    // Used if you wish the pre-processor to only be repsonsible for a single scraper.
+    public static GeneralSplitterFactory scraperJson;
+
     private final Gson gson;
 
 
@@ -49,35 +61,61 @@ public class ACLEDScraperPreProcessor implements IHttpDocumentProcessor {
 
         gson = new Gson();
         try {
-            initScrapers(scraperLocation);
+            if(Files.isDirectory(scraperLocation)) {
+                initScrapers(scraperLocation);
+            }
+            else {
+                initScraper(scraperLocation);
+            }
         } catch (IOException e) {
+            throw new RuntimeException("Failed: when attempting to initialise web scraper(s): " + e.getMessage());
+        }
+
+    }
+
+    /**
+     * Initialise and build a single scraper.
+     * @param scraperLocation
+     */
+    private void initScraper(Path scraperLocation){
+        File file = scraperLocation.toFile();
+        String processed = null;
+        try {
+
+            processed = Utils.processJSON(file);
+            Map<String, List<Map<String, String>>> scraperDefs = buildScraperDefinition(GeneralSplitterFactory.parseJsonTagSet(processed));
+            logger.info("Adding scraper: " + file.getParentFile().getName());
+            scrapersJson.put(file.getParentFile().getName(), new GeneralSplitterFactory(scraperDefs));
+            logger.info("Added scraper for: " + file.getParentFile().getName() + " " + scrapersJson.get(file.getParentFile().getName().replace(".json", "")));
+            System.out.println("Added scraper for: " + file.getParentFile().getName() + " " + scrapersJson.get(file.getParentFile().getName().replace(".json", "")));
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (IncorrectScraperJSONException e) {
             e.printStackTrace();
         }
 
     }
 
-    private void initScrapers(Path scraperLocation) throws IOException {
+    /**
+     * Initialise and build all scrapers in a single directory.
+     * @param scrapersLocation
+     */
+    private void initScrapers(Path scrapersLocation) throws IOException {
 
-        List<Path> scrapers = Files.walk(scraperLocation)
+        List<Path> scrapers = Files.walk(scrapersLocation)
                 .filter(file -> file.getFileName().toString().equals("job.json"))
                 .collect(Collectors.toList());
-//        File[] scrapers = scraperLocation.toFile().listFiles(new FilenameFilter() {
-//            @Override
-//            public boolean accept(File dir, String name) {
-//                boolean accepted = (name.endsWith("json")) ? true : false;
-//                return accepted;
-//            }
-//        });
         System.out.println(scrapers.size());
-        for(Path path : scrapers){
+        for (Path path : scrapers) {
             try {
                 File file = path.toFile();
                 String processed = Utils.processJSON(file);
                 Map<String, List<Map<String, String>>> scraperDefs = buildScraperDefinition(GeneralSplitterFactory.parseJsonTagSet(processed));
                 logger.info("Adding scraper: " + file.getParentFile().getName());
-                scraperJson.put(file.getParentFile().getName(), new GeneralSplitterFactory(scraperDefs));
-                logger.info("Added scraper for: " + file.getParentFile().getName() + " " + scraperJson.get(file.getParentFile().getName().replace(".json","")));
-                System.out.println("Added scraper for: " + file.getParentFile().getName() + " " + scraperJson.get(file.getParentFile().getName().replace(".json","")));
+                scrapersJson.put(file.getParentFile().getName(), new GeneralSplitterFactory(scraperDefs));
+                logger.info("Added scraper for: " + file.getParentFile().getName() + " " + scrapersJson.get(file.getParentFile().getName().replace(".json", "")));
+                System.out.println("Added scraper for: " + file.getParentFile().getName() + " " + scrapersJson.get(file.getParentFile().getName().replace(".json", "")));
             } catch (IOException e) {
                 e.printStackTrace();
             } catch (IncorrectScraperJSONException e) {
@@ -86,16 +124,22 @@ public class ACLEDScraperPreProcessor implements IHttpDocumentProcessor {
         }
     }
 
-
     public WebPage scrape_page(WebPage page) throws ScraperNotFoundException, MalformedURLException {
 
 
         String domain = Utils.getDomain(page.getUrl());
 
-        GeneralSplitterFactory factory = scraperJson.get(domain.replaceAll("\\.",""));
-        if(factory == null){
-            logger.error("No scraper was found for the domain " + domain.replaceAll("\\.",""));
-            throw new ScraperNotFoundException(domain);
+
+        // If there is a factory set for this preprocessor use that else search for one via the page's domain of origin
+        // Prefered functionality is to set a single preprocessor (more robust)
+        GeneralSplitterFactory factory = scraperJson;
+
+        if(factory == null) {
+            factory = scrapersJson.get(domain.replaceAll("\\.",""));
+            if(factory == null){
+                logger.error("No scraper was found for the domain " + domain.replaceAll("\\.",""));
+                throw new ScraperNotFoundException(domain);
+            }
         }
 
         IForumSplitter splitter = factory.create();
