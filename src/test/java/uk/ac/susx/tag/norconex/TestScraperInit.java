@@ -1,7 +1,6 @@
 package uk.ac.susx.tag.norconex;
 
 import com.casm.acled.crawler.ACLEDScraperPreProcessor;
-import org.apache.nutch.parse.forum.splitter.GeneralSplitterFactory;
 import org.junit.Test;
 
 import java.nio.file.Path;

@@ -2,7 +2,6 @@ package uk.ac.susx.tag.norconex;
 
 import com.enioka.jqm.api.JqmClientFactory;
 import org.junit.Test;
-import uk.ac.casm.jqm.manager.SubmissionService;
 
 import java.util.Properties;
 

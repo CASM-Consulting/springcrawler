@@ -1,10 +1,9 @@
 package uk.ac.susx.tag.norconex;
 
-import com.casm.acled.crawler.ACLEDScraperPreProcessor;
 import com.enioka.jqm.api.JobRequest;
 import org.junit.Assert;
 import org.junit.Test;
-import uk.ac.casm.jqm.manager.SubmissionService;
+import uk.ac.susx.tag.norconex.crawlpolling.SubmissionService;
 import uk.ac.susx.tag.norconex.jobqueuemanager.SingleSeedCollector;
 
 import java.net.MalformedURLException;

@@ -26,6 +26,9 @@ public class Utils {
         return (url.getHost().startsWith("www")) ? url.getHost().substring(4) : url.getHost();
     }
 
+
+    // NEED TO RESOLVE THESE BETTER
+
     // Processes a M52 job json to scraper rules
     public static String processJobJSON(String json) throws IncorrectScraperJSONException {
         JSONObject jobj = new JSONObject(json);

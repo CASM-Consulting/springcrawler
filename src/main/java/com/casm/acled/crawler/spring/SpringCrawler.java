@@ -28,7 +28,7 @@ import com.norconex.importer.handler.tagger.AbstractDocumentTagger;
 import com.norconex.importer.handler.tagger.impl.CurrentDateTagger;
 import com.norconex.importer.handler.tagger.impl.DebugTagger;
 import com.norconex.importer.handler.tagger.impl.KeepOnlyTagger;
-import org.apache.tools.ant.taskdefs.condition.Http;
+//import org.apache.tools.ant.taskdefs.condition.Http;
 import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
 import org.camunda.bpm.spring.boot.starter.rest.CamundaBpmRestJerseyAutoConfiguration;
 
@@ -92,40 +92,41 @@ public class SpringCrawler implements CommandLineRunner {
 
         String[] corrArgs = splitArgs.toArray(new String[splitArgs.size()]);
 
-        CrawlerArguments ca = new CrawlerArguments();
+        CrawlerArguments crawlerArguments = new CrawlerArguments();
         JCommander.newBuilder()
-                .addObject(ca)
+                .addObject(crawlerArguments)
                 .build()
                 .parse(corrArgs);
 
         // add the protocol
 //        String seed = (ca.seeds.get(0).startsWith("http")) ? ca.seeds.get(0) : ("http://" + ca.seeds.get(0));
 
-        SingleSeedCollector cc = new SingleSeedCollector(ca.userAgent,new File(ca.crawldb), Utils.getDomain(ca.seeds.get(0)),
-                ca.depth, ca.urlFilter,ca.threadsPerSeed,ca.ignoreRobots,
-                ca.ignoreSitemap, ca.polite,
-                ca.seeds.get(0));
+        SingleSeedCollector collector = new SingleSeedCollector(crawlerArguments.userAgent,new File(crawlerArguments.crawldb), Utils.getDomain(crawlerArguments.seeds.get(0)),
+                crawlerArguments.depth, crawlerArguments.urlFilter,crawlerArguments.threadsPerSeed,crawlerArguments.ignoreRobots,
+                crawlerArguments.ignoreSitemap, crawlerArguments.polite,
+                crawlerArguments.seeds.get(0));
 
-        HttpCrawlerConfig config = cc.getConfiguration();
+        HttpCrawlerConfig config = collector.getConfiguration();
 
         logger.error("Starting config");
         ImporterConfig ic = new ImporterConfig();
         List<IImporterHandler> handlers = new ArrayList<>();
 
         // Only performs this step when we are wanting to produce to a table
-        if(!ca.index){
+        if(!crawlerArguments.index){
             logger.info("INFO: The web content with be scraped and produced to the database.");
             Map<String,List<String>> map = new HashMap<>();
-            map.put(ACLEDMetadataPreProcessor.LINK, Arrays.asList(ca.seeds.get(0)));
-            map.put(CrawlerArguments.SOURCENAME, Arrays.asList(ca.source));
-            map.put(CrawlerArguments.COUNTRIES, Arrays.asList(ca.countries));
+            map.put(ACLEDMetadataPreProcessor.LINK, Arrays.asList(crawlerArguments.seeds.get(0)));
+            map.put(CrawlerArguments.SOURCENAME, Arrays.asList(crawlerArguments.source));
+            map.put(CrawlerArguments.COUNTRIES, Arrays.asList(crawlerArguments.countries));
 
             // single scraper definition overrides scraper directory
-            if(ca.scraper != null) {
-                config.setPreImportProcessors(new ACLEDScraperPreProcessor(Paths.get(ca.scraper)));
+            if(crawlerArguments.scraper != null) {
+                logger.info("INFO: Scraper " + crawlerArguments.scraper + " found for " + crawlerArguments.seeds.get(0));
+                config.setPreImportProcessors(new ACLEDScraperPreProcessor(Paths.get(crawlerArguments.scrapers,crawlerArguments.scraper)));
             }
             else {
-                config.setPreImportProcessors(new ACLEDScraperPreProcessor(Paths.get(ca.scrapers)));
+                config.setPreImportProcessors(new ACLEDScraperPreProcessor(Paths.get(crawlerArguments.scrapers)));
             }
             config.setPostImportProcessors(new ACLEDPostProcessor(articleDAO, sourceDAO, sourceListDAO));
 
@@ -161,7 +162,7 @@ public class SpringCrawler implements CommandLineRunner {
 //        config.setCrawlDataStoreFactory();
 
         try {
-            cc.start();
+            collector.start();
         } catch (URISyntaxException e) {
             throw new RuntimeException("The provided URL was invalid");
         }

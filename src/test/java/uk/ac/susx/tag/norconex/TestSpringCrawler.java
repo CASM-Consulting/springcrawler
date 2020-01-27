@@ -1,9 +1,6 @@
 package uk.ac.susx.tag.norconex;
 
 import com.casm.acled.crawler.spring.SpringCrawler;
-import com.google.common.collect.Lists;
-import org.apache.commons.math3.analysis.function.Sin;
-import org.hibernate.tool.hbm2ddl.SingleLineSqlCommandExtractor;
 import org.junit.Test;
 import org.springframework.boot.Banner;
 import org.springframework.boot.SpringApplication;

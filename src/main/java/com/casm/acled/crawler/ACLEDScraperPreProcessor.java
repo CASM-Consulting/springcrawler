@@ -6,10 +6,6 @@ import com.google.gson.Gson;
 // crawling imports
 import org.apache.commons.io.IOUtils;
 import org.apache.http.client.HttpClient;
-import org.apache.nutch.parse.filter.Post;
-import org.apache.nutch.parse.forum.splitter.GeneralSplitterFactory;
-import org.apache.nutch.parse.forum.splitter.IForumSplitter;
-import org.apache.nutch.splitter.utils.POJOHTMLMatcherDefinition;
 import com.norconex.collector.http.doc.HttpDocument;
 import com.norconex.collector.http.doc.HttpMetadata;
 import com.norconex.collector.http.processor.IHttpDocumentProcessor;
@@ -32,6 +28,10 @@ import java.util.stream.Collectors;
 
 // utils for domain resolution etc..
 import com.casm.acled.crawler.utils.Utils;
+import uk.ac.susx.tag.norconex.scraping.GeneralSplitterFactory;
+import uk.ac.susx.tag.norconex.scraping.IForumSplitter;
+import uk.ac.susx.tag.norconex.scraping.POJOHTMLMatcherDefinition;
+import uk.ac.susx.tag.norconex.scraping.Post;
 
 public class ACLEDScraperPreProcessor implements IHttpDocumentProcessor {
 
@@ -62,9 +62,11 @@ public class ACLEDScraperPreProcessor implements IHttpDocumentProcessor {
         gson = new Gson();
         try {
             if(Files.isDirectory(scraperLocation)) {
+                logger.info("INFO: Provided a directory for scraper location - attempting to load all scrapers it contains.");
                 initScrapers(scraperLocation);
             }
             else {
+                logger.info("INFO: Provided a specific crawler to load and scrape pages with.");
                 initScraper(scraperLocation);
             }
         } catch (IOException e) {
@@ -84,9 +86,9 @@ public class ACLEDScraperPreProcessor implements IHttpDocumentProcessor {
 
             processed = Utils.processJSON(file);
             Map<String, List<Map<String, String>>> scraperDefs = buildScraperDefinition(GeneralSplitterFactory.parseJsonTagSet(processed));
-            logger.info("Adding scraper: " + file.getParentFile().getName());
-            scrapersJson.put(file.getParentFile().getName(), new GeneralSplitterFactory(scraperDefs));
-            logger.info("Added scraper for: " + file.getParentFile().getName() + " " + scrapersJson.get(file.getParentFile().getName().replace(".json", "")));
+            logger.info("Adding scraper: " + file.getName());
+            scraperJson = new GeneralSplitterFactory(scraperDefs);
+            logger.info("Added scraper for: " + file.getName() + " " + scrapersJson.get(file.getParentFile().getName().replace(".json", "")));
             System.out.println("Added scraper for: " + file.getParentFile().getName() + " " + scrapersJson.get(file.getParentFile().getName().replace(".json", "")));
 
         } catch (IOException e) {

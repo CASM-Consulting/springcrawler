@@ -15,10 +15,10 @@ import com.casm.acled.entities.sourcelist.SourceList;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.norconex.collector.http.doc.HttpDocument;
 import org.apache.http.client.HttpClient;
-import org.apache.nutch.parse.filter.Post;
-import org.apache.nutch.parse.forum.splitter.GeneralSplitterFactory;
-import org.apache.nutch.splitter.utils.POJOHTMLMatcherDefinition;
 import org.jsoup.Jsoup;
+import uk.ac.susx.tag.norconex.scraping.GeneralSplitterFactory;
+import uk.ac.susx.tag.norconex.scraping.POJOHTMLMatcherDefinition;
+import uk.ac.susx.tag.norconex.scraping.Post;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -41,6 +41,7 @@ import java.util.concurrent.TimeUnit;
  *  2 probably better as is completely independent from the crawling architecture
  *
  */
+@Deprecated
 public class Scraper {
 
     private ExecutorService service;

@@ -3,12 +3,11 @@ package uk.ac.susx.tag.norconex;
 import com.casm.acled.crawler.ACLEDScraperPreProcessor;
 import com.casm.acled.crawler.IncorrectScraperJSONException;
 import com.casm.acled.crawler.utils.Utils;
-import org.apache.nutch.parse.filter.Post;
-import org.apache.nutch.parse.forum.splitter.GeneralSplitterFactory;
-import org.apache.nutch.splitter.utils.POJOHTMLMatcherDefinition;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.junit.Test;
+import uk.ac.susx.tag.norconex.scraping.GeneralSplitterFactory;
+import uk.ac.susx.tag.norconex.scraping.Post;
 
 import java.io.IOException;
 import java.nio.file.Path;
