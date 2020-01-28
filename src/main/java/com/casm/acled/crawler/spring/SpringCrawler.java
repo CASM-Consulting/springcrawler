@@ -124,7 +124,7 @@ public class SpringCrawler implements CommandLineRunner {
             metadata.put(CrawlerArguments.SOURCENAME, Arrays.asList(crawlerArguments.source));
             metadata.put(CrawlerArguments.COUNTRIES, Arrays.asList(crawlerArguments.countries));
 
-//            buildACLEDArticleFilters(handlers);
+            buildACLEDArticleFilters(handlers);
 
             // Add the scraper definition(s)
             // single scraper definition overrides scraper directory
@@ -143,8 +143,8 @@ public class SpringCrawler implements CommandLineRunner {
         }
 
         // appended to list last to avoid errors
-        KeepOnlyTagger kop = buildKeepOnly();
-        handlers.add(kop);
+//        KeepOnlyTagger kop = buildKeepOnly();
+//        handlers.add(kop);
 
         ic.setPostParseHandlers(handlers.toArray(new IImporterHandler[handlers.size()]));
         config.setImporterConfig(ic);
