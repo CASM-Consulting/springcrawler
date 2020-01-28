@@ -81,7 +81,7 @@ public class ACLEDPostProcessor implements IHttpDocumentProcessor {
             String seed = doc.getMetadata().get(ACLEDMetadataPreProcessor.LINK).get(0);
             Optional<Source> source = sourceDAO.getByUnique(Source.LINK, seed);
 
-            if(source.isPresent()) {
+//            if(source.isPresent()) {
 
                 logger.error("INFO: Source present");
 
@@ -91,10 +91,10 @@ public class ACLEDPostProcessor implements IHttpDocumentProcessor {
                 for(SourceList list : lists) {
                     String bk = BusinessKeys.generate(list.get(SourceList.LIST_NAME));
                     articleDAO.create(article.businessKey(bk));
-                }
+//                }
 
             }
-            else{
+            if(!source.isPresent()){
                 logger.error("INFO: Source not present");
             }
 
