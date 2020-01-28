@@ -39,6 +39,7 @@ import org.slf4j.LoggerFactory;
 
 // java
 import java.io.File;
+import java.lang.reflect.Array;
 import java.net.URISyntaxException;
 import java.nio.file.Paths;
 import java.util.*;
@@ -98,6 +99,8 @@ public class SpringCrawler implements CommandLineRunner {
                 .build()
                 .parse(corrArgs);
 
+
+
         // add the protocol
 //        String seed = (ca.seeds.get(0).startsWith("http")) ? ca.seeds.get(0) : ("http://" + ca.seeds.get(0));
 
@@ -114,39 +117,34 @@ public class SpringCrawler implements CommandLineRunner {
 
         // Only performs this step when we are wanting to produce to a table
         if(!crawlerArguments.index){
-            logger.info("INFO: The web content with be scraped and produced to the database.");
-            Map<String,List<String>> map = new HashMap<>();
-            map.put(ACLEDMetadataPreProcessor.LINK, Arrays.asList(crawlerArguments.seeds.get(0)));
-            map.put(CrawlerArguments.SOURCENAME, Arrays.asList(crawlerArguments.source));
-            map.put(CrawlerArguments.COUNTRIES, Arrays.asList(crawlerArguments.countries));
 
+
+            // Add the source information to the metadata
+            Map<String,List<String>> metadata = buildACLEDMetadata(crawlerArguments.sourcedomain,crawlerArguments.seeds.get(0));
+            metadata.put(CrawlerArguments.SOURCENAME, Arrays.asList(crawlerArguments.source));
+            metadata.put(CrawlerArguments.COUNTRIES, Arrays.asList(crawlerArguments.countries));
+
+            buildACLEDArticleFilters(handlers);
+
+            // Add the scraper definition(s)
             // single scraper definition overrides scraper directory
             if(crawlerArguments.scraper != null) {
                 logger.info("INFO: Scraper " + crawlerArguments.scraper + " found for " + crawlerArguments.seeds.get(0));
-                config.setPreImportProcessors(new ACLEDScraperPreProcessor(Paths.get(crawlerArguments.scrapers,crawlerArguments.scraper)));
+                config.setPreImportProcessors(new ACLEDScraperPreProcessor(Paths.get(crawlerArguments.scrapers,crawlerArguments.scraper)), new ACLEDMetadataPreProcessor(metadata));
             }
             else {
-                config.setPreImportProcessors(new ACLEDScraperPreProcessor(Paths.get(crawlerArguments.scrapers)));
+                config.setPreImportProcessors(new ACLEDScraperPreProcessor(Paths.get(crawlerArguments.scrapers)), new ACLEDMetadataPreProcessor(metadata));
             }
+
+            // Add the crawler-to-spring-magic post-processor
             config.setPostImportProcessors(new ACLEDPostProcessor(articleDAO, sourceDAO, sourceListDAO));
 
-            // Set the various document filters
-            EmptyMetadataFilter emptyArticle = new EmptyMetadataFilter(OnMatch.EXCLUDE,ACLEDScraperPreProcessor.SCRAPEDJSON);
-            RegexMetadataFilter regexFilter = new RegexMetadataFilter(ACLEDScraperPreProcessor.SCRAPEDJSON, Utils.KEYWORDS);
 
-            int week = 168;
-            DateFilter df = new DateFilter(new DateTime().minusHours(week).toDate());
-            CurrentDateTagger date = new CurrentDateTagger();
-
-            handlers.add(emptyArticle);
-            handlers.add(regexFilter);
-            handlers.add(df);
-            handlers.add(date);
         }
 
         // appended to list last to avoid errors
-        KeepOnlyTagger kop = buildKeepOnly();
-        handlers.add(kop);
+//        KeepOnlyTagger kop = buildKeepOnly();
+//        handlers.add(kop);
 
         ic.setPostParseHandlers(handlers.toArray(new IImporterHandler[handlers.size()]));
         config.setImporterConfig(ic);
@@ -166,6 +164,40 @@ public class SpringCrawler implements CommandLineRunner {
         } catch (URISyntaxException e) {
             throw new RuntimeException("The provided URL was invalid");
         }
+    }
+
+    private static void buildACLEDArticleFilters(List<IImporterHandler> handlers) {
+
+        // Set the various document filters
+//            EmptyMetadataFilter emptyArticle = new EmptyMetadataFilter(OnMatch.EXCLUDE,ACLEDScraperPreProcessor.SCRAPEDJSON);
+        RegexMetadataFilter regexFilter = new RegexMetadataFilter(ACLEDScraperPreProcessor.SCRAPEDJSON, Utils.KEYWORDS);
+
+        int week = 168;
+        DateFilter df = new DateFilter(new DateTime().minusHours(week).toDate());
+//            CurrentDateTagger date = new CurrentDateTagger();
+
+//            handlers.add(emptyArticle);
+//            handlers.add(regexFilter);
+//            handlers.add(df);
+//            handlers.add(date);
+
+    }
+
+    private static Map<String,List<String>> buildACLEDMetadata(String sourcedomain, String seed) {
+        logger.info("INFO: The web content with be scraped and produced to the database.");
+        Map<String,List<String>> map = new HashMap<>();
+        List<String> source;
+        if(sourcedomain != null) {
+            logger.info("INFO: Adding source LINK as " + sourcedomain);
+            source = Arrays.asList(sourcedomain);
+        }
+        else {
+            logger.info("INFO: Could not find source LINK. Defaulting to seed - " + seed);
+            source = Arrays.asList(seed);
+        }
+        map.put(ACLEDMetadataPreProcessor.LINK, source);
+
+        return map;
     }
 
     /**

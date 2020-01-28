@@ -88,8 +88,7 @@ public class ACLEDScraperPreProcessor implements IHttpDocumentProcessor {
             Map<String, List<Map<String, String>>> scraperDefs = buildScraperDefinition(GeneralSplitterFactory.parseJsonTagSet(processed));
             logger.info("Adding scraper: " + file.getName());
             scraperJson = new GeneralSplitterFactory(scraperDefs);
-            logger.info("Added scraper for: " + file.getName() + " " + scrapersJson.get(file.getParentFile().getName().replace(".json", "")));
-            System.out.println("Added scraper for: " + file.getParentFile().getName() + " " + scrapersJson.get(file.getParentFile().getName().replace(".json", "")));
+            logger.info("Scraper successfully added for: " + file.getName());
 
         } catch (IOException e) {
             e.printStackTrace();
