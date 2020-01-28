@@ -143,8 +143,8 @@ public class SpringCrawler implements CommandLineRunner {
         }
 
         // appended to list last to avoid errors
-//        KeepOnlyTagger kop = buildKeepOnly();
-//        handlers.add(kop);
+        KeepOnlyTagger kop = buildKeepOnly();
+        handlers.add(kop);
 
         ic.setPostParseHandlers(handlers.toArray(new IImporterHandler[handlers.size()]));
         config.setImporterConfig(ic);
@@ -169,17 +169,17 @@ public class SpringCrawler implements CommandLineRunner {
     private static void buildACLEDArticleFilters(List<IImporterHandler> handlers) {
 
         // Set the various document filters
-//            EmptyMetadataFilter emptyArticle = new EmptyMetadataFilter(OnMatch.EXCLUDE,ACLEDScraperPreProcessor.SCRAPEDJSON);
+        EmptyMetadataFilter emptyArticle = new EmptyMetadataFilter(OnMatch.EXCLUDE,ACLEDScraperPreProcessor.SCRAPEDJSON);
         RegexMetadataFilter regexFilter = new RegexMetadataFilter(ACLEDScraperPreProcessor.SCRAPEDJSON, Utils.KEYWORDS);
 
         int week = 168;
         DateFilter df = new DateFilter(new DateTime().minusHours(week).toDate());
-//            CurrentDateTagger date = new CurrentDateTagger();
+        CurrentDateTagger date = new CurrentDateTagger();
 
-//            handlers.add(emptyArticle);
-//            handlers.add(regexFilter);
-//            handlers.add(df);
-//            handlers.add(date);
+        handlers.add(emptyArticle);
+        handlers.add(regexFilter);
+        handlers.add(df);
+        handlers.add(date);
 
     }
 
