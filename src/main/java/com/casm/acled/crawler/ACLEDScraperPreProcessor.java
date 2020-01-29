@@ -23,6 +23,7 @@ import java.io.*;
 import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -61,7 +62,7 @@ public class ACLEDScraperPreProcessor implements IHttpDocumentProcessor {
 
         gson = new Gson();
         try {
-            if(Files.isDirectory(scraperLocation)) {
+            if(Files.isDirectory(scraperLocation) && !Files.exists(Paths.get(scraperLocation.toAbsolutePath().toString(),"job.json"))) {
                 logger.info("INFO: Provided a directory for scraper location - attempting to load all scrapers it contains.");
                 initScrapers(scraperLocation);
             }
@@ -80,7 +81,7 @@ public class ACLEDScraperPreProcessor implements IHttpDocumentProcessor {
      * @param scraperLocation
      */
     private void initScraper(Path scraperLocation){
-        File file = scraperLocation.toFile();
+        File file = getJobFile(scraperLocation).toFile();
         String processed = null;
         try {
 
@@ -96,6 +97,10 @@ public class ACLEDScraperPreProcessor implements IHttpDocumentProcessor {
             e.printStackTrace();
         }
 
+    }
+
+    private Path getJobFile(Path scraperLocation) {
+        return Paths.get(scraperLocation.toAbsolutePath().toString(),"job.json");
     }
 
     /**

@@ -120,7 +120,7 @@ public class SpringCrawler implements CommandLineRunner {
 
 
             // Add the source information to the metadata
-            Map<String,List<String>> metadata = buildACLEDMetadata(crawlerArguments.sourcedomain,crawlerArguments.seeds.get(0));
+            Map<String,List<String>> metadata = buildACLEDMetadata(crawlerArguments.sourcedomain, crawlerArguments.seeds.get(0));
             metadata.put(CrawlerArguments.SOURCENAME, Arrays.asList(crawlerArguments.source));
             metadata.put(CrawlerArguments.COUNTRIES, Arrays.asList(crawlerArguments.countries));
 
