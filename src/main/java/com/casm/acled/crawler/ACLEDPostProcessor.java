@@ -79,6 +79,8 @@ public class ACLEDPostProcessor implements IHttpDocumentProcessor {
 
 
             String seed = doc.getMetadata().get(ACLEDMetadataPreProcessor.LINK).get(0);
+
+            logger.error("SEED = " + seed);
             Optional<Source> source = sourceDAO.getByUnique(Source.LINK, seed);
 
             if(source.isPresent()) {
