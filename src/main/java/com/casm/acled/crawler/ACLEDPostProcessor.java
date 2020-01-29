@@ -81,18 +81,25 @@ public class ACLEDPostProcessor implements IHttpDocumentProcessor {
             String seed = doc.getMetadata().get(ACLEDMetadataPreProcessor.LINK).get(0);
             Optional<Source> source = sourceDAO.getByUnique(Source.LINK, seed);
 
-//            if(source.isPresent()) {
+            if(source.isPresent()) {
 
                 logger.error("INFO: Source present");
 
+                logger.error("INFO: seed: " + seed);
+
                 article = article.put(Article.SOURCE_ID, source.get().id());
 
-                List<SourceList> lists = sourceListDAO.bySource(source.get());
-                for(SourceList list : lists) {
-                    String bk = BusinessKeys.generate(list.get(SourceList.LIST_NAME));
-                    articleDAO.create(article.businessKey(bk));
-//                }
+                logger.error("INFO: seed: " + article.toString());
 
+                List<SourceList> lists = sourceListDAO.bySource(source.get());
+
+                logger.error("INFO  list size: " + lists.size());
+                for (SourceList list : lists) {
+                    String bk = BusinessKeys.generate(list.get(SourceList.LIST_NAME));
+                    logger.error("INFO: " + bk);
+                    articleDAO.create(article.businessKey(bk));
+                    logger.error("INFO: Article created.");
+                }
             }
             if(!source.isPresent()){
                 logger.error("INFO: Source not present");
