@@ -16,6 +16,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.norconex.collector.http.doc.HttpDocument;
 import org.apache.http.client.HttpClient;
 import org.jsoup.Jsoup;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import uk.ac.susx.tag.norconex.scraping.GeneralSplitterFactory;
 import uk.ac.susx.tag.norconex.scraping.POJOHTMLMatcherDefinition;
 import uk.ac.susx.tag.norconex.scraping.Post;
@@ -41,17 +44,25 @@ import java.util.concurrent.TimeUnit;
  *  2 probably better as is completely independent from the crawling architecture
  *
  */
-@Deprecated
 public class Scraper {
+
+    protected static final Logger logger = LoggerFactory.getLogger(ACLEDScraperPreProcessor.class);
+
+    @Autowired
+    private ArticleDAO articleDAO;
+    @Autowired
+    private SourceDAO sourceDAO;
+    @Autowired
+    private SourceListDAO sourceListDAO;
 
     private ExecutorService service;
     private GeneralSplitterFactory factory;
     private String domain;
     private int jobID;
 
-    private final ArticleDAO articleDAO;
-    private final SourceDAO sourceDAO;
-    private final SourceListDAO sourceListDAO;
+//    private final ArticleDAO articleDAO;
+//    private final SourceDAO sourceDAO;
+//    private final SourceListDAO sourceListDAO;
 
     public Scraper(Path jsonScraper, String domain,
                    ArticleDAO articleDAO, SourceDAO sourceDAO, SourceListDAO sourceListDAO) {
