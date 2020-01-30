@@ -3,8 +3,6 @@ package com.casm.acled.crawler.scraper;
 import com.casm.acled.camunda.BusinessKeys;
 import com.casm.acled.crawler.ACLEDMetadataPreProcessor;
 import com.casm.acled.crawler.ACLEDScraperPreProcessor;
-import com.casm.acled.crawler.IncorrectScraperJSONException;
-import com.casm.acled.crawler.utils.Utils;
 import com.casm.acled.dao.entities.ArticleDAO;
 import com.casm.acled.dao.entities.SourceDAO;
 import com.casm.acled.dao.entities.SourceListDAO;
@@ -12,41 +10,20 @@ import com.casm.acled.entities.EntityVersions;
 import com.casm.acled.entities.article.Article;
 import com.casm.acled.entities.source.Source;
 import com.casm.acled.entities.sourcelist.SourceList;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import com.norconex.collector.http.doc.HttpDocument;
 import org.apache.http.client.HttpClient;
-import org.jsoup.Jsoup;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import uk.ac.susx.tag.norconex.scraping.GeneralSplitterFactory;
-import uk.ac.susx.tag.norconex.scraping.POJOHTMLMatcherDefinition;
-import uk.ac.susx.tag.norconex.scraping.Post;
 
 import java.io.IOException;
-import java.nio.file.Path;
-import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
-/**
- * General idea:
- * 1
- *  - have a scraper service sitting on a separate queue with seperate engines polling it
- *  - scraper jobs sent to queue via crawler
- *  - engines pick up the job and run through the scraper
- *  OR
- *  2
- *  - crawled pages written as files
- *  - scrapers running in the engine pick up the pages and write to disc - deleting json when done
- *
- *  2 probably better as is completely independent from the crawling architecture
- *
- */
-public class Scraper {
-
-    protected static final Logger logger = LoggerFactory.getLogger(ACLEDScraperPreProcessor.class);
+public class ACLEDScraper extends BaseScraper {
 
     @Autowired
     private ArticleDAO articleDAO;
@@ -55,50 +32,19 @@ public class Scraper {
     @Autowired
     private SourceListDAO sourceListDAO;
 
-    private ExecutorService service;
-    private GeneralSplitterFactory factory;
-    private String domain;
-    private int jobID;
-
 //    private final ArticleDAO articleDAO;
 //    private final SourceDAO sourceDAO;
 //    private final SourceListDAO sourceListDAO;
 
-    public Scraper(Path jsonScraper, String domain,
-                   ArticleDAO articleDAO, SourceDAO sourceDAO, SourceListDAO sourceListDAO) {
-        try {
-            String json = Utils.processJSON(jsonScraper.toFile());
-            List<POJOHTMLMatcherDefinition> rules = GeneralSplitterFactory.parseJsonTagSet(json);
-            factory = new GeneralSplitterFactory(buildScraperDefinition(rules));
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (IncorrectScraperJSONException e) {
-            e.printStackTrace();
-        }
-        service = Executors.newFixedThreadPool(2);
 
+    public ACLEDScraper(Map<String, GeneralSplitterFactory> scrapers,
+                        ArticleDAO articleDAO, SourceDAO sourceDAO, SourceListDAO sourceListDAO) {
+
+        super(scrapers);
         this.articleDAO = articleDAO;
         this.sourceDAO = sourceDAO;
         this.sourceListDAO = sourceListDAO;
 
-    }
-
-    public void shutDown() throws InterruptedException {
-        service.shutdown();
-        service.awaitTermination(Integer.MAX_VALUE, TimeUnit.MINUTES);
-    }
-
-    public void shutDownNow() {
-        service.shutdownNow();
-    }
-
-    public void parseCrawledDocument() {
-        //read json of saved document.
-        // or
-    }
-
-    public LinkedList<Post> scrapePage(String html) {
-        return factory.create().split(Jsoup.parse(html));
     }
 
     public void processPage(HttpClient httpClient, HttpDocument doc){
@@ -149,24 +95,5 @@ public class Scraper {
         }
     }
 
-    /**
-     * Transform json pojo object to splitter structure
-     * @param matcherList
-     * @return
-     */
-    public static Map<String, List<Map<String, String>>> buildScraperDefinition(List<POJOHTMLMatcherDefinition> matcherList) {
-
-        Map<String, List<Map<String, String>>> fields = new HashMap<>();
-        for(POJOHTMLMatcherDefinition matcher : matcherList) {
-            List<Map<String, String>> tags = matcher.getTagDefinitions();
-            fields.put(matcher.field,tags);
-        }
-        return fields;
-
-    }
-
-    public static void main(String[] args) {
-        // main argument from being enqueued by crawler?
-    }
 
 }

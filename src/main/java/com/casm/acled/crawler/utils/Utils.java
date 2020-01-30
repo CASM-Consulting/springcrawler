@@ -13,8 +13,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
 
-import com.casm.acled.crawler.IncorrectScraperJSONException;
-
 public class Utils {
 
     // keyword query specific to potential articles of interest to ACLED
@@ -28,28 +26,6 @@ public class Utils {
 
 
     // NEED TO RESOLVE THESE BETTER
-
-    // Processes a M52 job json to scraper rules
-    public static String processJobJSON(String json) throws IncorrectScraperJSONException {
-        JSONObject jobj = new JSONObject(json);
-        try {
-            return jobj.getJSONArray("components").getJSONObject(0).getJSONObject("opts").getJSONArray("fields").toString();
-        } catch (Exception e) {
-            throw new IncorrectScraperJSONException();
-        }
-    }
-
-
-    public static String processScraperJSON(String json){
-        // BUG FOUND - NEED TO USE job.json!!
-        return null;
-    }
-
-    // returns a web scraper based on a job spect of last_scrape file
-    public static String processJSON(File scraperLocation) throws IOException, IncorrectScraperJSONException {
-        String json = Files.toString(scraperLocation, Charset.defaultCharset());
-        return (scraperLocation.getName().equals("last_scrape.json")) ? processScraperJSON(json) : processJobJSON(json);
-    }
 
 }
 
