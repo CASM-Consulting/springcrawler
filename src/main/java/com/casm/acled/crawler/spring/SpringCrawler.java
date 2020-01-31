@@ -139,8 +139,7 @@ public class SpringCrawler implements CommandLineRunner {
 
             // Add the crawler-to-spring-magic post-processor
             config.setPostImportProcessors(new ACLEDPostProcessor(articleDAO, sourceDAO, sourceListDAO,false));
-
-
+            
         }
 
         // appended to list last to avoid errors
