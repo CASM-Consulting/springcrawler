@@ -8,13 +8,14 @@ import com.casm.acled.crawler.ACLEDMetadataPreProcessor;
 import com.casm.acled.crawler.ACLEDPostProcessor;
 import com.casm.acled.crawler.ACLEDScraperPreProcessor;
 import com.casm.acled.crawler.DateFilter;
-import com.casm.acled.crawler.utils.Utils;
+import com.casm.acled.crawler.utils.SpringUtils;
 import com.casm.acled.dao.entities.ArticleDAO;
 import com.casm.acled.dao.entities.SourceDAO;
 import com.casm.acled.dao.entities.SourceListDAO;
 
 // norconex
 import com.norconex.collector.http.crawler.HttpCrawlerConfig;
+import com.norconex.collector.http.data.store.impl.jdbc.JDBCCrawlDataStoreFactory;
 import com.norconex.collector.http.doc.HttpMetadata;
 import com.norconex.collector.http.recrawl.impl.GenericRecrawlableResolver;
 import com.norconex.importer.ImporterConfig;
@@ -56,8 +57,10 @@ import org.springframework.boot.autoconfigure.validation.ValidationAutoConfigura
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
 
+import uk.ac.susx.tag.norconex.database.PostgresDBCommiter;
 import uk.ac.susx.tag.norconex.jobqueuemanager.CrawlerArguments;
 import uk.ac.susx.tag.norconex.jobqueuemanager.SingleSeedCollector;
+import uk.ac.susx.tag.norconex.utils.Utils;
 
 @EnableAutoConfiguration(exclude={HibernateJpaAutoConfiguration.class,CamundaBpmAutoConfiguration.class, CamundaBpmRestJerseyAutoConfiguration.class, ValidationAutoConfiguration.class})
 // We need the special object mapper, though.
@@ -139,8 +142,9 @@ public class SpringCrawler implements CommandLineRunner {
             // Add the crawler-to-spring-magic post-processor
             config.setPostImportProcessors(new ACLEDPostProcessor(articleDAO, sourceDAO, sourceListDAO));
 
-
         }
+
+        config.setCommitter(new PostgresDBCommiter(Utils.getProperties(crawlerArguments.crawldbProps)));
 
         // appended to list last to avoid errors
 //        KeepOnlyTagger kop = buildKeepOnly();
@@ -166,11 +170,13 @@ public class SpringCrawler implements CommandLineRunner {
         }
     }
 
+
+
     private static void buildACLEDArticleFilters(List<IImporterHandler> handlers) {
 
         // Set the various document filters
         EmptyMetadataFilter emptyArticle = new EmptyMetadataFilter(OnMatch.EXCLUDE,ACLEDScraperPreProcessor.SCRAPEDJSON);
-        RegexMetadataFilter regexFilter = new RegexMetadataFilter(ACLEDScraperPreProcessor.SCRAPEDJSON, Utils.KEYWORDS);
+        RegexMetadataFilter regexFilter = new RegexMetadataFilter(ACLEDScraperPreProcessor.SCRAPEDJSON, SpringUtils.KEYWORDS);
 
         int week = 168;
         DateFilter df = new DateFilter(new DateTime().minusHours(week).toDate());

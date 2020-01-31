@@ -16,6 +16,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.norconex.collector.http.doc.HttpDocument;
 import org.apache.http.client.HttpClient;
 import org.springframework.beans.factory.annotation.Autowired;
+import uk.ac.susx.tag.norconex.scraper.BaseScraper;
 import uk.ac.susx.tag.norconex.scraping.GeneralSplitterFactory;
 
 import java.io.IOException;

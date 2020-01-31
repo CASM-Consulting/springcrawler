@@ -28,7 +28,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 // utils for domain resolution etc..
-import com.casm.acled.crawler.utils.Utils;
+import com.casm.acled.crawler.utils.SpringUtils;
 import uk.ac.susx.tag.norconex.scraping.GeneralSplitterFactory;
 import uk.ac.susx.tag.norconex.scraping.IForumSplitter;
 import uk.ac.susx.tag.norconex.scraping.POJOHTMLMatcherDefinition;
@@ -85,7 +85,7 @@ public class ACLEDScraperPreProcessor implements IHttpDocumentProcessor {
         String processed = null;
         try {
 
-            processed = Utils.processJSON(file);
+            processed = SpringUtils.processJSON(file);
             Map<String, List<Map<String, String>>> scraperDefs = buildScraperDefinition(GeneralSplitterFactory.parseJsonTagSet(processed));
             logger.info("Adding scraper: " + file.getName());
             scraperJson = new GeneralSplitterFactory(scraperDefs);
@@ -116,7 +116,7 @@ public class ACLEDScraperPreProcessor implements IHttpDocumentProcessor {
         for (Path path : scrapers) {
             try {
                 File file = path.toFile();
-                String processed = Utils.processJSON(file);
+                String processed = SpringUtils.processJSON(file);
                 Map<String, List<Map<String, String>>> scraperDefs = buildScraperDefinition(GeneralSplitterFactory.parseJsonTagSet(processed));
                 logger.info("Adding scraper: " + file.getParentFile().getName());
                 scrapersJson.put(file.getParentFile().getName(), new GeneralSplitterFactory(scraperDefs));
@@ -133,7 +133,7 @@ public class ACLEDScraperPreProcessor implements IHttpDocumentProcessor {
     public WebPage scrape_page(WebPage page) throws ScraperNotFoundException, MalformedURLException {
 
 
-        String domain = Utils.getDomain(page.getUrl());
+        String domain = SpringUtils.getDomain(page.getUrl());
 
 
         // If there is a factory set for this preprocessor use that else search for one via the page's domain of origin
