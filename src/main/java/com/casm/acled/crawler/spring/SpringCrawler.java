@@ -137,7 +137,7 @@ public class SpringCrawler implements CommandLineRunner {
             }
 
             // Add the crawler-to-spring-magic post-processor
-            config.setPostImportProcessors(new ACLEDPostProcessor(articleDAO, sourceDAO, sourceListDAO));
+            config.setPostImportProcessors(new ACLEDPostProcessor(articleDAO, sourceDAO, sourceListDAO,false));
 
 
         }
@@ -146,7 +146,7 @@ public class SpringCrawler implements CommandLineRunner {
 //        KeepOnlyTagger kop = buildKeepOnly();
 //        handlers.add(kop);
 
-//        ic.setPostParseHandlers(handlers.toArray(new IImporterHandler[handlers.size()]));
+        ic.setPostParseHandlers(handlers.toArray(new IImporterHandler[handlers.size()]));
         config.setImporterConfig(ic);
 
 //        GenericRecrawlableResolver grr = new GenericRecrawlableResolver();

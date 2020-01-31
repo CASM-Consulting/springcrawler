@@ -42,11 +42,14 @@ public class ACLEDPostProcessor implements IHttpDocumentProcessor {
     private final ArticleDAO articleDAO;
     private final SourceDAO sourceDAO;
     private final SourceListDAO sourceListDAO;
+    private final boolean sourceRequired;
 
-    public ACLEDPostProcessor(ArticleDAO articleDAO, SourceDAO sourceDAO, SourceListDAO sourceListDAO) {
+    public ACLEDPostProcessor(ArticleDAO articleDAO, SourceDAO sourceDAO,
+                              SourceListDAO sourceListDAO, boolean sourceRequired) {
         this.articleDAO = articleDAO;
         this.sourceDAO = sourceDAO;
         this.sourceListDAO = sourceListDAO;
+        this.sourceRequired = sourceRequired;
     }
 
     @Override
@@ -67,15 +70,16 @@ public class ACLEDPostProcessor implements IHttpDocumentProcessor {
             String text = new StringBuilder()
                     .append(title)
                     .append("\n")
-                    .append(date)
-                    .append("\n")
+//                    .append(date)
+//                    .append("\n")
                     .append(articleText)
                     .toString();
 
             Article article = EntityVersions.get(Article.class)
                     .current()
                     .put(Article.TEXT, text)
-                    .put(Article.URL, url);
+                    .put(Article.URL, url)
+                    .put(Article.DATE, date);
 
 
             String seed = doc.getMetadata().get(ACLEDMetadataPreProcessor.LINK).get(0);
@@ -85,17 +89,11 @@ public class ACLEDPostProcessor implements IHttpDocumentProcessor {
             Optional<Source> source = sourceDAO.getByUnique(Source.LINK, seed);
 
             if(source.isPresent()) {
-
                 logger.error("INFO: Source present");
-
 //                logger.error("INFO: seed: " + seed);
-
                 article = article.put(Article.SOURCE_ID, source.get().id());
-
 //                logger.error("INFO: seed: " + article.toString());
-
                 List<SourceList> lists = sourceListDAO.bySource(source.get());
-
 //                logger.error("INFO  list size: " + lists.size());
                 for (SourceList list : lists) {
                     String bk = BusinessKeys.generate(list.get(SourceList.LIST_NAME));
@@ -104,7 +102,11 @@ public class ACLEDPostProcessor implements IHttpDocumentProcessor {
 //                    logger.error("INFO: Article created.");
                 }
             }
-            if(!source.isPresent()){
+            if(!source.isPresent() && !sourceRequired) {
+                article = article.put(Article.SOURCE_ID, source.get().id());
+                articleDAO.create(article);
+            }
+            if(!source.isPresent() && sourceRequired){
                 logger.error("INFO: Source not present");
             }
 
