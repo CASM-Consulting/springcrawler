@@ -15,6 +15,7 @@ import com.casm.acled.dao.entities.SourceListDAO;
 
 // norconex
 import com.norconex.collector.http.crawler.HttpCrawlerConfig;
+import com.norconex.collector.http.data.store.impl.jdbc.JDBCCrawlDataStoreFactory;
 import com.norconex.collector.http.doc.HttpMetadata;
 import com.norconex.collector.http.recrawl.impl.GenericRecrawlableResolver;
 import com.norconex.importer.ImporterConfig;
