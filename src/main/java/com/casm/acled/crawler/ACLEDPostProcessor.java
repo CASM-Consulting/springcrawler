@@ -70,16 +70,16 @@ public class ACLEDPostProcessor implements IHttpDocumentProcessor {
             String text = new StringBuilder()
                     .append(title)
                     .append("\n")
-//                    .append(date)
-//                    .append("\n")
+                    .append(date)
+                    .append("\n")
                     .append(articleText)
                     .toString();
 
             Article article = EntityVersions.get(Article.class)
                     .current()
                     .put(Article.TEXT, text)
-                    .put(Article.URL, url)
-                    .put(Article.DATE, date);
+                    .put(Article.URL, url);
+//                    .put(Article.DATE, date);
 
 
             String seed = doc.getMetadata().get(ACLEDMetadataPreProcessor.LINK).get(0);
