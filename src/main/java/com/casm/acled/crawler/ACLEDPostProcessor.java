@@ -88,6 +88,8 @@ public class ACLEDPostProcessor implements IHttpDocumentProcessor {
 
             Optional<Source> source = sourceDAO.getByUnique(Source.LINK, seed);
 
+            logger.error("source is present? " + source.isPresent());
+
             if(source.isPresent()) {
                 logger.error("INFO: Source present");
 //                logger.error("INFO: seed: " + seed);
