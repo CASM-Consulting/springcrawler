@@ -105,6 +105,7 @@ public class ACLEDPostProcessor implements IHttpDocumentProcessor {
                 }
             }
             if(!source.isPresent() && !sourceRequired) {
+                logger.error("INFO: Source not present - adding without source.");
                 article = article.put(Article.SOURCE_ID, source.get().id());
                 articleDAO.create(article);
             }
