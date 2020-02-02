@@ -125,7 +125,7 @@ public class SpringCrawler implements CommandLineRunner {
             metadata.put(CrawlerArguments.SOURCENAME, Arrays.asList(crawlerArguments.source));
             metadata.put(CrawlerArguments.COUNTRIES, Arrays.asList(crawlerArguments.countries));
 
-//            buildACLEDArticleFilters(handlers);
+            buildACLEDArticleFilters(handlers);
 
             // Add the scraper definition(s)
             // single scraper definition overrides scraper directory
@@ -174,12 +174,12 @@ public class SpringCrawler implements CommandLineRunner {
 
         int week = 168;
         DateFilter df = new DateFilter(new DateTime().minusHours(week).toDate());
-        CurrentDateTagger date = new CurrentDateTagger();
+//        CurrentDateTagger date = new CurrentDateTagger();
 
         handlers.add(emptyArticle);
         handlers.add(regexFilter);
         handlers.add(df);
-        handlers.add(date);
+//        handlers.add(date);
 
     }
 
