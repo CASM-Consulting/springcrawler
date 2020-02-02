@@ -164,7 +164,7 @@
         <dependency>
             <groupId>uk.ac.susx.tag.norconex.crawler</groupId>
             <artifactId>m52-norconex-crawler</artifactId>
-            <version>1.4.0</version>
+            <version>1.5.2</version>
         </dependency>
 
         <!--<dependency>-->

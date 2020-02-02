@@ -125,7 +125,7 @@ public class SpringCrawler implements CommandLineRunner {
             metadata.put(CrawlerArguments.SOURCENAME, Arrays.asList(crawlerArguments.source));
             metadata.put(CrawlerArguments.COUNTRIES, Arrays.asList(crawlerArguments.countries));
 
-            buildACLEDArticleFilters(handlers);
+//            buildACLEDArticleFilters(handlers);
 
             // Add the scraper definition(s)
             // single scraper definition overrides scraper directory
