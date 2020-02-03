@@ -67,7 +67,7 @@ import uk.ac.susx.tag.norconex.jobqueuemanager.SingleSeedCollector;
 @ComponentScan(basePackages={"com.casm.acled.dao"})
 public class SpringCrawler implements CommandLineRunner {
 
-    protected static final Logger logger = LoggerFactory.getLogger(ACLEDScraperPreProcessor.class);
+    protected static final Logger logger = LoggerFactory.getLogger(SpringCrawler.class);
 
     @Autowired
     private ArticleDAO articleDAO;
