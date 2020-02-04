@@ -1,9 +1,7 @@
 package com.casm.acled.crawler;
 
 // faster xml
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.casm.acled.dao.util.Util;
 
 // apache commons
 import com.norconex.importer.handler.filter.OnMatch;
@@ -14,8 +12,7 @@ import com.norconex.importer.doc.ImporterMetadata;
 import com.norconex.importer.handler.ImporterHandlerException;
 import com.norconex.importer.handler.filter.AbstractDocumentFilter;
 import com.norconex.commons.lang.xml.EnhancedXMLStreamWriter;
-import org.joda.time.DateTime;
-import org.ocpsoft.prettytime.nlp.PrettyTimeParser;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,65 +20,51 @@ import org.slf4j.LoggerFactory;
 import javax.xml.stream.XMLStreamException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.time.LocalDate;
+
 
 public class DateFilter extends AbstractDocumentFilter {
 
     protected static final Logger logger = LoggerFactory.getLogger(DateFilter.class);
 
-    public static final int DEFAULT = 24;
-    public Date threshold;
-    private PrettyTimeParser parser;
+    public static final int DEFAULT = 1;
+    public LocalDate threshold;
 
     public DateFilter() {
-        this(new DateTime().minusHours(DEFAULT).toDate());
+        this(LocalDate.now().minusDays(DEFAULT));
     }
 
-    public DateFilter(Date threshold) {
+    public DateFilter(LocalDate threshold) {
         this.threshold = threshold;
-        parser = new PrettyTimeParser();
         this.setOnMatch(OnMatch.EXCLUDE);
+
     }
 
     @Override
     protected boolean isDocumentMatched(String reference, InputStream input, ImporterMetadata metadata, boolean parsed) throws ImporterHandlerException {
 
-        List<String> meta = metadata.get(ACLEDScraperPreProcessor.SCRAPEDJSON);
-        if(meta == null || meta.size() <= 0) {
-            logger.error("INFO: No metadata found for url: " + reference);
+        String dateStr = metadata.get(ACLEDScraperPreProcessor.SCRAPEDATE).get(0);
+        if(dateStr == null || dateStr.length() <= 0) {
+            logger.debug("INFO: No date found for url: " + reference);
             return true;
+        }
+        try{
+            LocalDate date = parseDate(dateStr);
+            logger.info("INFO: filtering article by date: " + reference + " date: " + date + " " + threshold.toString()
+                    + " article date: " + dateStr + "after?: " + date.isAfter(threshold));
+            return date.isBefore(threshold);
+
+        } catch (Exception e) {
+            logger.error("Error parsing date: " + reference);
         }
 
-        ObjectMapper om = new ObjectMapper();
-        try{
-            Map<String, String> data = om.readValue(meta.get(0), Map.class);
-            if(data.containsKey(ACLEDScraperPreProcessor.metaDATE)){
-                String date = data.get(ACLEDScraperPreProcessor.metaDATE);
-                List<Date> dates = parseDate(date);
-                logger.error("INFO: filtering article by date: " + reference + " date: " + date + " " + threshold.toString()
-                        + " article date: " + dates.get(0).toString() + "after?: " + dates.get(0).after(threshold));
-                return dates.get(0).before(threshold);
-//                return dates.get(0).after(threshold);
-//                logger.error("ERROR: article did not pass date filter: threshold - " + threshold.toString()
-//                        + " article date: " + dates.get(0).toString());
-            }
-            return true;
-        } catch (JsonParseException e) {
-            logger.error("Error parsing date: " + reference);
-        } catch (JsonMappingException e) {
-            logger.error("Error parsing date: " + reference);
-        } catch (IOException e) {
-            logger.error("Error parsing date: " + reference);
-        }
         return true;
 
     }
 
-    public List<Date> parseDate(String date) {
-        return parser.parse(date);
-    }
+
+
+    public LocalDate parseDate(String date) { return Util.getDate(date); }
 
     @Override
     protected void saveFilterToXML(EnhancedXMLStreamWriter writer) throws XMLStreamException {

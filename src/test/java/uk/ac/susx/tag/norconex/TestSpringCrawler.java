@@ -19,16 +19,16 @@ public class TestSpringCrawler {
     @Test
     public void TestSpringCrawler() {
         SpringCrawler  sc = new SpringCrawler();
-        String seed = "https://www.gulftoday.ae";
-        int depth = 3;
+        String seed = "https://www.presstv.com/Detail/2020/02/01/617641/UK-Scotland-Nicola-Sturgeon-New-Speech-";
         CrawlerArguments ca = new CrawlerArguments();
         ca.seeds = Arrays.asList(seed);
         ca.crawldb= "/Users/jp242/Desktop";
-        ca.depth= 0;
-        ca.ignoreRobots = true;
-        ca.ignoreSitemap = true;
+        ca.depth=1;
+        ca.ignoreRobots = false;
+        ca.ignoreSitemap = false;
         ca.polite = 300;
-        ca.scrapers = "/Users/jp242/Documents/Projects/ACLED/ManualScrapers/demo-scrapers";
+        ca.scrapers = "/Users/jp242/Documents/Projects/ACLED/ManualScrapers/demo-scrapers-2";
+        ca.scraper = "presstvcom";
         ca.threadsPerSeed = 2;
         ca.urlFilter = ".*";
         ca.userAgent = "taglab";
@@ -39,14 +39,14 @@ public class TestSpringCrawler {
         params.add(SingleSeedCollector.CRAWLB);
         params.add(ca.crawldb);
         params.add(SingleSeedCollector.DEPTH);
-        params.add("0");
+        params.add(String.valueOf(ca.depth));
         params.add(SingleSeedCollector.ROBOTS);
-        params.add("true");
+        params.add("false");
         params.add(SingleSeedCollector.SITEMAP);
-        params.add("true");
+        params.add("false");
         params.add(SingleSeedCollector.POLITENESS);
-        params.add("300");
-        params.add("casm.jqm.scraping.scrapers");
+        params.add("500");
+        params.add("casm.jqm.scraping.scrapers.dir");
         params.add(ca.scrapers);
         params.add(SingleSeedCollector.THREADS);
         params.add("2");
@@ -56,6 +56,8 @@ public class TestSpringCrawler {
         params.add("taglab");
         params.add(SingleSeedCollector.ID);
         params.add("springtest");
+        params.add(CrawlerArguments.SCRAPER);
+        params.add(ca.scraper);
 
         String[] args = params.toArray(new String[params.size()]);
 

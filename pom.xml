@@ -6,7 +6,7 @@
 
     <groupId>com.casm</groupId>
     <artifactId>acled-spring-crawler</artifactId>
-    <version>1.2.13</version>
+    <version>1.2.15</version>
 
     <packaging>jar</packaging>
 
@@ -158,7 +158,7 @@
         <dependency>
             <groupId>com.casm</groupId>
             <artifactId>acled</artifactId>
-            <version>1.1-SNAPSHOT</version>
+            <version>1.2-SNAPSHOT</version>
         </dependency>
 
         <dependency>
@@ -166,6 +166,14 @@
             <artifactId>m52-norconex-crawler</artifactId>
             <version>1.5.2</version>
         </dependency>
+
+        <!-- https://mvnrepository.com/artifact/com.rubiconproject.oss/jchronic -->
+        <dependency>
+            <groupId>com.rubiconproject.oss</groupId>
+            <artifactId>jchronic</artifactId>
+            <version>0.2.8</version>
+        </dependency>
+
 
         <!--<dependency>-->
             <!--<groupId>uk.ac.susx.tag</groupId>-->
@@ -179,10 +187,17 @@
             <artifactId>hibernate-entitymanager</artifactId>
         </dependency>
 
+        <!--<dependency>-->
+            <!--<groupId>org.postgresql</groupId>-->
+            <!--<artifactId>postgresql</artifactId>-->
+            <!--<version>42.2.6</version>-->
+        <!--</dependency>-->
+
+        <!-- https://mvnrepository.com/artifact/postgresql/postgresql -->
         <dependency>
-            <groupId>org.postgresql</groupId>
+            <groupId>postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>42.2.6</version>
+            <version>9.1-901-1.jdbc4</version>
         </dependency>
 
         <dependency>

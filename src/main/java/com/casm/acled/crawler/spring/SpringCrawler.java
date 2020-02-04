@@ -22,6 +22,7 @@ import com.norconex.importer.ImporterConfig;
 import com.norconex.importer.handler.IImporterHandler;
 import com.norconex.importer.handler.filter.OnMatch;
 import com.norconex.importer.handler.filter.impl.EmptyMetadataFilter;
+import com.norconex.importer.handler.filter.impl.RegexContentFilter;
 import com.norconex.importer.handler.filter.impl.RegexMetadataFilter;
 
 //camunda
@@ -43,6 +44,7 @@ import java.io.File;
 import java.lang.reflect.Array;
 import java.net.URISyntaxException;
 import java.nio.file.Paths;
+import java.time.LocalDate;
 import java.util.*;
 
 // spring
@@ -142,22 +144,8 @@ public class SpringCrawler implements CommandLineRunner {
             
         }
 
-        // appended to list last to avoid errors
-//        KeepOnlyTagger kop = buildKeepOnly();
-//        handlers.add(kop);
-
         ic.setPostParseHandlers(handlers.toArray(new IImporterHandler[handlers.size()]));
         config.setImporterConfig(ic);
-
-//        GenericRecrawlableResolver grr = new GenericRecrawlableResolver();
-//        GenericRecrawlableResolver.MinFrequency minFreq = new GenericRecrawlableResolver.MinFrequency();
-//        minFreq.setCaseSensitive(false);
-//        minFreq.setApplyTo();
-//        grr.setMinFrequencies();
-//        config.setRecrawlableResolver();
-
-//        public class CleanUP implements CrawlerC
-//        config.setCrawlDataStoreFactory();
 
         try {
             collector.start();
@@ -169,17 +157,14 @@ public class SpringCrawler implements CommandLineRunner {
     private static void buildACLEDArticleFilters(List<IImporterHandler> handlers) {
 
         // Set the various document filters
-        EmptyMetadataFilter emptyArticle = new EmptyMetadataFilter(OnMatch.EXCLUDE,ACLEDScraperPreProcessor.SCRAPEDJSON);
-        RegexMetadataFilter regexFilter = new RegexMetadataFilter(ACLEDScraperPreProcessor.SCRAPEDJSON, Utils.KEYWORDS);
-
-        int week = 168;
-        DateFilter df = new DateFilter(new DateTime().minusHours(week).toDate());
-//        CurrentDateTagger date = new CurrentDateTagger();
+        RegexMetadataFilter regexFilter = new RegexMetadataFilter(ACLEDScraperPreProcessor.SCRAPEDARTICLE, Utils.KEYWORDS);
+        EmptyMetadataFilter emptyArticle = new EmptyMetadataFilter(OnMatch.EXCLUDE,ACLEDScraperPreProcessor.SCRAPEDARTICLE);
+        int week = 7;
+        DateFilter df = new DateFilter(LocalDate.now().minusDays(week));
 
         handlers.add(emptyArticle);
         handlers.add(regexFilter);
         handlers.add(df);
-//        handlers.add(date);
 
     }
 

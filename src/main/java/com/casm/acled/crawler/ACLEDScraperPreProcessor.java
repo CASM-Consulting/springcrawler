@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 
 // java imports
 import java.io.*;
+import java.lang.reflect.Array;
 import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -39,7 +40,10 @@ public class ACLEDScraperPreProcessor implements IHttpDocumentProcessor {
     protected static final Logger logger = LoggerFactory.getLogger(ACLEDScraperPreProcessor.class);
 
     public static final String SCRAPERS = "casm.jqm.scrapers";
-    public static final String SCRAPEDJSON = "scraped.json";
+//    public static final String SCRAPEDJSON = "scraped.json";
+    public static final String SCRAPEDARTICLE = "scraped.article";
+    public static final String SCRAPEDATE = "scraped.date";
+    public static final String SCRAPEDTITLE = "scraped.title";
 
     public static final String article = "field.name/article";
     public static final String title = "field.name/title";
@@ -219,12 +223,15 @@ public class ACLEDScraperPreProcessor implements IHttpDocumentProcessor {
                 logger.warn("Malformed url exception");
             }
 
-            String json = gson.toJson(webPage,WebPage.class);
-
             if(webPage.getArticle() != null && webPage.getArticle().length() > 0) {
                 List<String> pages = new ArrayList<>();
-                pages.add(json);
-                doc.getMetadata().put(SCRAPEDJSON, pages);
+                doc.getMetadata().put(SCRAPEDARTICLE,Arrays.asList(webPage.getArticle()));
+                if(webPage.getTitle() != null && webPage.getTitle().length() > 0) {
+                    doc.getMetadata().put(SCRAPEDTITLE, Arrays.asList(webPage.getTitle()));
+                }
+                if(webPage.getDate() != null && webPage.getDate().length() > 0) {
+                    doc.getMetadata().put(SCRAPEDATE, Arrays.asList(webPage.getDate()));
+                }
             }
 
         }

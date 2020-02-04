@@ -4,6 +4,7 @@ package com.casm.acled.crawler;
 import com.casm.acled.camunda.BusinessKeys;
 import com.casm.acled.dao.entities.SourceDAO;
 import com.casm.acled.dao.entities.SourceListDAO;
+import com.casm.acled.dao.util.Util;
 import com.casm.acled.entities.EntityVersions;
 import com.casm.acled.entities.article.Article;
 import com.casm.acled.entities.source.Source;
@@ -14,6 +15,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 // norconex
 import com.norconex.collector.http.doc.HttpDocument;
+import com.norconex.collector.http.doc.HttpMetadata;
 import com.norconex.collector.http.processor.IHttpDocumentProcessor;
 
 // http
@@ -28,6 +30,7 @@ import org.slf4j.LoggerFactory;
 
 // java
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -46,24 +49,22 @@ public class ACLEDPostProcessor implements IHttpDocumentProcessor {
 
     public ACLEDPostProcessor(ArticleDAO articleDAO, SourceDAO sourceDAO,
                               SourceListDAO sourceListDAO, boolean sourceRequired) {
+
         this.articleDAO = articleDAO;
         this.sourceDAO = sourceDAO;
         this.sourceListDAO = sourceListDAO;
         this.sourceRequired = sourceRequired;
+
     }
 
     @Override
     public void processDocument(HttpClient httpClient, HttpDocument doc) {
 
-        String scrapedJson = doc.getMetadata().get(ACLEDScraperPreProcessor.SCRAPEDJSON).get(0);
-
-        ObjectMapper om = new ObjectMapper();
-
         try {
-            Map<String, String> data = om.readValue(scrapedJson, Map.class);
-            String articleText = data.get("article");
-            String title = data.get("title");
-            String date = data.get("date");
+            HttpMetadata metadata = doc.getMetadata();
+            String articleText = metadata.get(ACLEDScraperPreProcessor.SCRAPEDARTICLE).get(0);
+            String title = metadata.get(ACLEDScraperPreProcessor.SCRAPEDTITLE).get(0);
+            String date = metadata.get(ACLEDScraperPreProcessor.SCRAPEDATE).get(0);
 
             String url = doc.getReference();
 
@@ -78,8 +79,8 @@ public class ACLEDPostProcessor implements IHttpDocumentProcessor {
             Article article = EntityVersions.get(Article.class)
                     .current()
                     .put(Article.TEXT, text)
-                    .put(Article.URL, url);
-//                    .put(Article.DATE, date);
+                    .put(Article.URL, url)
+                    .put(Article.DATE, Util.getDate(date));
 
 
             String seed = doc.getMetadata().get(ACLEDMetadataPreProcessor.LINK).get(0);
@@ -106,14 +107,17 @@ public class ACLEDPostProcessor implements IHttpDocumentProcessor {
             }
             if(!source.isPresent() && !sourceRequired) {
                 logger.error("INFO: Source not present - adding without source.");
-                article = article.put(Article.SOURCE_ID, source.get().id());
-                articleDAO.create(article);
+                try {
+                    articleDAO.create(article);
+                } catch (Exception e) {
+                    logger.error(e.getMessage());
+                }
             }
             if(!source.isPresent() && sourceRequired){
                 logger.error("INFO: Source not present");
             }
 
-        } catch (IOException e) {
+        } catch (Exception e) {
             logger.error("Failed to import page to spring: " + doc.getReference() + " " + e.getMessage());
         }
 

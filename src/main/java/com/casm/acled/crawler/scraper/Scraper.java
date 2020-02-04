@@ -44,6 +44,7 @@ import java.util.concurrent.TimeUnit;
  *  2 probably better as is completely independent from the crawling architecture
  *
  */
+@Deprecated
 public class Scraper {
 
     protected static final Logger logger = LoggerFactory.getLogger(ACLEDScraperPreProcessor.class);
@@ -101,53 +102,53 @@ public class Scraper {
         return factory.create().split(Jsoup.parse(html));
     }
 
-    public void processPage(HttpClient httpClient, HttpDocument doc){
-        String scrapedJson = doc.getMetadata().get(ACLEDScraperPreProcessor.SCRAPEDJSON).get(0);
-
-        ObjectMapper om = new ObjectMapper();
-
-        try {
-            Map<String, String> data = om.readValue(scrapedJson, Map.class);
-            String articleText = data.get(ACLEDScraperPreProcessor.metaARTICLE);
-            String title = data.get(ACLEDScraperPreProcessor.metaTITLE);
-            String date = data.get(ACLEDScraperPreProcessor.metaDATE);
-
-            String url = doc.getReference();
-
-            String text = new StringBuilder()
-                    .append(title)
-                    .append("\n")
-                    .append(date)
-                    .append("\n")
-                    .append(articleText)
-                    .toString();
-
-            Article article = EntityVersions.get(Article.class)
-                    .current()
-                    .put(Article.TEXT, text)
-                    .put(Article.URL, url);
-
-
-            String seed = doc.getMetadata().get(ACLEDMetadataPreProcessor.LINK).get(0);
-            Optional<Source> source = sourceDAO.getByUnique(Source.LINK, seed);
-
-            if(source.isPresent()) {
-
-                article = article.put(Article.SOURCE_ID, source.get().id());
-
-                List<SourceList> lists = sourceListDAO.bySource(source.get());
-                for(SourceList list : lists) {
-                    String bk = BusinessKeys.generate(list.get(SourceList.LIST_NAME));
-                    articleDAO.create(article.businessKey(bk));
-
-                }
-            }
-
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
+//    public void processPage(HttpClient httpClient, HttpDocument doc){
+//        String scrapedJson = doc.getMetadata().get(ACLEDScraperPreProcessor.SCRAPEDJSON).get(0);
+//
+//        ObjectMapper om = new ObjectMapper();
+//
+//        try {
+//            Map<String, String> data = om.readValue(scrapedJson, Map.class);
+//            String articleText = data.get(ACLEDScraperPreProcessor.metaARTICLE);
+//            String title = data.get(ACLEDScraperPreProcessor.metaTITLE);
+//            String date = data.get(ACLEDScraperPreProcessor.metaDATE);
+//
+//            String url = doc.getReference();
+//
+//            String text = new StringBuilder()
+//                    .append(title)
+//                    .append("\n")
+//                    .append(date)
+//                    .append("\n")
+//                    .append(articleText)
+//                    .toString();
+//
+//            Article article = EntityVersions.get(Article.class)
+//                    .current()
+//                    .put(Article.TEXT, text)
+//                    .put(Article.URL, url);
+//
+//
+//            String seed = doc.getMetadata().get(ACLEDMetadataPreProcessor.LINK).get(0);
+//            Optional<Source> source = sourceDAO.getByUnique(Source.LINK, seed);
+//
+//            if(source.isPresent()) {
+//
+//                article = article.put(Article.SOURCE_ID, source.get().id());
+//
+//                List<SourceList> lists = sourceListDAO.bySource(source.get());
+//                for(SourceList list : lists) {
+//                    String bk = BusinessKeys.generate(list.get(SourceList.LIST_NAME));
+//                    articleDAO.create(article.businessKey(bk));
+//
+//                }
+//            }
+//
+//
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//    }
 
     /**
      * Transform json pojo object to splitter structure
