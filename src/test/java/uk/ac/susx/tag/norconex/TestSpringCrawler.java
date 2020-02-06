@@ -19,14 +19,14 @@ public class TestSpringCrawler {
     @Test
     public void TestSpringCrawler() {
         SpringCrawler  sc = new SpringCrawler();
-        String seed = "https://www.presstv.com/Detail/2020/02/01/617641/UK-Scotland-Nicola-Sturgeon-New-Speech-";
+        String seed = "https://crawler-test.com/";
         CrawlerArguments ca = new CrawlerArguments();
         ca.seeds = Arrays.asList(seed);
         ca.crawldb= "/Users/jp242/Desktop";
-        ca.depth=1;
+        ca.depth=7;
         ca.ignoreRobots = false;
         ca.ignoreSitemap = false;
-        ca.polite = 300;
+        ca.polite = 400;
         ca.scrapers = "/Users/jp242/Documents/Projects/ACLED/ManualScrapers/demo-scrapers-2";
         ca.scraper = "presstvcom";
         ca.threadsPerSeed = 2;
@@ -41,15 +41,15 @@ public class TestSpringCrawler {
         params.add(SingleSeedCollector.DEPTH);
         params.add(String.valueOf(ca.depth));
         params.add(SingleSeedCollector.ROBOTS);
-        params.add("false");
+        params.add(String.valueOf(ca.ignoreRobots));
         params.add(SingleSeedCollector.SITEMAP);
-        params.add("false");
+        params.add(String.valueOf(ca.ignoreSitemap));
         params.add(SingleSeedCollector.POLITENESS);
-        params.add("500");
+        params.add(String.valueOf(ca.polite));
         params.add("casm.jqm.scraping.scrapers.dir");
         params.add(ca.scrapers);
         params.add(SingleSeedCollector.THREADS);
-        params.add("2");
+        params.add(String.valueOf(ca.threadsPerSeed));
         params.add(SingleSeedCollector.FILTER);
         params.add(".*");
         params.add(SingleSeedCollector.USERAGENT);

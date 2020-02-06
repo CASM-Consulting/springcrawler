@@ -13,6 +13,26 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="Maven: uk.ac.susx.casm.crawlpoll:crawl-polling-service:0.0.4" level="project" />
+    <orderEntry type="library" name="Maven: com.casm:acled:1.2-SNAPSHOT" level="project" />
+    <orderEntry type="library" name="Maven: com.google.guava:guava:28.0-jre" level="project" />
+    <orderEntry type="library" name="Maven: com.google.guava:failureaccess:1.0.1" level="project" />
+    <orderEntry type="library" name="Maven: com.google.guava:listenablefuture:9999.0-empty-to-avoid-conflict-with-guava" level="project" />
+    <orderEntry type="library" name="Maven: com.google.code.findbugs:jsr305:3.0.2" level="project" />
+    <orderEntry type="library" name="Maven: org.checkerframework:checker-qual:2.8.1" level="project" />
+    <orderEntry type="library" name="Maven: com.google.errorprone:error_prone_annotations:2.3.2" level="project" />
+    <orderEntry type="library" name="Maven: com.google.j2objc:j2objc-annotations:1.3" level="project" />
+    <orderEntry type="library" name="Maven: org.codehaus.mojo:animal-sniffer-annotations:1.17" level="project" />
+    <orderEntry type="library" name="Maven: org.postgresql:postgresql:42.2.5" level="project" />
+    <orderEntry type="library" name="Maven: com.casm:acled-camunda-webapp:0.0.6" level="project" />
+    <orderEntry type="library" name="Maven: org.javaruntype:javaruntype:1.3" level="project" />
+    <orderEntry type="library" name="Maven: com.opencsv:opencsv:4.5" level="project" />
+    <orderEntry type="library" name="Maven: commons-beanutils:commons-beanutils:1.9.3" level="project" />
+    <orderEntry type="library" name="Maven: org.apache.commons:commons-collections4:4.2" level="project" />
+    <orderEntry type="library" name="Maven: com.joestelmach:natty:0.11" level="project" />
+    <orderEntry type="library" name="Maven: org.mnode.ical4j:ical4j:1.0.2" level="project" />
+    <orderEntry type="library" name="Maven: backport-util-concurrent:backport-util-concurrent:3.1" level="project" />
+    <orderEntry type="library" name="Maven: uk.ac.susx.tag.norconex.crawler:m52-norconex-crawler:1.5.2" level="project" />
+    <orderEntry type="library" name="Maven: com.rubiconproject.oss:jchronic:0.2.8" level="project" />
     <orderEntry type="library" name="Maven: org.springframework.boot:spring-boot-starter-web:2.2.1.RELEASE" level="project" />
     <orderEntry type="library" name="Maven: org.springframework.boot:spring-boot-starter:2.1.5.RELEASE" level="project" />
     <orderEntry type="library" name="Maven: org.springframework.boot:spring-boot:2.1.5.RELEASE" level="project" />
