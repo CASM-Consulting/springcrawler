@@ -205,6 +205,18 @@
             <artifactId>prettytime-nlp</artifactId>
             <version>4.0.2.Final</version>
         </dependency>
+
+        <dependency>
+            <groupId>com.joestelmach</groupId>
+            <artifactId>natty</artifactId>
+            <version>0.11</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.rubiconproject.oss</groupId>
+            <artifactId>jchronic</artifactId>
+            <version>0.2.8</version>
+        </dependency>
     </dependencies>
 
 
