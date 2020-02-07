@@ -6,7 +6,7 @@
 
     <groupId>com.casm</groupId>
     <artifactId>acled-spring-crawler</artifactId>
-    <version>1.2.15</version>
+    <version>1.2.16</version>
 
     <packaging>jar</packaging>
 
@@ -172,6 +172,11 @@
             <groupId>com.rubiconproject.oss</groupId>
             <artifactId>jchronic</artifactId>
             <version>0.2.8</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
 
 

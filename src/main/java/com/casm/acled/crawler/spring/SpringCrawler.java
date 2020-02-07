@@ -31,6 +31,7 @@ import com.norconex.importer.handler.tagger.impl.CurrentDateTagger;
 import com.norconex.importer.handler.tagger.impl.DebugTagger;
 import com.norconex.importer.handler.tagger.impl.KeepOnlyTagger;
 //import org.apache.tools.ant.taskdefs.condition.Http;
+import javafx.application.Application;
 import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
 import org.camunda.bpm.spring.boot.starter.rest.CamundaBpmRestJerseyAutoConfiguration;
 
@@ -56,15 +57,21 @@ import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
 import org.springframework.boot.autoconfigure.validation.ValidationAutoConfiguration;
+import org.springframework.boot.builder.SpringApplicationBuilder;
+import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
 import uk.ac.susx.tag.norconex.jobqueuemanager.CrawlerArguments;
 import uk.ac.susx.tag.norconex.jobqueuemanager.SingleSeedCollector;
 
+import javax.annotation.PreDestroy;
+
 @EnableAutoConfiguration(exclude={HibernateJpaAutoConfiguration.class,CamundaBpmAutoConfiguration.class, CamundaBpmRestJerseyAutoConfiguration.class, ValidationAutoConfiguration.class})
 // We need the special object mapper, though.
-@Import(ObjectMapperConfiguration.class)
+@Import({ObjectMapperConfiguration.class, SpringCrawler.ShutdownConfig.class})
 // And we also need the DAOs.
 @ComponentScan(basePackages={"com.casm.acled.dao"})
 public class SpringCrawler implements CommandLineRunner {
@@ -80,10 +87,33 @@ public class SpringCrawler implements CommandLineRunner {
 
 
     public static void main(String[] args) {
+
         SpringApplication app = new SpringApplication(SpringCrawler.class);
         app.setBannerMode(Banner.Mode.OFF);
         app.setWebApplicationType(WebApplicationType.NONE);
-        app.run(args);
+        ConfigurableApplicationContext ctx = app.run(args);
+        logger.info("Spring Boot application started");
+
+        // Close when complete
+        ctx.getBean(TerminateBean.class);
+        ctx.close();
+    }
+
+    public class TerminateBean {
+
+        @PreDestroy
+        public void onDestroy() throws Exception {
+            logger.info("Spring Container is destroyed!");
+        }
+    }
+
+    @Configuration
+    public class ShutdownConfig {
+
+        @Bean
+        public TerminateBean getTerminateBean() {
+            return new TerminateBean();
+        }
     }
 
     @Override
