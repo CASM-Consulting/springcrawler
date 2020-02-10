@@ -14,36 +14,28 @@ import com.casm.acled.dao.entities.SourceDAO;
 import com.casm.acled.dao.entities.SourceListDAO;
 
 // norconex
+import com.norconex.collector.core.data.store.impl.mvstore.MVStoreCrawlDataStoreFactory;
 import com.norconex.collector.http.crawler.HttpCrawlerConfig;
-import com.norconex.collector.http.data.store.impl.jdbc.JDBCCrawlDataStoreFactory;
 import com.norconex.collector.http.doc.HttpMetadata;
-import com.norconex.collector.http.recrawl.impl.GenericRecrawlableResolver;
 import com.norconex.importer.ImporterConfig;
 import com.norconex.importer.handler.IImporterHandler;
 import com.norconex.importer.handler.filter.OnMatch;
 import com.norconex.importer.handler.filter.impl.EmptyMetadataFilter;
-import com.norconex.importer.handler.filter.impl.RegexContentFilter;
 import com.norconex.importer.handler.filter.impl.RegexMetadataFilter;
 
 //camunda
-import com.norconex.importer.handler.tagger.AbstractDocumentTagger;
-import com.norconex.importer.handler.tagger.impl.CurrentDateTagger;
-import com.norconex.importer.handler.tagger.impl.DebugTagger;
 import com.norconex.importer.handler.tagger.impl.KeepOnlyTagger;
-//import org.apache.tools.ant.taskdefs.condition.Http;
-import javafx.application.Application;
 import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
 import org.camunda.bpm.spring.boot.starter.rest.CamundaBpmRestJerseyAutoConfiguration;
 
 // logging
-import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 // java
 import java.io.File;
-import java.lang.reflect.Array;
 import java.net.URISyntaxException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.*;
@@ -57,13 +49,14 @@ import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
 import org.springframework.boot.autoconfigure.validation.ValidationAutoConfiguration;
-import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
+import uk.ac.susx.tag.norconex.database.ConcurrentContentHashStore;
+import uk.ac.susx.tag.norconex.document.WebScraperChecksum;
 import uk.ac.susx.tag.norconex.jobqueuemanager.CrawlerArguments;
 import uk.ac.susx.tag.norconex.jobqueuemanager.SingleSeedCollector;
 
@@ -85,6 +78,8 @@ public class SpringCrawler implements CommandLineRunner {
     @Autowired
     private SourceListDAO sourceListDAO;
 
+    private ConcurrentContentHashStore contentHashStore;
+
 
     public static void main(String[] args) {
 
@@ -103,6 +98,7 @@ public class SpringCrawler implements CommandLineRunner {
 
         @PreDestroy
         public void onDestroy() throws Exception {
+            contentHashStore.close();
             logger.info("Spring Container is destroyed!");
         }
     }
@@ -119,6 +115,8 @@ public class SpringCrawler implements CommandLineRunner {
     @Override
     public void run(String[] args) throws Exception {
 
+
+
         List<String> splitArgs = new ArrayList<>();
         for(String arg : args){
             splitArgs.addAll(Arrays.asList(arg.split("\\s+")));
@@ -132,11 +130,6 @@ public class SpringCrawler implements CommandLineRunner {
                 .build()
                 .parse(corrArgs);
 
-
-
-        // add the protocol
-//        String seed = (ca.seeds.get(0).startsWith("http")) ? ca.seeds.get(0) : ("http://" + ca.seeds.get(0));
-
         SingleSeedCollector collector = new SingleSeedCollector(crawlerArguments.userAgent,new File(crawlerArguments.crawldb), Utils.getDomain(crawlerArguments.seeds.get(0)),
                 crawlerArguments.depth, crawlerArguments.urlFilter,crawlerArguments.threadsPerSeed,crawlerArguments.ignoreRobots,
                 crawlerArguments.ignoreSitemap, crawlerArguments.polite,
@@ -145,12 +138,13 @@ public class SpringCrawler implements CommandLineRunner {
         HttpCrawlerConfig config = collector.getConfiguration();
 
         logger.error("Starting config");
-        ImporterConfig ic = new ImporterConfig();
+        ImporterConfig importerConfig = config.getImporterConfig();
         List<IImporterHandler> handlers = new ArrayList<>();
+
+        contentHashStore = new ConcurrentContentHashStore(Paths.get(crawlerArguments.crawldb,Utils.getDomain(crawlerArguments.seeds.get(0)),"crawlstore"));
 
         // Only performs this step when we are wanting to produce to a table
         if(!crawlerArguments.index){
-
 
             // Add the source information to the metadata
             Map<String,List<String>> metadata = buildACLEDMetadata(crawlerArguments.sourcedomain, crawlerArguments.seeds.get(0));
@@ -163,10 +157,12 @@ public class SpringCrawler implements CommandLineRunner {
             // single scraper definition overrides scraper directory
             if(crawlerArguments.scraper != null) {
                 logger.info("INFO: Scraper " + crawlerArguments.scraper + " found for " + crawlerArguments.seeds.get(0));
-                config.setPreImportProcessors(new ACLEDScraperPreProcessor(Paths.get(crawlerArguments.scrapers,crawlerArguments.scraper)), new ACLEDMetadataPreProcessor(metadata));
+                config.setDocumentChecksummer(new WebScraperChecksum(Paths.get(crawlerArguments.scrapers,crawlerArguments.scraper),contentHashStore));
+                config.setPreImportProcessors(new ACLEDMetadataPreProcessor(metadata));
             }
             else {
-                config.setPreImportProcessors(new ACLEDScraperPreProcessor(Paths.get(crawlerArguments.scrapers)), new ACLEDMetadataPreProcessor(metadata));
+                config.setDocumentChecksummer(new WebScraperChecksum(Paths.get(crawlerArguments.scrapers),contentHashStore));
+                config.setPreImportProcessors(new ACLEDMetadataPreProcessor(metadata));
             }
 
             // Add the crawler-to-spring-magic post-processor
@@ -174,8 +170,10 @@ public class SpringCrawler implements CommandLineRunner {
             
         }
 
-        ic.setPostParseHandlers(handlers.toArray(new IImporterHandler[handlers.size()]));
-        config.setImporterConfig(ic);
+        importerConfig.setPostParseHandlers(handlers.toArray(new IImporterHandler[handlers.size()]));
+        config.setImporterConfig(importerConfig);
+
+        collector.setConfiguration(config);
 
         try {
             collector.start();
@@ -213,6 +211,11 @@ public class SpringCrawler implements CommandLineRunner {
         map.put(ACLEDMetadataPreProcessor.LINK, source);
 
         return map;
+    }
+
+    private MVStoreCrawlDataStoreFactory createDBStore() {
+        MVStoreCrawlDataStoreFactory factory = new MVStoreCrawlDataStoreFactory();
+        return factory;
     }
 
     /**

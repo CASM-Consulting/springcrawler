@@ -35,6 +35,7 @@ import uk.ac.susx.tag.norconex.scraping.IForumSplitter;
 import uk.ac.susx.tag.norconex.scraping.POJOHTMLMatcherDefinition;
 import uk.ac.susx.tag.norconex.scraping.Post;
 
+@Deprecated
 public class ACLEDScraperPreProcessor implements IHttpDocumentProcessor {
 
     protected static final Logger logger = LoggerFactory.getLogger(ACLEDScraperPreProcessor.class);

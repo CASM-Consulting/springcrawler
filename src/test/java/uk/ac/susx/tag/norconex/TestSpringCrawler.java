@@ -19,16 +19,16 @@ public class TestSpringCrawler {
     @Test
     public void TestSpringCrawler() {
         SpringCrawler  sc = new SpringCrawler();
-        String seed = "https://crawler-test.com/";
+        String seed = "http://www.newagebd.net/article/98651/articlelist/323/articlelist/323/Cartoon";
         CrawlerArguments ca = new CrawlerArguments();
         ca.seeds = Arrays.asList(seed);
         ca.crawldb= "/Users/jp242/Desktop";
-        ca.depth=7;
-        ca.ignoreRobots = false;
-        ca.ignoreSitemap = false;
+        ca.depth=0;
+        ca.ignoreRobots = true;
+        ca.ignoreSitemap = true;
         ca.polite = 400;
-        ca.scrapers = "/Users/jp242/Documents/Projects/ACLED/ManualScrapers/demo-scrapers-2";
-        ca.scraper = "presstvcom";
+        ca.scrapers = "/Users/jp242/Documents/Projects/ACLED/ManualScrapers/demoscrapers";
+        ca.scraper = "newagebdnet";
         ca.threadsPerSeed = 2;
         ca.urlFilter = ".*";
         ca.userAgent = "taglab";

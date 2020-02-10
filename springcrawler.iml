@@ -152,7 +152,7 @@
     <orderEntry type="library" name="Maven: com.opencsv:opencsv:4.5" level="project" />
     <orderEntry type="library" name="Maven: commons-beanutils:commons-beanutils:1.9.3" level="project" />
     <orderEntry type="library" name="Maven: org.apache.commons:commons-collections4:4.2" level="project" />
-    <orderEntry type="library" name="Maven: uk.ac.susx.tag.norconex.crawler:m52-norconex-crawler:1.5.2" level="project" />
+    <orderEntry type="library" name="Maven: uk.ac.susx.tag.norconex.crawler:m52-norconex-crawler:1.5.3" level="project" />
     <orderEntry type="library" name="Maven: com.norconex.collectors:norconex-committer-sql:2.0.0" level="project" />
     <orderEntry type="library" name="Maven: com.norconex.collectors:norconex-committer-core:2.1.2" level="project" />
     <orderEntry type="library" name="Maven: com.tdunning:json:1.8" level="project" />
@@ -163,6 +163,7 @@
     <orderEntry type="library" name="Maven: net.sourceforge.nekohtml:nekohtml:1.9.22" level="project" />
     <orderEntry type="library" name="Maven: org.codehaus.jackson:jackson-mapper-asl:1.9.13" level="project" />
     <orderEntry type="library" name="Maven: org.codehaus.jackson:jackson-core-asl:1.9.13" level="project" />
+    <orderEntry type="library" name="Maven: com.github.crawler-commons:crawler-commons:1.0" level="project" />
     <orderEntry type="library" name="Maven: com.beust:jcommander:1.78" level="project" />
     <orderEntry type="library" name="Maven: com.enioka.jqm:jqm-api:2.2.1" level="project" />
     <orderEntry type="library" name="Maven: com.enioka.jqm:jqm-api-client-jersey:2.2.1" level="project" />
