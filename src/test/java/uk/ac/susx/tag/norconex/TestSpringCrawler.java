@@ -24,8 +24,8 @@ public class TestSpringCrawler {
         ca.seeds = Arrays.asList(seed);
         ca.crawldb= "/Users/jp242/Desktop";
         ca.depth=0;
-        ca.ignoreRobots = true;
-        ca.ignoreSitemap = true;
+        ca.ignoreRobots = false;
+        ca.ignoreSitemap = false;
         ca.polite = 400;
         ca.scrapers = "/Users/jp242/Documents/Projects/ACLED/ManualScrapers/demoscrapers";
         ca.scraper = "newagebdnet";
@@ -33,6 +33,8 @@ public class TestSpringCrawler {
         ca.urlFilter = ".*";
         ca.userAgent = "taglab";
         ca.id = "testspring";
+        ca.index = true;
+
         List<String> params = new ArrayList<>();
         params.add(SingleSeedCollector.SEED);
         params.add(seed);
@@ -58,6 +60,7 @@ public class TestSpringCrawler {
         params.add("springtest");
         params.add(CrawlerArguments.SCRAPER);
         params.add(ca.scraper);
+//        params.add(SingleSeedCollector.INDEXONLY);
 
         String[] args = params.toArray(new String[params.size()]);
 

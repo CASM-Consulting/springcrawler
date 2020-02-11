@@ -56,7 +56,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
 import uk.ac.susx.tag.norconex.database.ConcurrentContentHashStore;
-import uk.ac.susx.tag.norconex.document.WebScraperChecksum;
+import uk.ac.susx.tag.norconex.document.WebScraperMetadataChecksum;
 import uk.ac.susx.tag.norconex.jobqueuemanager.CrawlerArguments;
 import uk.ac.susx.tag.norconex.jobqueuemanager.SingleSeedCollector;
 
@@ -143,6 +143,7 @@ public class SpringCrawler implements CommandLineRunner {
 
         contentHashStore = new ConcurrentContentHashStore(Paths.get(crawlerArguments.crawldb,Utils.getDomain(crawlerArguments.seeds.get(0)),"crawlstore"));
 
+        System.out.println(crawlerArguments.index);
         // Only performs this step when we are wanting to produce to a table
         if(!crawlerArguments.index){
 
@@ -157,12 +158,12 @@ public class SpringCrawler implements CommandLineRunner {
             // single scraper definition overrides scraper directory
             if(crawlerArguments.scraper != null) {
                 logger.info("INFO: Scraper " + crawlerArguments.scraper + " found for " + crawlerArguments.seeds.get(0));
-                config.setDocumentChecksummer(new WebScraperChecksum(Paths.get(crawlerArguments.scrapers,crawlerArguments.scraper),contentHashStore));
-                config.setPreImportProcessors(new ACLEDMetadataPreProcessor(metadata));
+                config.setPreImportProcessors(new ACLEDScraperPreProcessor(Paths.get(crawlerArguments.scrapers,crawlerArguments.scraper)),new ACLEDMetadataPreProcessor(metadata));
+                config.setDocumentChecksummer(new WebScraperMetadataChecksum(contentHashStore));
             }
             else {
-                config.setDocumentChecksummer(new WebScraperChecksum(Paths.get(crawlerArguments.scrapers),contentHashStore));
-                config.setPreImportProcessors(new ACLEDMetadataPreProcessor(metadata));
+                config.setPreImportProcessors(new ACLEDScraperPreProcessor(Paths.get(crawlerArguments.scrapers)),new ACLEDMetadataPreProcessor(metadata));
+                config.setDocumentChecksummer(new WebScraperMetadataChecksum(contentHashStore));
             }
 
             // Add the crawler-to-spring-magic post-processor
@@ -185,8 +186,8 @@ public class SpringCrawler implements CommandLineRunner {
     private static void buildACLEDArticleFilters(List<IImporterHandler> handlers) {
 
         // Set the various document filters
-        RegexMetadataFilter regexFilter = new RegexMetadataFilter(ACLEDScraperPreProcessor.SCRAPEDARTICLE, Utils.KEYWORDS);
-        EmptyMetadataFilter emptyArticle = new EmptyMetadataFilter(OnMatch.EXCLUDE,ACLEDScraperPreProcessor.SCRAPEDARTICLE);
+        RegexMetadataFilter regexFilter = new RegexMetadataFilter(CrawlerArguments.SCRAPEDARTICLE, Utils.KEYWORDS);
+        EmptyMetadataFilter emptyArticle = new EmptyMetadataFilter(OnMatch.EXCLUDE,CrawlerArguments.SCRAPEDARTICLE);
         int week = 7;
         DateFilter df = new DateFilter(LocalDate.now().minusDays(week));
 
