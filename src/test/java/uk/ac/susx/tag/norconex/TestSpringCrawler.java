@@ -60,6 +60,7 @@ public class TestSpringCrawler {
         params.add("springtest");
         params.add(CrawlerArguments.SCRAPER);
         params.add(ca.scraper);
+//        params.add("");
 //        params.add(SingleSeedCollector.INDEXONLY);
 
         String[] args = params.toArray(new String[params.size()]);
