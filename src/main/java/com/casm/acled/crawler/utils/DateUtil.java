@@ -18,7 +18,11 @@ public class DateUtil {
         Date date = null;
         String dateFormat = getDateFormat(input);
         if (dateFormat == null) {
-            throw new IllegalArgumentException("Date is not in an accepted format " + input);
+            input = removeAlpha(input);
+            dateFormat = getDateFormat(input);
+            if(dateFormat == null) {
+                throw new IllegalArgumentException("Date is not in an accepted format " + input);
+            }
         }
 
         for (String sep : dateSeparators) {
@@ -37,6 +41,7 @@ public class DateUtil {
             }
         }
 
+
         return date;
     }
 
@@ -52,6 +57,10 @@ public class DateUtil {
             }
         }
         return null;
+    }
+
+    public static String removeAlpha(String messyDate) {
+        return messyDate.replaceAll("[a-zA-Z]","");
     }
 
     private static String patternForSeparator(String template, String sep) {

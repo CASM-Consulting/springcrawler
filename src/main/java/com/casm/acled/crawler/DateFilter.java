@@ -50,8 +50,9 @@ public class DateFilter extends AbstractDocumentFilter {
             LocalDate date = parseDate(dateStr);
             logger.info("INFO: filtering article by date: " + reference + " date: " + date + " " + threshold.toString()
                     + " article date: " + dateStr + "after?: " + date.isAfter(threshold));
-            return date.isBefore(threshold);
-
+            if(date != null) {
+                return date.isBefore(threshold);
+            }
         } catch (Exception e) {
             logger.error("Error parsing date: " + reference);
         }
