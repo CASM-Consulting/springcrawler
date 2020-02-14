@@ -60,6 +60,8 @@ public class Util implements CommandLineRunner {
 
     private static Options opts = new Options(Pointer.PointerType.PAST);
     private static PrettyTimeParser prettyParser = new PrettyTimeParser();
+    private static PrettyTimeParser nonamericanPrettyParser = new PrettyTimeParser();
+
     private static Parser nattyParser = new Parser();
 
     private static Map<String, String> months = ImmutableMap.<String,String>builder()
@@ -127,23 +129,37 @@ public class Util implements CommandLineRunner {
         if(result == null) {
             dates = prettyParser.parse(date);
 
-            if(!dates.isEmpty()) {
 
+            if(!dates.isEmpty()) {
                 localDate = dates.get(dates.size()-1).toInstant().atZone(ZoneId.of("GMT")).toLocalDate();
+                if(localDate.isAfter(LocalDate.now())) {
+                    localDate = dates.get(0).toInstant().atZone(ZoneId.of("GMT")).toLocalDate();
+                }
             }
 
 
             if(dates.isEmpty() || localDate.isAfter(LocalDate.now())) {
 
                 List<DateGroup> dateGroups = nattyParser.parse(date);
-                DateGroup dateGroup = dateGroups.get(dateGroups.size() - 1);
-                List<Date> ds = dateGroup.getDates();
-                Date d = ds.get(ds.size() - 1);
-                localDate = d.toInstant().atZone(ZoneId.of("GMT")).toLocalDate();
+                if(dateGroups.size() > 0) {
+                    DateGroup dateGroup = dateGroups.get(dateGroups.size() - 1);
+                    List<Date> ds = dateGroup.getDates();
+                    Date d = ds.get(ds.size() - 1);
+                    localDate = d.toInstant().atZone(ZoneId.of("GMT")).toLocalDate();
 
-                if (localDate.isAfter(LocalDate.now())) {
-                    return null;
+                    if (localDate.isAfter(LocalDate.now())) {
+                        // Last ditch fallback attempt
+                        Date dNew = DateUtil.stringToDate(date);
+                        localDate = dNew.toInstant().atZone(ZoneId.of("GMT")).toLocalDate();
+                        return localDate;
+                    }
+                } else {
+                    // last ditch fallback attempt
+                    Date d = DateUtil.stringToDate(date);
+                    localDate = d.toInstant().atZone(ZoneId.of("GMT")).toLocalDate();
+                    return localDate;
                 }
+
             }
         } else {
 
@@ -152,6 +168,10 @@ public class Util implements CommandLineRunner {
 
         return localDate;
     }
+
+//    public LocalDate simplDateFallback(String dateString) {
+//
+//    }
 
     public void recoverArticleDates() {
 
