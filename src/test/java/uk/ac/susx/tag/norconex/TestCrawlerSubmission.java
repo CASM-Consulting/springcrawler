@@ -4,6 +4,7 @@ import com.enioka.jqm.api.JobRequest;
 import org.junit.Assert;
 import org.junit.Test;
 import uk.ac.susx.tag.norconex.crawlpolling.SubmissionService;
+import uk.ac.susx.tag.norconex.jobqueuemanager.CrawlerSubmissionService;
 import uk.ac.susx.tag.norconex.jobqueuemanager.SingleSeedCollector;
 
 import java.net.MalformedURLException;
@@ -20,7 +21,7 @@ public class TestCrawlerSubmission {
 
 //        props.put("com.enioka.jqm.ws.url", "https://jqm.casmconsulting.co.uk/ws/client");
 
-        SubmissionService ss = new SubmissionService(props);
+        SubmissionService ss = new CrawlerSubmissionService(props);
 
 
 //        jobRequest.addParameter(SingleSeedCollector.ROBOTS, SingleSeedCollector.ROBOTS);
