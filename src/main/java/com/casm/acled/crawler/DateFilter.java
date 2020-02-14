@@ -1,9 +1,7 @@
 package com.casm.acled.crawler;
 
-// faster xml
-import com.casm.acled.dao.util.Util;
-
 // apache commons
+import com.casm.acled.crawler.utils.Util;
 import com.norconex.importer.handler.filter.OnMatch;
 import org.apache.commons.configuration.XMLConfiguration;
 
