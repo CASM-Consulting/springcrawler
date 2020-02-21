@@ -44,20 +44,23 @@ public class DateFilter extends AbstractDocumentFilter {
         String dateStr = metadata.get(ACLEDScraperPreProcessor.SCRAPEDATE).get(0);
         if(dateStr == null || dateStr.length() <= 0) {
             logger.debug("INFO: No date found for url: " + reference);
-            return true;
+            return false;
         }
         try{
             LocalDate date = parseDate(dateStr);
             logger.info("INFO: filtering article by date: " + reference + " date: " + date + " " + threshold.toString()
                     + " article date: " + dateStr + "after?: " + date.isAfter(threshold));
             if(date != null) {
-                return date.isBefore(threshold);
+                if(date.isBefore(threshold)) {
+                    return true;
+                }
+                logger.error("PARSED BUT APPEARED PRIOR: " + date.toString());
             }
         } catch (Exception e) {
             logger.error("Error parsing date: " + reference);
         }
 
-        return true;
+        return false;
 
     }
 

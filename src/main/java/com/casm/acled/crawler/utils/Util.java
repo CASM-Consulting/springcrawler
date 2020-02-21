@@ -95,7 +95,67 @@ public class Util implements CommandLineRunner {
             .put("ديسمبر" , "December")
             .build();
 
-    private static String replaceArabicMonths(String dateStr) {
+    private static Map<String, String> russianMonths = ImmutableMap.<String,String>builder()
+            .put("января",  "January")
+            .put("февраля", "February")
+            .put("март" ,"March")
+            .put("апреля" , "April")
+            .put("май"	, "May")
+            .put("июня" , "June")
+            .put("июля"	, "July")
+            .put("августа" , "August")
+            .put("сентября" , "September")
+            .put("октября" , "October")
+            .put("ноября" , "November")
+            .put("декабря" , "December")
+            .build();
+
+    private static Map<String, String> frenchMonths = ImmutableMap.<String,String>builder()
+            .put("janvier",  "January")
+            .put("février", "February")
+            .put("mars" ,"March")
+            .put("avril" , "April")
+            .put("mai"	, "May")
+            .put("juin" , "June")
+            .put("juillet"	, "July")
+            .put("août" , "August")
+            .put("septembre" , "September")
+            .put("octobre" , "October")
+            .put("novembre" , "November")
+            .put("décembre" , "December")
+            .build();
+
+    private static Map<String, String> spanishMonths = ImmutableMap.<String,String>builder()
+            .put("enero",  "January")
+            .put("febrero", "February")
+            .put("marzo" ,"March")
+            .put("abril" , "April")
+            .put("mayo"	, "May")
+            .put("junio" , "June")
+            .put("julio"	, "July")
+            .put("agosto" , "August")
+            .put("septiembre" , "September")
+            .put("octubre" , "October")
+            .put("noviembre" , "November")
+            .put("diciembre" , "December")
+            .build();
+
+    private static Map<String, String> germanMonths = ImmutableMap.<String,String>builder()
+            .put("januar",  "January")
+            .put("februar", "February")
+            .put("märz" ,"March")
+            .put("april" , "April")
+            .put("mai"	, "May")
+            .put("juni" , "June")
+            .put("juli"	, "July")
+            .put("august" , "August")
+            .put("september" , "September")
+            .put("oktober" , "October")
+            .put("november" , "November")
+            .put("dezember" , "December")
+            .build();
+
+    private static String replaceMonths(Map<String, String> months, String dateStr) {
 
         for(Map.Entry<String, String> entry : months.entrySet()) {
             dateStr = dateStr.replace(entry.getKey(), entry.getValue());
@@ -107,7 +167,21 @@ public class Util implements CommandLineRunner {
 
     public static LocalDate getDate(String date) {
 
-        date = date.replaceAll("\\p{javaSpaceChar}+", "").trim();
+        // change log:
+        // 1. added last ditch formating attempt
+        // 2. changed java space char for empty space to ' '
+        // Has significant problems with non-english
+        // 3. add russian months - needs looking at
+        // 4. add spanish
+        // 5. replace UTC offset
+        // 6. add german
+        //
+
+        date = date.replaceAll("\\p{javaSpaceChar}+", " ").trim();
+
+        date = date.replaceAll("UTC\\+[0-9]+:[0-9]+","");
+
+        date = date.replaceAll("\\.","/");
 
         date = date.replaceAll("-(?!\\p{Digit})", " ")
                 .replaceAll("(?<!\\p{Digit})-", " ");
@@ -121,7 +195,11 @@ public class Util implements CommandLineRunner {
         List<Date> dates = ImmutableList.of();
 
 
-        date = replaceArabicMonths(date);
+        date = replaceMonths(months,date);
+        date = replaceMonths(russianMonths,date.toLowerCase());
+        date = replaceMonths(spanishMonths,date.toLowerCase());
+        date = replaceMonths(germanMonths,date.toLowerCase());
+        date = replaceMonths(frenchMonths,date.toLowerCase());
 //                groups = parser.( text[1]);
         result = Chronic.parse(date, opts);   // Year is treated as 1938 because of PointerType.PAST.
 
@@ -149,9 +227,10 @@ public class Util implements CommandLineRunner {
 
                     if (localDate.isAfter(LocalDate.now())) {
                         // Last ditch fallback attempt
-                        Date dNew = DateUtil.stringToDate(date);
-                        localDate = dNew.toInstant().atZone(ZoneId.of("GMT")).toLocalDate();
-                        return localDate;
+//                        Date dNew = DateUtil.stringToDate(date);
+//                        localDate = dNew.toInstant().atZone(ZoneId.of("GMT")).toLocalDate();
+//                        return localDate;
+                        return null;
                     }
                 } else {
                     // last ditch fallback attempt
