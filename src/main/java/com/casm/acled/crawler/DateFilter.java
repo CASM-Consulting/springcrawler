@@ -48,13 +48,13 @@ public class DateFilter extends AbstractDocumentFilter {
         }
         try{
             LocalDate date = parseDate(dateStr);
-            logger.info("INFO: filtering article by date: " + reference + " date: " + date + " " + threshold.toString()
-                    + " article date: " + dateStr + "after?: " + date.isAfter(threshold));
+//            logger.info("INFO: filtering article by date: " + reference + " date: " + date + " " + threshold.toString()
+//                    + " article date: " + dateStr + "after?: " + date.isAfter(threshold));
             if(date != null) {
                 if(date.isBefore(threshold)) {
                     return true;
                 }
-                logger.error("PARSED BUT APPEARED PRIOR: " + date.toString());
+                logger.error("DATE-PRIOR-TO-THRESH " + date.toString() + " | " + dateStr);
             }
         } catch (Exception e) {
             logger.error("Error parsing date: " + reference);
