@@ -62,7 +62,9 @@ public class ACLEDPostProcessor implements IHttpDocumentProcessor {
     @Override
     public void processDocument(HttpClient httpClient, HttpDocument doc) {
 
-        if(!Boolean.valueOf(doc.getMetadata().get(CrawlerArguments.PREVIOUSLYSCRAPED).get(0))) {
+        if(doc.getMetadata().get(CrawlerArguments.PREVIOUSLYSCRAPED) != null &&
+                doc.getMetadata().get(CrawlerArguments.PREVIOUSLYSCRAPED).size() > 0 &&
+                !Boolean.valueOf(doc.getMetadata().get(CrawlerArguments.PREVIOUSLYSCRAPED).get(0))) {
             try {
                 HttpMetadata metadata = doc.getMetadata();
                 String articleText = metadata.get(CrawlerArguments.SCRAPEDARTICLE).get(0);

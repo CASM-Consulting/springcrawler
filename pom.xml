@@ -6,7 +6,7 @@
 
     <groupId>com.casm</groupId>
     <artifactId>acled-spring-crawler</artifactId>
-    <version>1.3.2</version>
+    <version>1.3.3</version>
 
     <packaging>jar</packaging>
 
@@ -164,7 +164,7 @@
         <dependency>
             <groupId>uk.ac.susx.tag.norconex.crawler</groupId>
             <artifactId>m52-norconex-crawler</artifactId>
-            <version>1.5.4</version>
+            <version>1.5.5</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/com.rubiconproject.oss/jchronic -->
