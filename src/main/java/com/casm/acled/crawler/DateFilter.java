@@ -52,9 +52,9 @@ public class DateFilter extends AbstractDocumentFilter {
 //                    + " article date: " + dateStr + "after?: " + date.isAfter(threshold));
             if(date != null) {
                 if(date.isBefore(threshold)) {
+                    logger.error("DATE-PRIOR-TO-THRESH " + date.toString() + " | " + dateStr);
                     return true;
                 }
-                logger.error("DATE-PRIOR-TO-THRESH " + date.toString() + " | " + dateStr);
             }
         } catch (Exception e) {
             logger.error("Error parsing date: " + reference);
