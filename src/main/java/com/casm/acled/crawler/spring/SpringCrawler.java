@@ -137,7 +137,7 @@ public class SpringCrawler implements CommandLineRunner {
 
         HttpCrawlerConfig config = collector.getConfiguration();
 
-        logger.error("Starting config");
+        logger.info("Starting config");
         ImporterConfig importerConfig = config.getImporterConfig();
         List<IImporterHandler> handlers = new ArrayList<>();
 

@@ -68,14 +68,14 @@ public class ACLEDPostProcessor implements IHttpDocumentProcessor {
             try {
                 HttpMetadata metadata = doc.getMetadata();
                 String articleText = metadata.get(CrawlerArguments.SCRAPEDARTICLE).get(0);
-                String title = metadata.get(CrawlerArguments.SCRAPEDTITLE).get(0);
+//                String title = metadata.get(CrawlerArguments.SCRAPEDTITLE).get(0);
                 String date = metadata.get(CrawlerArguments.SCRAPEDATE).get(0);
 
                 String url = doc.getReference();
 
                 String text = new StringBuilder()
-                        .append(title)
-                        .append("\n")
+//                        .append(title)
+//                        .append("\n")
                         .append(date)
                         .append("\n")
                         .append(articleText)
@@ -90,7 +90,7 @@ public class ACLEDPostProcessor implements IHttpDocumentProcessor {
 
                 String seed = doc.getMetadata().get(ACLEDMetadataPreProcessor.LINK).get(0);
 
-                logger.error("SOURCE = " + seed);
+               logger.error("SOURCE = " + seed);
 
                 Optional<Source> source = sourceDAO.getByUnique(Source.LINK, seed);
 
@@ -124,6 +124,7 @@ public class ACLEDPostProcessor implements IHttpDocumentProcessor {
 
             } catch (Exception e) {
                 logger.error("Failed to import page to spring - this may be due to it being a previously seen content hash: " + doc.getReference() + " " + e.getMessage());
+                throw e;
             }
         }
     }

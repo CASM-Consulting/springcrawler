@@ -19,21 +19,21 @@ public class TestSpringCrawler {
     @Test
     public void TestSpringCrawler() {
         SpringCrawler  sc = new SpringCrawler();
-        String seed = "http://www.newagebd.net/article/98651/articlelist/323/articlelist/323/Cartoon";
+        String seed = "http://www.0.com:5000";
         CrawlerArguments ca = new CrawlerArguments();
         ca.seeds = Arrays.asList(seed);
-        ca.crawldb= "/Users/jp242/Desktop";
-        ca.depth=0;
-        ca.ignoreRobots = false;
+        ca.crawldb= "/home/sw206/git/springcrawler/testcrawldb";
+        ca.depth=5;
+        ca.ignoreRobots = true;
         ca.ignoreSitemap = false;
         ca.polite = 400;
-        ca.scrapers = "/Users/jp242/Documents/Projects/ACLED/ManualScrapers/demoscrapers";
-        ca.scraper = "newagebdnet";
+        ca.scrapers = "/home/sw206/git/springcrawler/testscrapers";
+        ca.scraper = "generic";
         ca.threadsPerSeed = 2;
         ca.urlFilter = ".*";
         ca.userAgent = "taglab";
         ca.id = "testspring";
-        ca.index = true;
+        ca.index = false;
 
         List<String> params = new ArrayList<>();
         params.add(SingleSeedCollector.SEED);
