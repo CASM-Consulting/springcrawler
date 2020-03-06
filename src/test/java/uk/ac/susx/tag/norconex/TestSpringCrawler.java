@@ -1,6 +1,6 @@
 package uk.ac.susx.tag.norconex;
 
-import com.casm.acled.crawler.spring.SpringCrawler;
+import com.casm.acled.crawler.springcli.CLIRunner;
 import org.junit.Test;
 import org.springframework.boot.Banner;
 import org.springframework.boot.SpringApplication;
@@ -8,7 +8,6 @@ import org.springframework.boot.WebApplicationType;
 import uk.ac.susx.tag.norconex.jobqueuemanager.CrawlerArguments;
 import uk.ac.susx.tag.norconex.jobqueuemanager.SingleSeedCollector;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -18,7 +17,7 @@ public class TestSpringCrawler {
 
     @Test
     public void TestSpringCrawler() {
-        SpringCrawler  sc = new SpringCrawler();
+        CLIRunner sc = new CLIRunner();
         String seed = "http://www.0.com:5000";
         CrawlerArguments ca = new CrawlerArguments();
         ca.seeds = Arrays.asList(seed);
@@ -65,7 +64,7 @@ public class TestSpringCrawler {
 
         String[] args = params.toArray(new String[params.size()]);
 
-        SpringApplication app = new SpringApplication(SpringCrawler.class);
+        SpringApplication app = new SpringApplication(CLIRunner.class);
         app.setBannerMode(Banner.Mode.OFF);
         app.setWebApplicationType(WebApplicationType.NONE);
         app.run(args);

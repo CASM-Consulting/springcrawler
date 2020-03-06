@@ -1,9 +1,5 @@
 package com.casm.acled.crawler.spring;
 
-import com.beust.jcommander.JCommander;
-
-// acled
-import com.casm.acled.configuration.ObjectMapperConfiguration;
 import com.casm.acled.crawler.ACLEDMetadataPreProcessor;
 import com.casm.acled.crawler.ACLEDPostProcessor;
 import com.casm.acled.crawler.ACLEDScraperPreProcessor;
@@ -12,8 +8,6 @@ import com.casm.acled.crawler.utils.Utils;
 import com.casm.acled.dao.entities.ArticleDAO;
 import com.casm.acled.dao.entities.SourceDAO;
 import com.casm.acled.dao.entities.SourceListDAO;
-
-// norconex
 import com.norconex.collector.core.data.store.impl.mvstore.MVStoreCrawlDataStoreFactory;
 import com.norconex.collector.http.crawler.HttpCrawlerConfig;
 import com.norconex.collector.http.doc.HttpMetadata;
@@ -22,54 +16,27 @@ import com.norconex.importer.handler.IImporterHandler;
 import com.norconex.importer.handler.filter.OnMatch;
 import com.norconex.importer.handler.filter.impl.EmptyMetadataFilter;
 import com.norconex.importer.handler.filter.impl.RegexMetadataFilter;
-
-//camunda
 import com.norconex.importer.handler.tagger.impl.KeepOnlyTagger;
-import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
-import org.camunda.bpm.spring.boot.starter.rest.CamundaBpmRestJerseyAutoConfiguration;
-
-// logging
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-// java
-import java.io.File;
-import java.net.URISyntaxException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.time.LocalDate;
-import java.util.*;
-
-// spring
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.Banner;
-import org.springframework.boot.CommandLineRunner;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.WebApplicationType;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
-import org.springframework.boot.autoconfigure.validation.ValidationAutoConfiguration;
-import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
-
+import org.springframework.stereotype.Component;
 import uk.ac.susx.tag.norconex.database.ConcurrentContentHashStore;
 import uk.ac.susx.tag.norconex.document.WebScraperMetadataChecksum;
 import uk.ac.susx.tag.norconex.jobqueuemanager.CrawlerArguments;
 import uk.ac.susx.tag.norconex.jobqueuemanager.SingleSeedCollector;
 
-import javax.annotation.PreDestroy;
+import java.io.File;
+import java.net.URISyntaxException;
+import java.nio.file.Paths;
+import java.time.LocalDate;
+import java.util.*;
 
-@EnableAutoConfiguration(exclude={HibernateJpaAutoConfiguration.class,CamundaBpmAutoConfiguration.class, CamundaBpmRestJerseyAutoConfiguration.class, ValidationAutoConfiguration.class})
-// We need the special object mapper, though.
-@Import({ObjectMapperConfiguration.class, SpringCrawler.ShutdownConfig.class})
-// And we also need the DAOs.
-@ComponentScan(basePackages={"com.casm.acled.dao"})
-public class SpringCrawler implements CommandLineRunner {
 
-    protected static final Logger logger = LoggerFactory.getLogger(SpringCrawler.class);
+@Component
+public class CrawlerService {
+
+    protected static final Logger logger = LoggerFactory.getLogger(CrawlerService.class);
 
     @Autowired
     private ArticleDAO articleDAO;
@@ -78,57 +45,40 @@ public class SpringCrawler implements CommandLineRunner {
     @Autowired
     private SourceListDAO sourceListDAO;
 
-    private ConcurrentContentHashStore contentHashStore;
 
 
-    public static void main(String[] args) {
+//    public static void main(String[] args) {
+//
+//        SpringApplication app = new SpringApplication(CrawlerService.class);
+//        app.setBannerMode(Banner.Mode.OFF);
+//        app.setWebApplicationType(WebApplicationType.NONE);
+//        ConfigurableApplicationContext ctx = app.run(args);
+//        logger.info("Spring Boot application started");
+//
+//        // Close when complete
+////        ctx.getBean(TerminateBean.class);
+//        ctx.close();
+//    }
 
-        SpringApplication app = new SpringApplication(SpringCrawler.class);
-        app.setBannerMode(Banner.Mode.OFF);
-        app.setWebApplicationType(WebApplicationType.NONE);
-        ConfigurableApplicationContext ctx = app.run(args);
-        logger.info("Spring Boot application started");
+//    public class TerminateBean {
+//
+//        @PreDestroy
+//        public void onDestroy() throws Exception {
+//            contentHashStore.close();
+//            logger.info("Spring Container is destroyed!");
+//        }
+//    }
 
-        // Close when complete
-        ctx.getBean(TerminateBean.class);
-        ctx.close();
-    }
+//    @Configuration
+//    public class ShutdownConfig {
+//
+//        @Bean
+//        public TerminateBean getTerminateBean() {
+//            return new TerminateBean();
+//        }
+//    }
 
-    public class TerminateBean {
-
-        @PreDestroy
-        public void onDestroy() throws Exception {
-            contentHashStore.close();
-            logger.info("Spring Container is destroyed!");
-        }
-    }
-
-    @Configuration
-    public class ShutdownConfig {
-
-        @Bean
-        public TerminateBean getTerminateBean() {
-            return new TerminateBean();
-        }
-    }
-
-    @Override
-    public void run(String[] args) throws Exception {
-
-
-
-        List<String> splitArgs = new ArrayList<>();
-        for(String arg : args){
-            splitArgs.addAll(Arrays.asList(arg.split("\\s+")));
-        }
-
-        String[] corrArgs = splitArgs.toArray(new String[splitArgs.size()]);
-
-        CrawlerArguments crawlerArguments = new CrawlerArguments();
-        JCommander.newBuilder()
-                .addObject(crawlerArguments)
-                .build()
-                .parse(corrArgs);
+    public void run(CrawlerArguments crawlerArguments, ConcurrentContentHashStore contentHashStore)  {
 
         SingleSeedCollector collector = new SingleSeedCollector(crawlerArguments.userAgent,new File(crawlerArguments.crawldb), Utils.getDomain(crawlerArguments.seeds.get(0)),
                 crawlerArguments.depth, crawlerArguments.urlFilter,crawlerArguments.threadsPerSeed,crawlerArguments.ignoreRobots,

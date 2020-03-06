@@ -24,9 +24,13 @@ public class Utils {
     public static String KEYWORDS = ".*\\b(?:kill|massacre|death|died|dead|bomb|bombed|bombing|rebel|attack|attacked|riot|battle|protest|clash|demonstration|strike|wound|injure|casualty|displace|unrest|casualties|vigilante|torture|march|rape)\\b.*";
 
     // Returns the originating domain of a given url - minus any trailing 'www'
-    public static String getDomain(String urlString) throws MalformedURLException {
-        URL url = new URL(urlString);
-        return (url.getHost().startsWith("www")) ? url.getHost().substring(4) : url.getHost();
+    public static String getDomain(String urlString)  {
+        try {
+            URL url = new URL(urlString);
+            return (url.getHost().startsWith("www")) ? url.getHost().substring(4) : url.getHost();
+        } catch (MalformedURLException e){
+            throw new RuntimeException(e);
+        }
     }
 
 
