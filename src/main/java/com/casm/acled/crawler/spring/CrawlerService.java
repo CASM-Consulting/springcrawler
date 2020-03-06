@@ -28,6 +28,7 @@ import uk.ac.susx.tag.norconex.jobqueuemanager.SingleSeedCollector;
 
 import java.io.File;
 import java.net.URISyntaxException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.*;
@@ -78,7 +79,7 @@ public class CrawlerService {
 //        }
 //    }
 
-    public void run(CrawlerArguments crawlerArguments, ConcurrentContentHashStore contentHashStore)  {
+    public void run(CrawlerArguments crawlerArguments)  {
 
         SingleSeedCollector collector = new SingleSeedCollector(crawlerArguments.userAgent,new File(crawlerArguments.crawldb), Utils.getDomain(crawlerArguments.seeds.get(0)),
                 crawlerArguments.depth, crawlerArguments.urlFilter,crawlerArguments.threadsPerSeed,crawlerArguments.ignoreRobots,
@@ -91,7 +92,8 @@ public class CrawlerService {
         ImporterConfig importerConfig = config.getImporterConfig();
         List<IImporterHandler> handlers = new ArrayList<>();
 
-        contentHashStore = new ConcurrentContentHashStore(Paths.get(crawlerArguments.crawldb,Utils.getDomain(crawlerArguments.seeds.get(0)),"crawlstore"));
+        Path contentHashStorePath = Paths.get(crawlerArguments.crawldb,Utils.getDomain(crawlerArguments.seeds.get(0)),"crawlstore");
+        ConcurrentContentHashStore contentHashStore = new ConcurrentContentHashStore(contentHashStorePath);
 
         System.out.println(crawlerArguments.index);
         // Only performs this step when we are wanting to produce to a table
@@ -109,13 +111,12 @@ public class CrawlerService {
             if(crawlerArguments.scraper != null) {
                 logger.info("INFO: Scraper " + crawlerArguments.scraper + " found for " + crawlerArguments.seeds.get(0));
                 config.setPreImportProcessors(new ACLEDScraperPreProcessor(Paths.get(crawlerArguments.scrapers,crawlerArguments.scraper)),new ACLEDMetadataPreProcessor(metadata));
-                config.setDocumentChecksummer(new WebScraperMetadataChecksum(contentHashStore));
             }
             else {
                 config.setPreImportProcessors(new ACLEDScraperPreProcessor(Paths.get(crawlerArguments.scrapers)),new ACLEDMetadataPreProcessor(metadata));
-                config.setDocumentChecksummer(new WebScraperMetadataChecksum(contentHashStore));
             }
 
+            config.setDocumentChecksummer(new WebScraperMetadataChecksum(contentHashStore));
             // Add the crawler-to-spring-magic post-processor
             config.setPostImportProcessors(new ACLEDPostProcessor(articleDAO, sourceDAO, sourceListDAO,false));
             

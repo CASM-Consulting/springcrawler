@@ -25,13 +25,12 @@ public class JQMRunner implements Runnable {
     @Resource
     private JobManagerProvider jmp;
 
-    ConcurrentContentHashStore contentHashStore;
-
     @Override
     public void run()
     {
         System.out.println("Job " + jmp.getObject().jobInstanceID() + " starting");
 
+        System.out.println(parameters);
         List<String> splitArgs = new ArrayList<>();
         for(Map.Entry<String,String> entry : parameters.entrySet()){
             splitArgs.add(entry.getKey());
@@ -46,7 +45,7 @@ public class JQMRunner implements Runnable {
                 .build()
                 .parse(corrArgs);
 
-        crawlerService.run(crawlerArguments, contentHashStore);
+        crawlerService.run(crawlerArguments);
         System.out.println("Job " + jmp.getObject().jobInstanceID() + " is done!");
     }
 }
