@@ -13,8 +13,8 @@ import com.norconex.commons.lang.file.ContentType;
 
 // jsoup
 import org.jsoup.Jsoup;
-
-// logging imports
+//
+//// logging imports
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
