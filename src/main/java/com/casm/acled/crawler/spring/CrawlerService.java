@@ -81,10 +81,18 @@ public class CrawlerService {
 
     public void run(CrawlerArguments crawlerArguments)  {
 
-        SingleSeedCollector collector = new SingleSeedCollector(crawlerArguments.userAgent,new File(crawlerArguments.crawldb), Utils.getDomain(crawlerArguments.seeds.get(0)),
-                crawlerArguments.depth, crawlerArguments.urlFilter,crawlerArguments.threadsPerSeed,crawlerArguments.ignoreRobots,
-                crawlerArguments.ignoreSitemap, crawlerArguments.polite,
-                crawlerArguments.seeds.get(0));
+        SingleSeedCollector collector = new SingleSeedCollector(
+                crawlerArguments.userAgent,
+                new File(crawlerArguments.crawldb),
+                Utils.getDomain(crawlerArguments.seeds.get(0)),
+                crawlerArguments.depth,
+                crawlerArguments.urlFilter,
+                crawlerArguments.threadsPerSeed,
+                crawlerArguments.ignoreRobots,
+                crawlerArguments.ignoreSitemap,
+                crawlerArguments.polite,
+                crawlerArguments.seeds.get(0)
+        );
 
         HttpCrawlerConfig config = collector.getConfiguration();
 
@@ -95,7 +103,7 @@ public class CrawlerService {
         Path contentHashStorePath = Paths.get(crawlerArguments.crawldb,Utils.getDomain(crawlerArguments.seeds.get(0)),"crawlstore");
         ConcurrentContentHashStore contentHashStore = new ConcurrentContentHashStore(contentHashStorePath);
 
-        System.out.println(crawlerArguments.index);
+        logger.info("index only: {}", crawlerArguments.index);
         // Only performs this step when we are wanting to produce to a table
         if(!crawlerArguments.index){
 

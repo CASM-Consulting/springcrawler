@@ -3,6 +3,7 @@ package com.casm.acled.crawler.utils;
 
 import com.casm.acled.camunda.BusinessKeys;
 import com.casm.acled.configuration.ObjectMapperConfiguration;
+import com.casm.acled.crawler.DateFilter;
 import com.casm.acled.dao.entities.ArticleDAO;
 import com.casm.acled.dao.entities.SourceDAO;
 import com.casm.acled.dao.entities.SourceListDAO;
@@ -20,6 +21,8 @@ import com.mdimension.jchronic.tags.Pointer;
 import com.mdimension.jchronic.utils.Span;
 import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
 import org.camunda.bpm.spring.boot.starter.rest.CamundaBpmRestJerseyAutoConfiguration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.Banner;
 import org.springframework.boot.CommandLineRunner;
@@ -34,11 +37,13 @@ import org.ocpsoft.prettytime.nlp.PrettyTimeParser;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
+
+import static java.util.stream.Collectors.*;
 
 
 // We have to exclude these classes, because they only work in a web context.
@@ -48,6 +53,7 @@ import java.util.stream.Collectors;
 // And we also need the DAOs.
 @ComponentScan(basePackages={"com.casm.acled.dao"})
 public class Util implements CommandLineRunner {
+    protected static final Logger logger = LoggerFactory.getLogger(Util.class);
 
     @Autowired
     private ArticleDAO articleDAO;
@@ -164,18 +170,62 @@ public class Util implements CommandLineRunner {
         return dateStr;
     }
 
+    private static Optional<LocalDate> getJChronic (String date) {
+        Span span = Chronic.parse(date, opts);   // Year is treated as 1938 because of PointerType.PAST.
+        Optional<LocalDate> result = Optional.empty();
+        if (span != null) {
+            LocalDate localDate = Instant.ofEpochMilli(span.getBegin()*1000).atZone(ZoneId.of("GMT")).toLocalDate();
+            result = Optional.of(localDate);
+        }
+        return result;
+    }
 
-    public static LocalDate getDate(String date) {
+    private static Optional<LocalDate> getPretty (String date) {
+        List<Date> dates = prettyParser.parse(date);
+        Optional<LocalDate> result = Optional.empty();
 
-        // change log:
-        // 1. added last ditch formating attempt
-        // 2. changed java space char for empty space to ' '
-        // Has significant problems with non-english
-        // 3. add russian months - needs looking at
-        // 4. add spanish
-        // 5. replace UTC offset
-        // 6. add german
-        //
+        if(!dates.isEmpty()) {
+            LocalDate localDate = dates.get(dates.size()-1).toInstant().atZone(ZoneId.of("GMT")).toLocalDate();
+
+            if(localDate.isAfter(LocalDate.now())) {
+                localDate = dates.get(0).toInstant().atZone(ZoneId.of("GMT")).toLocalDate();
+            }
+            result = Optional.of(localDate);
+        }
+        return result;
+    }
+
+    private static Optional<LocalDate> getNatty (String date) {
+
+        Optional<LocalDate> result = Optional.empty();
+
+        List<DateGroup> dateGroups = nattyParser.parse(date);
+        if(dateGroups.size() > 0) {
+            DateGroup dateGroup = dateGroups.get(dateGroups.size() - 1);
+            List<Date> ds = dateGroup.getDates();
+            Date d = ds.get(ds.size() - 1);
+            LocalDate localDate = d.toInstant().atZone(ZoneId.of("GMT")).toLocalDate();
+            result = Optional.of(localDate);
+
+        }
+
+        return result;
+    }
+
+    private static Optional<LocalDate> getDefault(String date) {
+        try {
+
+            Date d = DateUtil.stringToDate(date);
+            LocalDate localDate = d.toInstant().atZone(ZoneId.of("GMT")).toLocalDate();
+
+            return Optional.of(localDate);
+        } catch (IllegalArgumentException e) {
+
+            return Optional.empty();
+        }
+    }
+
+    public static String normaliseDate(String date) {
 
         date = date.replaceAll("\\p{javaSpaceChar}+", " ").trim();
 
@@ -189,63 +239,55 @@ public class Util implements CommandLineRunner {
         date = date.replaceAll("(?<=\\p{Alpha}{2,})(?=\\p{Digit})", " ");
         date = date.replace(",", " ");
 
-        //try first two lines
-//            List<DateGroup> groups = ImmutableList.of();
-        Span result = null;
-        List<Date> dates = ImmutableList.of();
-
-
         date = replaceMonths(months,date);
         date = replaceMonths(russianMonths,date.toLowerCase());
         date = replaceMonths(spanishMonths,date.toLowerCase());
         date = replaceMonths(germanMonths,date.toLowerCase());
         date = replaceMonths(frenchMonths,date.toLowerCase());
-//                groups = parser.( text[1]);
-        result = Chronic.parse(date, opts);   // Year is treated as 1938 because of PointerType.PAST.
 
-        LocalDate localDate = null;
-        if(result == null) {
-            dates = prettyParser.parse(date);
+        return date;
+    }
 
 
-            if(!dates.isEmpty()) {
-                localDate = dates.get(dates.size()-1).toInstant().atZone(ZoneId.of("GMT")).toLocalDate();
-                if(localDate.isAfter(LocalDate.now())) {
-                    localDate = dates.get(0).toInstant().atZone(ZoneId.of("GMT")).toLocalDate();
-                }
+    private static Optional<LocalDate> resolveBestGuess(List<Optional<LocalDate>> guesses) {
+
+        List<LocalDate> dates = guesses.stream()
+                .filter( Optional::isPresent )
+                .map( Optional::get )
+                .filter( d -> d.isBefore(LocalDate.now()) )
+                .collect(Collectors.toList());
+
+        Optional<LocalDate> result = Optional.empty();
+
+        if(dates.size()==1) {
+            result = Optional.of(dates.get(0));
+        } else if (dates.size() > 1) {
+            Map<LocalDate, Long> counts = dates.stream().collect(
+                    groupingBy(Function.identity(), counting())
+            );
+
+            Optional<Map.Entry<LocalDate, Long>> favourite = counts.entrySet().stream().max(Map.Entry.comparingByValue());
+
+            if(favourite.isPresent()) {
+                result = Optional.of(favourite.get().getKey());
             }
-
-
-            if(dates.isEmpty() || localDate.isAfter(LocalDate.now())) {
-
-                List<DateGroup> dateGroups = nattyParser.parse(date);
-                if(dateGroups.size() > 0) {
-                    DateGroup dateGroup = dateGroups.get(dateGroups.size() - 1);
-                    List<Date> ds = dateGroup.getDates();
-                    Date d = ds.get(ds.size() - 1);
-                    localDate = d.toInstant().atZone(ZoneId.of("GMT")).toLocalDate();
-
-                    if (localDate.isAfter(LocalDate.now())) {
-                        // Last ditch fallback attempt
-//                        Date dNew = DateUtil.stringToDate(date);
-//                        localDate = dNew.toInstant().atZone(ZoneId.of("GMT")).toLocalDate();
-//                        return localDate;
-                        return null;
-                    }
-                } else {
-                    // last ditch fallback attempt
-                    Date d = DateUtil.stringToDate(date);
-                    localDate = d.toInstant().atZone(ZoneId.of("GMT")).toLocalDate();
-                    return localDate;
-                }
-
-            }
-        } else {
-
-            localDate = Instant.ofEpochMilli(result.getBegin()*1000).atZone(ZoneId.of("GMT")).toLocalDate();
         }
 
-        return localDate;
+        return result;
+    }
+
+    public static LocalDate getDate(String date) {
+
+        date = normaliseDate(date);
+
+        Optional<LocalDate> jchronicGuess = getJChronic(date);
+        Optional<LocalDate> prettyGuess = getPretty(date);
+        Optional<LocalDate> nattyGuess = getNatty(date);
+        Optional<LocalDate> defaultGuess = getDefault(date);
+
+        Optional<LocalDate> bestGuess = resolveBestGuess(ImmutableList.of(jchronicGuess, prettyGuess, nattyGuess, defaultGuess));
+
+        return bestGuess.orElseGet(()->null);
     }
 
 //    public LocalDate simplDateFallback(String dateString) {

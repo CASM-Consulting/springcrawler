@@ -18,7 +18,8 @@ public class TestSpringCrawler {
     @Test
     public void TestSpringCrawler() {
         CLIRunner sc = new CLIRunner();
-        String seed = "http://www.0.com:5000";
+//        String seed = "http://www.0.com:5000";
+        String seed = "http://english.pnn.ps/";
         CrawlerArguments ca = new CrawlerArguments();
         ca.seeds = Arrays.asList(seed);
         ca.crawldb= "/home/sw206/git/springcrawler/testcrawldb";
@@ -26,8 +27,8 @@ public class TestSpringCrawler {
         ca.ignoreRobots = true;
         ca.ignoreSitemap = false;
         ca.polite = 400;
-        ca.scrapers = "/home/sw206/git/springcrawler/testscrapers";
-        ca.scraper = "generic";
+        ca.scrapers = "/home/sw206/git/springcrawler/allscrapers";
+//        ca.scraper = "generic";
         ca.threadsPerSeed = 2;
         ca.urlFilter = ".*";
         ca.userAgent = "taglab";
@@ -57,8 +58,8 @@ public class TestSpringCrawler {
         params.add("taglab");
         params.add(SingleSeedCollector.ID);
         params.add("springtest");
-        params.add(CrawlerArguments.SCRAPER);
-        params.add(ca.scraper);
+//        params.add(CrawlerArguments.SCRAPER);
+//        params.add(ca.scraper);
 //        params.add("");
 //        params.add(SingleSeedCollector.INDEXONLY);
 

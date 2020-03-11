@@ -27,11 +27,11 @@
 -->
     <!-- Console appender writes human-readable messages to stdout -->
 
-    <appender class="ch.qos.logback.core.ConsoleAppender" name="DEBUG">
-        <encoder>
-            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
-        </encoder>
-    </appender>
+<!--    <appender class="ch.qos.logback.core.ConsoleAppender" name="DEBUG">-->
+<!--        <encoder>-->
+<!--            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>-->
+<!--        </encoder>-->
+<!--    </appender>-->
 
     <appender class="ch.qos.logback.core.ConsoleAppender" name="CONSOLE">
         <encoder>
