@@ -54,7 +54,7 @@ public class Utils {
 
     // returns a web scraper based on a job spect of last_scrape file
     public static String processJSON(File scraperLocation) throws IOException, IncorrectScraperJSONException {
-        String json = Files.toString(scraperLocation, Charset.defaultCharset());
+        String json = Files.asCharSource(scraperLocation, Charset.defaultCharset()).read();
         return (scraperLocation.getName().equals("last_scrape.json")) ? processScraperJSON(json) : processJobJSON(json);
     }
 
