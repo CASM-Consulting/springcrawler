@@ -1,7 +1,7 @@
 package com.casm.acled.crawler;
 
 // apache commons
-import com.casm.acled.crawler.utils.Util;
+import com.casm.acled.crawler.utils.DateUtil;
 import com.norconex.importer.handler.filter.OnMatch;
 import org.apache.commons.configuration.XMLConfiguration;
 
@@ -48,7 +48,7 @@ public class DateFilter extends AbstractDocumentFilter {
             rejected = false;
         }
         try{
-            LocalDate date = Util.getDate(dateStr);
+            LocalDate date = DateUtil.getDate(dateStr);
 //            logger.info("INFO: filtering article by date: " + reference + " date: " + date + " " + threshold.toString()
 //                    + " article date: " + dateStr + "after?: " + date.isAfter(threshold));
             if(date != null) {

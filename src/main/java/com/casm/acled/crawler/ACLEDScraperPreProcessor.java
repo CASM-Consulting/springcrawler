@@ -3,6 +3,7 @@ package com.casm.acled.crawler;
 // gson
 
 // crawling imports
+import com.casm.acled.crawler.utils.Util;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.client.HttpClient;
 import com.norconex.collector.http.doc.HttpDocument;
@@ -19,15 +20,11 @@ import org.slf4j.LoggerFactory;
 
 // java imports
 import java.io.*;
-        import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
-import java.util.stream.Collectors;
 
 // utils for domain resolution etc..
-import com.casm.acled.crawler.utils.Utils;
 import uk.ac.susx.tag.norconex.scraping.GeneralSplitterFactory;
 import uk.ac.susx.tag.norconex.scraping.IForumSplitter;
 import uk.ac.susx.tag.norconex.scraping.POJOHTMLMatcherDefinition;
@@ -154,7 +151,7 @@ public class ACLEDScraperPreProcessor implements IHttpDocumentProcessor {
         }
         file = scraperPath.resolve(key).resolve(jobJson).toFile();
 
-        String processed = Utils.processJSON(file);
+        String processed = Util.processJSON(file);
 
         Map<String, List<Map<String, String>>> scraperDef = buildScraperDefinition(GeneralSplitterFactory.parseJsonTagSet(processed));
 
@@ -182,7 +179,7 @@ public class ACLEDScraperPreProcessor implements IHttpDocumentProcessor {
 
     public WebPage scrapePage(WebPage page) throws ScraperNotFoundException, IOException, IncorrectScraperJSONException {
 
-        String domain = Utils.getDomain(page.getUrl());
+        String domain = Util.getDomain(page.getUrl());
 
         // If there is a factory set for this preprocessor use that else search for one via the page's domain of origin
         // Prefered functionality is to set a single preprocessor (more robust)

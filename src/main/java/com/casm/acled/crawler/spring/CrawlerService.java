@@ -4,7 +4,7 @@ import com.casm.acled.crawler.ACLEDMetadataPreProcessor;
 import com.casm.acled.crawler.ACLEDPostProcessor;
 import com.casm.acled.crawler.ACLEDScraperPreProcessor;
 import com.casm.acled.crawler.DateFilter;
-import com.casm.acled.crawler.utils.Utils;
+import com.casm.acled.crawler.utils.Util;
 import com.casm.acled.dao.entities.ArticleDAO;
 import com.casm.acled.dao.entities.SourceDAO;
 import com.casm.acled.dao.entities.SourceListDAO;
@@ -84,7 +84,7 @@ public class CrawlerService {
         SingleSeedCollector collector = new SingleSeedCollector(
                 crawlerArguments.userAgent,
                 new File(crawlerArguments.crawldb),
-                Utils.getDomain(crawlerArguments.seeds.get(0)),
+                Util.getDomain(crawlerArguments.seeds.get(0)),
                 crawlerArguments.depth,
                 crawlerArguments.urlFilter,
                 crawlerArguments.threadsPerSeed,
@@ -100,7 +100,7 @@ public class CrawlerService {
         ImporterConfig importerConfig = config.getImporterConfig();
         List<IImporterHandler> handlers = new ArrayList<>();
 
-        Path contentHashStorePath = Paths.get(crawlerArguments.crawldb,Utils.getDomain(crawlerArguments.seeds.get(0)),"crawlstore");
+        Path contentHashStorePath = Paths.get(crawlerArguments.crawldb, Util.getDomain(crawlerArguments.seeds.get(0)),"crawlstore");
         ConcurrentContentHashStore contentHashStore = new ConcurrentContentHashStore(contentHashStorePath);
 
         logger.info("index only: {}", crawlerArguments.index);
@@ -145,7 +145,7 @@ public class CrawlerService {
     private static void buildACLEDArticleFilters(List<IImporterHandler> handlers) {
 
         // Set the various document filters
-        RegexMetadataFilter regexFilter = new RegexMetadataFilter(CrawlerArguments.SCRAPEDARTICLE, Utils.KEYWORDS);
+        RegexMetadataFilter regexFilter = new RegexMetadataFilter(CrawlerArguments.SCRAPEDARTICLE, Util.KEYWORDS);
         EmptyMetadataFilter emptyArticle = new EmptyMetadataFilter(OnMatch.EXCLUDE,CrawlerArguments.SCRAPEDARTICLE);
         int week = 7;
         DateFilter df = new DateFilter(LocalDate.now().minusDays(week));

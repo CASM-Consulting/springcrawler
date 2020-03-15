@@ -2,7 +2,7 @@ package uk.ac.susx.tag.norconex;
 
 import com.casm.acled.crawler.ACLEDScraperPreProcessor;
 import com.casm.acled.crawler.IncorrectScraperJSONException;
-import com.casm.acled.crawler.utils.Utils;
+import com.casm.acled.crawler.utils.Util;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.junit.Test;
@@ -49,7 +49,7 @@ public class TestScraped {
         Path scraper = Paths.get("/Users/jp242/Documents/Projects/ACLED/ManualScrapers/demo-scrapers/greaterkashmircom/job.json");
 
         try {
-            String processed = Utils.processJSON(scraper.toFile());
+            String processed = Util.processJSON(scraper.toFile());
             Map<String, List<Map<String, String>>> scraperDefs = buildScraperDefinition(GeneralSplitterFactory.parseJsonTagSet(processed));
             GeneralSplitterFactory tagset = new GeneralSplitterFactory(scraperDefs);
 //            for(POJOHTMLMatcherDefinition matcher : tagset) {
