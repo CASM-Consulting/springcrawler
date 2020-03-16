@@ -1,20 +1,11 @@
 package com.casm.acled.crawler.scraper;
 
-import com.casm.acled.camunda.BusinessKeys;
-import com.casm.acled.crawler.ACLEDMetadataPreProcessor;
 import com.casm.acled.crawler.ACLEDScraperPreProcessor;
 import com.casm.acled.crawler.IncorrectScraperJSONException;
-import com.casm.acled.crawler.utils.Utils;
+import com.casm.acled.crawler.utils.Util;
 import com.casm.acled.dao.entities.ArticleDAO;
 import com.casm.acled.dao.entities.SourceDAO;
 import com.casm.acled.dao.entities.SourceListDAO;
-import com.casm.acled.entities.EntityVersions;
-import com.casm.acled.entities.article.Article;
-import com.casm.acled.entities.source.Source;
-import com.casm.acled.entities.sourcelist.SourceList;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.norconex.collector.http.doc.HttpDocument;
-import org.apache.http.client.HttpClient;
 import org.jsoup.Jsoup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,7 +59,7 @@ public class Scraper {
     public Scraper(Path jsonScraper, String domain,
                    ArticleDAO articleDAO, SourceDAO sourceDAO, SourceListDAO sourceListDAO) {
         try {
-            String json = Utils.processJSON(jsonScraper.toFile());
+            String json = Util.processJSON(jsonScraper.toFile());
             List<POJOHTMLMatcherDefinition> rules = GeneralSplitterFactory.parseJsonTagSet(json);
             factory = new GeneralSplitterFactory(buildScraperDefinition(rules));
         } catch (IOException e) {

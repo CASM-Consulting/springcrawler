@@ -4,7 +4,7 @@ import com.casm.acled.crawler.ACLEDMetadataPreProcessor;
 import com.casm.acled.crawler.ACLEDPostProcessor;
 import com.casm.acled.crawler.ACLEDScraperPreProcessor;
 import com.casm.acled.crawler.DateFilter;
-import com.casm.acled.crawler.utils.Utils;
+import com.casm.acled.crawler.utils.Util;
 import com.casm.acled.dao.entities.ArticleDAO;
 import com.casm.acled.dao.entities.SourceDAO;
 import com.casm.acled.dao.entities.SourceListDAO;
@@ -28,6 +28,7 @@ import uk.ac.susx.tag.norconex.jobqueuemanager.SingleSeedCollector;
 
 import java.io.File;
 import java.net.URISyntaxException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.*;
@@ -78,12 +79,20 @@ public class CrawlerService {
 //        }
 //    }
 
-    public void run(CrawlerArguments crawlerArguments, ConcurrentContentHashStore contentHashStore)  {
+    public void run(CrawlerArguments crawlerArguments)  {
 
-        SingleSeedCollector collector = new SingleSeedCollector(crawlerArguments.userAgent,new File(crawlerArguments.crawldb), Utils.getDomain(crawlerArguments.seeds.get(0)),
-                crawlerArguments.depth, crawlerArguments.urlFilter,crawlerArguments.threadsPerSeed,crawlerArguments.ignoreRobots,
-                crawlerArguments.ignoreSitemap, crawlerArguments.polite,
-                crawlerArguments.seeds.get(0));
+        SingleSeedCollector collector = new SingleSeedCollector(
+                crawlerArguments.userAgent,
+                new File(crawlerArguments.crawldb),
+                Util.getDomain(crawlerArguments.seeds.get(0)),
+                crawlerArguments.depth,
+                crawlerArguments.urlFilter,
+                crawlerArguments.threadsPerSeed,
+                crawlerArguments.ignoreRobots,
+                crawlerArguments.ignoreSitemap,
+                crawlerArguments.polite,
+                crawlerArguments.seeds.get(0)
+        );
 
         HttpCrawlerConfig config = collector.getConfiguration();
 
@@ -91,9 +100,10 @@ public class CrawlerService {
         ImporterConfig importerConfig = config.getImporterConfig();
         List<IImporterHandler> handlers = new ArrayList<>();
 
-        contentHashStore = new ConcurrentContentHashStore(Paths.get(crawlerArguments.crawldb,Utils.getDomain(crawlerArguments.seeds.get(0)),"crawlstore"));
+        Path contentHashStorePath = Paths.get(crawlerArguments.crawldb, Util.getDomain(crawlerArguments.seeds.get(0)),"crawlstore");
+        ConcurrentContentHashStore contentHashStore = new ConcurrentContentHashStore(contentHashStorePath);
 
-        System.out.println(crawlerArguments.index);
+        logger.info("index only: {}", crawlerArguments.index);
         // Only performs this step when we are wanting to produce to a table
         if(!crawlerArguments.index){
 
@@ -109,13 +119,12 @@ public class CrawlerService {
             if(crawlerArguments.scraper != null) {
                 logger.info("INFO: Scraper " + crawlerArguments.scraper + " found for " + crawlerArguments.seeds.get(0));
                 config.setPreImportProcessors(new ACLEDScraperPreProcessor(Paths.get(crawlerArguments.scrapers,crawlerArguments.scraper)),new ACLEDMetadataPreProcessor(metadata));
-                config.setDocumentChecksummer(new WebScraperMetadataChecksum(contentHashStore));
             }
             else {
                 config.setPreImportProcessors(new ACLEDScraperPreProcessor(Paths.get(crawlerArguments.scrapers)),new ACLEDMetadataPreProcessor(metadata));
-                config.setDocumentChecksummer(new WebScraperMetadataChecksum(contentHashStore));
             }
 
+            config.setDocumentChecksummer(new WebScraperMetadataChecksum(contentHashStore));
             // Add the crawler-to-spring-magic post-processor
             config.setPostImportProcessors(new ACLEDPostProcessor(articleDAO, sourceDAO, sourceListDAO,false));
             
@@ -136,7 +145,7 @@ public class CrawlerService {
     private static void buildACLEDArticleFilters(List<IImporterHandler> handlers) {
 
         // Set the various document filters
-        RegexMetadataFilter regexFilter = new RegexMetadataFilter(CrawlerArguments.SCRAPEDARTICLE, Utils.KEYWORDS);
+        RegexMetadataFilter regexFilter = new RegexMetadataFilter(CrawlerArguments.SCRAPEDARTICLE, Util.KEYWORDS);
         EmptyMetadataFilter emptyArticle = new EmptyMetadataFilter(OnMatch.EXCLUDE,CrawlerArguments.SCRAPEDARTICLE);
         int week = 7;
         DateFilter df = new DateFilter(LocalDate.now().minusDays(week));

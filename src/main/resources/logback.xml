@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Copyright (c) 2013, University of Sussex
+    All rights reserved.
+
+-->
+<configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.github.com/enricopulatzo/logback-XSD/master/src/main/xsd/logback.xsd">
+    <contextName>Spring Crawler</contextName>
+    <!-- Write logging status information to stdout -->
+    <!--<statusListener class="ch.qos.logback.core.status.OnConsoleStatusListener" />-->
+    <!--
+    ======================================================
+            Configuration property defaults
+    ======================================================
+-->
+    <!-- output directory to write logs to. defaults to user.dir system property, or cwd  -->
+    <property name="logging.output-dir" value="${logging.output-dir:-${user.dir:-.}}"/>
+    <!-- name of application, used as a file separation suffix, defaults to "default"  -->
+    <property name="logging.application-name" value="${logging.application-name:-default}"/>
+    <!-- root logging level for all handlers. defaults to INFO. can be overridden by child loggers -->
+    <property name="logging.level" value="${logging.level:-INFO}"/>
+    <!--
+    ======================================================
+            Appenders
+    ======================================================
+-->
+    <!-- Console appender writes human-readable messages to stdout -->
+
+<!--    <appender class="ch.qos.logback.core.ConsoleAppender" name="DEBUG">-->
+<!--        <encoder>-->
+<!--            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>-->
+<!--        </encoder>-->
+<!--    </appender>-->
+
+    <appender class="ch.qos.logback.core.ConsoleAppender" name="CONSOLE">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="ASYNC" class="ch.qos.logback.classic.AsyncAppender">
+        <neverBlock>true</neverBlock>
+        <appender-ref ref="CONSOLE" />
+    </appender>
+
+
+    <!--
+    ======================================================
+          Loggers
+    ======================================================
+-->
+
+    <!-- Maybe want to up this to 'error' if we don't need those warnings every time -->
+<!--    <logger name="com.norconex.collector" level="WARN"/>-->
+<!--    <logger name="CrawlerEvent" level="WARN"/>-->
+
+    <root level="${logging.level}">
+        <appender-ref ref="CONSOLE"/>
+    </root>
+</configuration>

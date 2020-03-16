@@ -1,13 +1,9 @@
 package uk.ac.susx.tag.norconex;
-import com.casm.acled.crawler.utils.Util;
-import com.joestelmach.natty.DateGroup;
+import com.casm.acled.crawler.utils.DateUtil;
 import com.joestelmach.natty.Parser;
 import org.junit.Test;
 
 import java.time.LocalDate;
-import java.time.ZoneId;
-import java.util.Date;
-import java.util.List;
 
 public class TestDataParser {
 
@@ -24,7 +20,7 @@ public class TestDataParser {
         // 06.02.2020 Perşembe 16:25  - Son Güncelleme: 06.02.2020 Perşembe 16:48
 
         String date = " Our Correspondent | Published: March 01, 2018 01:17:42 | Updated: March 01, 2018 11:10:53";
-        LocalDate parsedD = Util.getDate(date);
+        LocalDate parsedD = DateUtil.getDate(date);
         System.out.println("Original: " + date);
         System.out.println("Parsed: " + parsedD);
 

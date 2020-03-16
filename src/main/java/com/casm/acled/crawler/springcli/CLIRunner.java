@@ -41,7 +41,8 @@ import javax.annotation.PreDestroy;
 
 @EnableAutoConfiguration(exclude={HibernateJpaAutoConfiguration.class,CamundaBpmAutoConfiguration.class, CamundaBpmRestJerseyAutoConfiguration.class, ValidationAutoConfiguration.class})
 // We need the special object mapper, though.
-@Import({ObjectMapperConfiguration.class, CLIRunner.ShutdownConfig.class})
+//@Import({ObjectMapperConfiguration.class, CLIRunner.ShutdownConfig.class})
+@Import({ObjectMapperConfiguration.class})
 // And we also need the DAOs.
 @ComponentScan(basePackages={"com.casm.acled.dao", "com.casm.acled.crawler.spring"})
 public class CLIRunner implements CommandLineRunner {
@@ -63,27 +64,27 @@ public class CLIRunner implements CommandLineRunner {
         logger.info("Spring Boot application started");
 
         // Close when complete
-        ctx.getBean(TerminateBean.class);
+//        ctx.getBean(TerminateBean.class);
         ctx.close();
     }
 
-    public class TerminateBean {
-
-        @PreDestroy
-        public void onDestroy() throws Exception {
-            contentHashStore.close();
-            logger.info("Spring Container is destroyed!");
-        }
-    }
-
-    @Configuration
-    public class ShutdownConfig {
-
-        @Bean
-        public TerminateBean getTerminateBean() {
-            return new TerminateBean();
-        }
-    }
+//    public class TerminateBean {
+//
+//        @PreDestroy
+//        public void onDestroy() throws Exception {
+//            contentHashStore.close();
+//            logger.info("Spring Container is destroyed!");
+//        }
+//    }
+//
+//    @Configuration
+//    public class ShutdownConfig {
+//
+//        @Bean
+//        public TerminateBean getTerminateBean() {
+//            return new TerminateBean();
+//        }
+//    }
 
     @Override
     public void run(String[] args)  {
@@ -100,6 +101,6 @@ public class CLIRunner implements CommandLineRunner {
                 .addObject(crawlerArguments)
                 .build()
                 .parse(corrArgs);
-        crawlerService.run(crawlerArguments, contentHashStore);
+        crawlerService.run(crawlerArguments);
     }
 }
