@@ -147,10 +147,15 @@ public class ACLEDScraperPreProcessor implements IHttpDocumentProcessor {
     private GeneralSplitterFactory loadScraper(String key) throws IOException, IncorrectScraperJSONException {
         File file;
         if(singularScaper) {
-            key = jobJson;
+            key = ".";
         }
         file = scraperPath.resolve(key).resolve(jobJson).toFile();
 
+        if(!file.exists()) {
+            logger.warn("No scraper for {}", file.toString());
+
+            throw new ScraperNotFoundException(file.toString());
+        }
         String processed = Util.processJSON(file);
 
         Map<String, List<Map<String, String>>> scraperDef = buildScraperDefinition(GeneralSplitterFactory.parseJsonTagSet(processed));
@@ -187,7 +192,7 @@ public class ACLEDScraperPreProcessor implements IHttpDocumentProcessor {
         GeneralSplitterFactory factory = getScraper(id);
 
         if(factory == null){
-            logger.error("No scraper was found for the domain " + domain.replaceAll("\\.",""));
+            logger.error("No scraper was found for the domain " + id);
             throw new ScraperNotFoundException(domain);
         }
 
@@ -197,16 +202,22 @@ public class ACLEDScraperPreProcessor implements IHttpDocumentProcessor {
         if(newspages.size() > 0) {
             Post newspage = newspages.get(0);
 
-            if(newspage.containsKey(article) && newspage.get(article).get(0).length() > 0) {
+            if(newspage.containsKey(article) &&
+                    newspage.get(article).size() > 0  &&
+                    newspage.get(article).get(0).length() > 0) {
                 page.setArticle(newspage.get(article).get(0));
             }
             else {
                 return page;
             }
-            if (newspage.containsKey(title) && newspage.get(title).get(0).length() > 0){
+            if (newspage.containsKey(title) &&
+                    newspage.get(title).size() > 0 &&
+                    newspage.get(title).get(0).length() > 0){
                 page.setTitle(newspage.get(title).get(0));
             }
-            if(newspage.containsKey(date) && newspage.get(date).get(0).length() > 0){
+            if(newspage.containsKey(date) &&
+                    newspage.get(date).size() > 0 &&
+                    newspage.get(date).get(0).length() > 0){
                 page.setDate(newspage.get(date).get(0));
             }
         }
@@ -256,9 +267,11 @@ public class ACLEDScraperPreProcessor implements IHttpDocumentProcessor {
             try {
                 scrapePage(webPage);
             } catch (ScraperNotFoundException e) {
-                logger.warn("Scraper not found for article ");
+                logger.warn("Scraper not found for article {}", url);
+                throw e;
             } catch (IOException | IncorrectScraperJSONException e) {
-                logger.warn("Malformed url exception");
+                logger.warn(e.getMessage(), e);
+                throw new RuntimeException(e);
             }
 
             if(webPage.getArticle() != null && webPage.getArticle().length() > 0) {

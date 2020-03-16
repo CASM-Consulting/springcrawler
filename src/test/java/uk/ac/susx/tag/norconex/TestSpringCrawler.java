@@ -15,23 +15,32 @@ import java.util.List;
 public class TestSpringCrawler {
 
 
+
     @Test
     public void TestSpringCrawler() {
-        CLIRunner sc = new CLIRunner();
+//        CLIRunner sc = new CLIRunner();
 //        String seed = "http://www.0.com:5000";
-        String seed = "http://english.pnn.ps/";
+//        String seed = "http://english.pnn.ps/";
+//        String seed = "http://www.israelnationalnews.com/";
+//        String seed = "https://www.jpost.com/";
+//        String seed = "https://www.timesofisrael.com/";
+        String seed = "http://en.annahar.com/section/184-lebanon";
+
+//        String seed = "http://nna-leb.gov.lb/en";
+//        String seed = "https://reliefweb.int/";
         CrawlerArguments ca = new CrawlerArguments();
         ca.seeds = Arrays.asList(seed);
         ca.crawldb= "/home/sw206/git/springcrawler/testcrawldb";
         ca.depth=5;
-        ca.ignoreRobots = true;
-        ca.ignoreSitemap = false;
-        ca.polite = 400;
+        ca.ignoreRobots = false;
+        ca.ignoreSitemap = true;
+        ca.polite = 100;
         ca.scrapers = "/home/sw206/git/springcrawler/allscrapers";
+//        ca.scrapers = "/home/sw206/git/springcrawler/testscrapers";
 //        ca.scraper = "generic";
         ca.threadsPerSeed = 2;
         ca.urlFilter = ".*";
-        ca.userAgent = "taglab";
+        ca.userAgent = "casmconsulting.co.uk";
         ca.id = "testspring";
         ca.index = false;
 

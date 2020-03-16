@@ -116,8 +116,8 @@ public class CrawlerService {
 
             // Add the scraper definition(s)
             // single scraper definition overrides scraper directory
-            if(crawlerArguments.scraper != null) {
-                logger.info("INFO: Scraper " + crawlerArguments.scraper + " found for " + crawlerArguments.seeds.get(0));
+            if(crawlerArguments.scraper != null && !crawlerArguments.scraper.equals("null")) {
+                logger.info("Scraper " + crawlerArguments.scraper + " found for " + crawlerArguments.seeds.get(0));
                 config.setPreImportProcessors(new ACLEDScraperPreProcessor(Paths.get(crawlerArguments.scrapers,crawlerArguments.scraper)),new ACLEDMetadataPreProcessor(metadata));
             }
             else {
