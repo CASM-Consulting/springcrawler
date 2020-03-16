@@ -2,6 +2,7 @@ package com.casm.acled.crawler;
 
 // casm
 import com.casm.acled.camunda.BusinessKeys;
+import com.casm.acled.crawler.utils.DateUtil;
 import com.casm.acled.dao.entities.SourceDAO;
 import com.casm.acled.dao.entities.SourceListDAO;
 import com.casm.acled.dao.util.Util;
@@ -32,6 +33,7 @@ import uk.ac.susx.tag.norconex.jobqueuemanager.CrawlerArguments;
 
 // java
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -81,11 +83,13 @@ public class ACLEDPostProcessor implements IHttpDocumentProcessor {
                         .append(articleText)
                         .toString();
 
+                LocalDate parsedDate = DateUtil.getDate(date);
+
                 Article article = EntityVersions.get(Article.class)
                         .current()
                         .put(Article.TEXT, text)
                         .put(Article.URL, url)
-                        .put(Article.DATE, Util.getDate(date));
+                        .put(Article.DATE, parsedDate);
 
 
                 String seed = doc.getMetadata().get(ACLEDMetadataPreProcessor.LINK).get(0);

@@ -52,7 +52,7 @@ public class ACLEDScraperPreProcessor implements IHttpDocumentProcessor {
 
     private final Path scraperPath;
 
-    private static final String JOB_JSON = "job.json";
+    public static final String JOB_JSON = "job.json";
     private final String jobJson;
     private static final String SINGULAR_KEY = "SINGULAR_KEY";
 

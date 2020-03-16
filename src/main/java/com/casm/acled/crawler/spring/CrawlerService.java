@@ -1,9 +1,6 @@
 package com.casm.acled.crawler.spring;
 
-import com.casm.acled.crawler.ACLEDMetadataPreProcessor;
-import com.casm.acled.crawler.ACLEDPostProcessor;
-import com.casm.acled.crawler.ACLEDScraperPreProcessor;
-import com.casm.acled.crawler.DateFilter;
+import com.casm.acled.crawler.*;
 import com.casm.acled.crawler.utils.Util;
 import com.casm.acled.dao.entities.ArticleDAO;
 import com.casm.acled.dao.entities.SourceDAO;
@@ -25,9 +22,14 @@ import uk.ac.susx.tag.norconex.database.ConcurrentContentHashStore;
 import uk.ac.susx.tag.norconex.document.WebScraperMetadataChecksum;
 import uk.ac.susx.tag.norconex.jobqueuemanager.CrawlerArguments;
 import uk.ac.susx.tag.norconex.jobqueuemanager.SingleSeedCollector;
+import uk.ac.susx.tag.norconex.scraping.GeneralSplitterFactory;
+import uk.ac.susx.tag.norconex.utils.WebsiteReport;
 
 import java.io.File;
+import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
@@ -79,7 +81,30 @@ public class CrawlerService {
 //        }
 //    }
 
+    private String ensureURL(String url) {
+        HttpURLConnection con = null;
+        try {
+            con = WebsiteReport.ensureConnection(url);
+            url = con.getURL().toString();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if(con != null) {
+                con.disconnect();
+            }
+        }
+        return url;
+    }
+
     public void run(CrawlerArguments crawlerArguments)  {
+
+        String seed = crawlerArguments.seeds.get(0);
+
+
+
+
+
+//        seed = ensureURL(seed);
 
         SingleSeedCollector collector = new SingleSeedCollector(
                 crawlerArguments.userAgent,
@@ -91,7 +116,7 @@ public class CrawlerService {
                 crawlerArguments.ignoreRobots,
                 crawlerArguments.ignoreSitemap,
                 crawlerArguments.polite,
-                crawlerArguments.seeds.get(0)
+                seed
         );
 
         HttpCrawlerConfig config = collector.getConfiguration();
@@ -114,14 +139,24 @@ public class CrawlerService {
 
             buildACLEDArticleFilters(handlers);
 
-            // Add the scraper definition(s)
-            // single scraper definition overrides scraper directory
-            if(crawlerArguments.scraper != null && !crawlerArguments.scraper.equals("null")) {
-                logger.info("Scraper " + crawlerArguments.scraper + " found for " + crawlerArguments.seeds.get(0));
-                config.setPreImportProcessors(new ACLEDScraperPreProcessor(Paths.get(crawlerArguments.scrapers,crawlerArguments.scraper)),new ACLEDMetadataPreProcessor(metadata));
-            }
-            else {
-                config.setPreImportProcessors(new ACLEDScraperPreProcessor(Paths.get(crawlerArguments.scrapers)),new ACLEDMetadataPreProcessor(metadata));
+            Path scrapersPath = Paths.get(crawlerArguments.scrapers);
+
+            String explicitScraper = crawlerArguments.scraper;
+
+            if(explicitScraper != null && !explicitScraper.equals("null")) {
+                if(Files.exists(scrapersPath.resolve(explicitScraper).resolve(ACLEDScraperPreProcessor.JOB_JSON))) {
+                    config.setPreImportProcessors(new ACLEDScraperPreProcessor(Paths.get(crawlerArguments.scrapers,crawlerArguments.scraper)),new ACLEDMetadataPreProcessor(metadata));
+                } else {
+                    throw new ScraperNotFoundException(explicitScraper);
+                }
+            } else {
+                String id = Util.getDomain(seed).replaceAll("\\.","");
+
+                if(Files.exists(scrapersPath.resolve(id).resolve(ACLEDScraperPreProcessor.JOB_JSON))) {
+                    config.setPreImportProcessors(new ACLEDScraperPreProcessor(Paths.get(crawlerArguments.scrapers)),new ACLEDMetadataPreProcessor(metadata));
+                } else {
+                    throw new ScraperNotFoundException(id);
+                }
             }
 
             config.setDocumentChecksummer(new WebScraperMetadataChecksum(contentHashStore));
@@ -135,11 +170,7 @@ public class CrawlerService {
 
         collector.setConfiguration(config);
 
-        try {
-            collector.start();
-        } catch (URISyntaxException e) {
-            throw new RuntimeException("The provided URL was invalid");
-        }
+        collector.start();
     }
 
     private static void buildACLEDArticleFilters(List<IImporterHandler> handlers) {

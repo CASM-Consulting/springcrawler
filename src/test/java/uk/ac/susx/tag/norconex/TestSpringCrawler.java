@@ -21,10 +21,11 @@ public class TestSpringCrawler {
 //        CLIRunner sc = new CLIRunner();
 //        String seed = "http://www.0.com:5000";
 //        String seed = "http://english.pnn.ps/";
+        String seed = "https://english.pnn.ps/";
 //        String seed = "http://www.israelnationalnews.com/";
 //        String seed = "https://www.jpost.com/";
 //        String seed = "https://www.timesofisrael.com/";
-        String seed = "http://en.annahar.com/section/184-lebanon";
+//        String seed = "http://en.annahar.com/section/184-lebanon";
 
 //        String seed = "http://nna-leb.gov.lb/en";
 //        String seed = "https://reliefweb.int/";
