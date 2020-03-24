@@ -15,6 +15,7 @@ import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +32,7 @@ public class DateUtil {
 
     private static final String DMY_FORMAT = "dd{sep}MM{sep}yyyy";
     private static final String YMD_FORMAT = "yyyy{sep}MM{sep}dd";
+    private static final String SEP = "{sep}";
 
     private static final String ymd_template = "\\d{4}{sep}\\d{2}{sep}\\d{2}.*";
     private static final String dmy_template = "\\d{2}{sep}\\d{2}{sep}\\d{4}.*";
@@ -136,7 +138,7 @@ public class DateUtil {
         }
 
         for (String sep : dateSeparators) {
-            String actualDateFormat = patternForSeparator(dateFormat, sep);
+            String actualDateFormat = dateFormat.replace(SEP, sep);
             //try first with the time
             for (String time : timeFormats) {
                 date = tryParse(input, actualDateFormat + " " + time);
@@ -157,8 +159,8 @@ public class DateUtil {
 
     private static String getDateFormat(String date) {
         for (String sep : dateSeparators) {
-            String ymdPattern = patternForSeparator(ymd_template, sep);
-            String dmyPattern = patternForSeparator(dmy_template, sep);
+            String ymdPattern = ymd_template.replace(SEP, sep);
+            String dmyPattern = dmy_template.replace(SEP, sep);
             if (date.matches(ymdPattern)) {
                 return YMD_FORMAT;
             }
@@ -173,8 +175,12 @@ public class DateUtil {
         return messyDate.replaceAll("[a-zA-Z]","");
     }
 
-    private static String patternForSeparator(String template, String sep) {
-        return template.replace("{sep}", sep);
+    public static String toDateString(LocalDate date) {
+        return date.format(DateTimeFormatter.ISO_DATE);
+    }
+
+    public static LocalDate fromDateString(String date) {
+        return LocalDate.from(DateTimeFormatter.ISO_DATE.parse(date));
     }
 
     private static Date tryParse(String input, String pattern) {
@@ -274,10 +280,12 @@ public class DateUtil {
 
     private static Optional<LocalDate> resolveBestGuess(List<Optional<LocalDate>> guesses) {
 
+        LocalDate now = LocalDate.now();
+
         List<LocalDate> dates = guesses.stream()
                 .filter( Optional::isPresent )
                 .map( Optional::get )
-                .filter( d -> d.isBefore(LocalDate.now()) )
+                .filter( d -> d.isBefore(now) || d.equals(now) )
                 .collect(Collectors.toList());
 
         Optional<LocalDate> result = Optional.empty();
@@ -299,17 +307,19 @@ public class DateUtil {
         return result;
     }
 
-    public static LocalDate getDate(String date) {
+    public static Optional<LocalDate> getDate(String date) {
 
         date = normaliseDate(date);
 
         Optional<LocalDate> jchronicGuess = getJChronic(date);
         Optional<LocalDate> prettyGuess = getPretty(date);
-        Optional<LocalDate> nattyGuess = getNatty(date);
+//        Optional<LocalDate> nattyGuess = getNatty(date);
         Optional<LocalDate> defaultGuess = getDefault(date);
 
-        Optional<LocalDate> bestGuess = resolveBestGuess(ImmutableList.of(jchronicGuess, prettyGuess, nattyGuess, defaultGuess));
+        Optional<LocalDate> bestGuess = resolveBestGuess(ImmutableList.of(jchronicGuess, prettyGuess, defaultGuess));
+//        Optional<LocalDate> bestGuess = resolveBestGuess(ImmutableList.of(jchronicGuess, prettyGuess, nattyGuess, defaultGuess));
+//        Optional<LocalDate> bestGuess = resolveBestGuess(ImmutableList.of(jchronicGuess, defaultGuess));
 
-        return bestGuess.orElseGet(()->null);
+        return bestGuess;
     }
 }

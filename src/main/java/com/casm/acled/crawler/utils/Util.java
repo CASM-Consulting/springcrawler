@@ -11,6 +11,7 @@ import com.casm.acled.entities.article.Article;
 import com.casm.acled.entities.source.Source;
 import com.casm.acled.entities.sourcelist.SourceList;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.io.Files;
 import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
 import org.camunda.bpm.spring.boot.starter.rest.CamundaBpmRestJerseyAutoConfiguration;
@@ -100,6 +101,30 @@ public class Util implements CommandLineRunner {
 //
 //    }
 
+    public static String metadataGet(Map<String, List<String>> metadata, String key) {
+        String value = null;
+        if(metadata.containsKey(key) && metadata.get(key).size() > 0) {
+            value = metadata.get(key).get(0);
+        }
+        return value;
+    }
+
+    public static void metadataPut(Map<String, List<String>> metadata, String key, String value) {
+        metadata.put(key, ImmutableList.of(value));
+    }
+
+    public static void metadataAdd(Map<String, List<String>> metadata, String key, String value) {
+        if(metadata.containsKey(key)) {
+            metadata.put(key, new ImmutableList.Builder<String>()
+                    .addAll(metadata.get(key))
+                    .add(value).build());
+        } else {
+            metadataPut(metadata, key, value);
+        }
+    }
+
+
+
     public void recoverArticleDates() {
 
 //        Parser parser = new Parser();
@@ -115,15 +140,9 @@ public class Util implements CommandLineRunner {
                 continue;
             }
 
-            LocalDate localDate = null;
-            try {
+            Optional<LocalDate> localDate  = DateUtil.getDate(text[1]);
 
-                localDate = DateUtil.getDate(text[1]);
-            } catch (RuntimeException e) {
-                continue;
-            }
-
-            if(localDate == null) {
+            if(!localDate.isPresent()) {
 
                 articleDAO.delete(article);
                 continue;
@@ -139,7 +158,7 @@ public class Util implements CommandLineRunner {
 
                 for(SourceList sourceList : sourceLists) {
 
-                    article = article.businessKey(BusinessKeys.generate(sourceList.get(SourceList.LIST_NAME), localDate));
+                    article = article.businessKey(BusinessKeys.generate(sourceList.get(SourceList.LIST_NAME), localDate.get()));
                 }
 
             }

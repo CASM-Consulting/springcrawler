@@ -1,11 +1,13 @@
 package com.casm.acled.crawler;
 
+import com.casm.acled.crawler.utils.DateUtil;
+import com.casm.acled.crawler.utils.Util;
 import com.norconex.collector.http.doc.HttpDocument;
 import com.norconex.collector.http.doc.HttpMetadata;
 import com.norconex.collector.http.processor.IHttpDocumentProcessor;
 import org.apache.http.client.HttpClient;
-import org.joda.time.DateTime;
 
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -32,10 +34,19 @@ public class ACLEDMetadataPreProcessor implements IHttpDocumentProcessor {
 
     @Override
     public void processDocument(HttpClient httpClient, HttpDocument doc) {
-//        metadata.put(UPDATED,Arrays.asList(String.valueOf(doc.getMetadata().getBoolean(HttpMetadata.COLLECTOR_IS_CRAWL_NEW))));
+//        metadata.put(UPDATED,Arrays.asList(String.valsueOf(doc.getMetadata().getBoolean(HttpMetadata.COLLECTOR_IS_CRAWL_NEW))));
 //        metadata.put(DEPTH, Arrays.asList(String.valueOf(doc.getMetadata().getInt(HttpMetadata.COLLECTOR_DEPTH))));
-        metadata.put(CRAWLDATE, Arrays.asList(DateTime.now().toString()));
-        doc.getMetadata().putAll(metadata);
 //        doc.getMetadata().getDocumentUrls();
+
+        String crawlDate = DateUtil.toDateString(LocalDate.now());
+
+        Util.metadataPut(metadata, CRAWLDATE, crawlDate);
+
+        doc.getMetadata().putAll(metadata);
     }
+
+
+//    public static void main(String[] args ){
+//        System.out.println(LocalDate.now().toString());
+//    }
 }

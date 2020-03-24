@@ -49,38 +49,6 @@ public class CrawlerService {
     private SourceListDAO sourceListDAO;
 
 
-
-//    public static void main(String[] args) {
-//
-//        SpringApplication app = new SpringApplication(CrawlerService.class);
-//        app.setBannerMode(Banner.Mode.OFF);
-//        app.setWebApplicationType(WebApplicationType.NONE);
-//        ConfigurableApplicationContext ctx = app.run(args);
-//        logger.info("Spring Boot application started");
-//
-//        // Close when complete
-////        ctx.getBean(TerminateBean.class);
-//        ctx.close();
-//    }
-
-//    public class TerminateBean {
-//
-//        @PreDestroy
-//        public void onDestroy() throws Exception {
-//            contentHashStore.close();
-//            logger.info("Spring Container is destroyed!");
-//        }
-//    }
-
-//    @Configuration
-//    public class ShutdownConfig {
-//
-//        @Bean
-//        public TerminateBean getTerminateBean() {
-//            return new TerminateBean();
-//        }
-//    }
-
     private String ensureURL(String url) {
         HttpURLConnection con = null;
         try {
@@ -100,10 +68,6 @@ public class CrawlerService {
 
         String seed = crawlerArguments.seeds.get(0);
 
-
-
-
-
 //        seed = ensureURL(seed);
 
         SingleSeedCollector collector = new SingleSeedCollector(
@@ -121,12 +85,15 @@ public class CrawlerService {
 
         HttpCrawlerConfig config = collector.getConfiguration();
 
+//        config.setIgnoreCanonicalLinks(true);
+
         logger.info("Starting config");
         ImporterConfig importerConfig = config.getImporterConfig();
         List<IImporterHandler> handlers = new ArrayList<>();
 
         Path contentHashStorePath = Paths.get(crawlerArguments.crawldb, Util.getDomain(crawlerArguments.seeds.get(0)),"crawlstore");
         ConcurrentContentHashStore contentHashStore = new ConcurrentContentHashStore(contentHashStorePath);
+        config.setDocumentChecksummer(new WebScraperMetadataChecksum(contentHashStore));
 
         logger.info("index only: {}", crawlerArguments.index);
         // Only performs this step when we are wanting to produce to a table
@@ -159,7 +126,6 @@ public class CrawlerService {
                 }
             }
 
-            config.setDocumentChecksummer(new WebScraperMetadataChecksum(contentHashStore));
             // Add the crawler-to-spring-magic post-processor
             config.setPostImportProcessors(new ACLEDPostProcessor(articleDAO, sourceDAO, sourceListDAO,false));
             
@@ -183,7 +149,7 @@ public class CrawlerService {
 
         handlers.add(emptyArticle);
         handlers.add(regexFilter);
-        handlers.add(df);
+//        handlers.add(df);
 
     }
 

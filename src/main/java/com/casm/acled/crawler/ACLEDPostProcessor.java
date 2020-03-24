@@ -39,6 +39,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static com.casm.acled.crawler.utils.Util.metadataGet;
+
 /**
  * Commits the scraped data produced by @ACLEDScraperPreProcessor to the relevant fields in acled_article
  */
@@ -61,75 +63,67 @@ public class ACLEDPostProcessor implements IHttpDocumentProcessor {
 
     }
 
+    private boolean previouslyScraped(HttpDocument doc) {
+        return doc.getMetadata().get(CrawlerArguments.PREVIOUSLYSCRAPED) == null ||
+                doc.getMetadata().get(CrawlerArguments.PREVIOUSLYSCRAPED).size() > 0 &&
+                Boolean.valueOf(doc.getMetadata().get(CrawlerArguments.PREVIOUSLYSCRAPED).get(0));
+    }
+
     @Override
     public void processDocument(HttpClient httpClient, HttpDocument doc) {
 
-        if(doc.getMetadata().get(CrawlerArguments.PREVIOUSLYSCRAPED) != null &&
-                doc.getMetadata().get(CrawlerArguments.PREVIOUSLYSCRAPED).size() > 0 &&
-                !Boolean.valueOf(doc.getMetadata().get(CrawlerArguments.PREVIOUSLYSCRAPED).get(0))) {
-            try {
-                HttpMetadata metadata = doc.getMetadata();
-                String articleText = metadata.get(CrawlerArguments.SCRAPEDARTICLE).get(0);
-//                String title = metadata.get(CrawlerArguments.SCRAPEDTITLE).get(0);
-                String date = metadata.get(CrawlerArguments.SCRAPEDATE).get(0);
+        if(!previouslyScraped(doc)) {
 
-                String url = doc.getReference();
+            HttpMetadata metadata = doc.getMetadata();
+            String articleText = metadataGet(metadata, CrawlerArguments.SCRAPEDARTICLE);
+            String date = metadataGet(metadata,CrawlerArguments.SCRAPEDATE);
 
-                String text = new StringBuilder()
-//                        .append(title)
-//                        .append("\n")
-                        .append(date)
-                        .append("\n")
-                        .append(articleText)
-                        .toString();
+            String title = metadataGet(metadata, CrawlerArguments.SCRAPEDTITLE);
+            StringBuilder text = new StringBuilder();
+            Article article = EntityVersions.get(Article.class)
+                    .current();
 
-                LocalDate parsedDate = DateUtil.getDate(date);
-
-                Article article = EntityVersions.get(Article.class)
-                        .current()
-                        .put(Article.TEXT, text)
-                        .put(Article.URL, url)
-                        .put(Article.DATE, parsedDate);
-
-
-                String seed = doc.getMetadata().get(ACLEDMetadataPreProcessor.LINK).get(0);
-
-               logger.error("SOURCE = " + seed);
-
-                Optional<Source> source = sourceDAO.getByUnique(Source.LINK, seed);
-
-                logger.error("source is present? " + source.isPresent());
-
-                if(source.isPresent()) {
-                    logger.error("INFO: Source present");
-//                logger.error("INFO: seed: " + seed);
-                    article = article.put(Article.SOURCE_ID, source.get().id());
-//                logger.error("INFO: seed: " + article.toString());
-                    List<SourceList> lists = sourceListDAO.bySource(source.get());
-//                logger.error("INFO  list size: " + lists.size());
-                    for (SourceList list : lists) {
-                        String bk = BusinessKeys.generate(list.get(SourceList.LIST_NAME));
-//                    logger.error("INFO: " + bk);
-                        articleDAO.create(article.businessKey(bk));
-//                    logger.error("INFO: Article created.");
-                    }
-                }
-                if(!source.isPresent() && !sourceRequired) {
-                    logger.error("INFO: Source not present - adding without source.");
-                    try {
-                        articleDAO.create(article);
-                    } catch (Exception e) {
-                        logger.error(e.getMessage());
-                    }
-                }
-                if(!source.isPresent() && sourceRequired){
-                    logger.error("INFO: Source not present");
-                }
-
-            } catch (Exception e) {
-                logger.error("Failed to import page to spring - this may be due to it being a previously seen content hash: " + doc.getReference() + " " + e.getMessage());
-                throw e;
+            if(title != null) {
+                text.append(title).append("\n");
+                article = article.put(Article.TITLE, title);
             }
+
+            text.append(date).append("\n")
+                .append(articleText);
+
+            Optional<LocalDate> parsedDate = DateUtil.getDate(date);
+
+            String url = doc.getReference();
+
+            article = article.put(Article.TEXT, text.toString())
+                    .put(Article.URL, url);
+
+            if(parsedDate.isPresent()) {
+                article = article.put(Article.DATE, parsedDate.get());
+            }
+
+            LocalDate crawlDate = DateUtil.fromDateString(metadataGet(metadata, ACLEDMetadataPreProcessor.CRAWLDATE));
+
+            article = article.put(Article.CRAWL_DATE, crawlDate);
+
+            String seed = metadataGet(metadata, ACLEDMetadataPreProcessor.LINK);
+
+            Optional<Source> source = sourceDAO.getByUnique(Source.LINK, seed);
+
+            if(source.isPresent()) {
+                article = article.put(Article.SOURCE_ID, source.get().id());
+                List<SourceList> lists = sourceListDAO.bySource(source.get());
+                for (SourceList list : lists) {
+                    String bk = BusinessKeys.generate(list.get(SourceList.LIST_NAME));
+                    articleDAO.create(article.businessKey(bk));
+                }
+            } else  if(!sourceRequired) {
+//                logger.info("Source not present - adding without source.");
+                articleDAO.create(article);
+            } else{
+                logger.warn("Skipping import: source required and not present.");
+            }
+
         }
     }
 }

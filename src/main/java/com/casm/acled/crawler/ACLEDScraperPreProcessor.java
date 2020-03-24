@@ -75,75 +75,7 @@ public class ACLEDScraperPreProcessor implements IHttpDocumentProcessor {
 
         scraperCache = new HashMap<>();
 
-//        try {
-//            if(Files.isDirectory(scraperPath) && !Files.exists(Paths.get(scraperPath.toAbsolutePath().toString(),"job.json"))) {
-//                logger.info("INFO: Provided a directory for scraper location - attempting to load all scrapers it contains.");
-//                initScrapers(scraperPath);
-//            }
-//            else {
-//                logger.info("INFO: Provided a specific crawler to load and scrape pages with.");
-//                initScraper(scraperPath);
-//            }
-//        } catch (IOException e) {
-//            throw new RuntimeException("Failed: when attempting to initialise web scraper(s): " + e.getMessage());
-//        }
-
     }
-
-//    /**
-//     * Initialise and build a single scraper.
-//     * @param scraperLocation
-//     */
-//    private void initScraper(Path scraperLocation){
-//        File file = getJobFile(scraperLocation).toFile();
-//        String processed = null;
-//        try {
-//
-//            processed = Utils.processJSON(file);
-//            Map<String, List<Map<String, String>>> scraperDefs = buildScraperDefinition(GeneralSplitterFactory.parseJsonTagSet(processed));
-//            logger.info("Adding scraper: " + file.getName());
-//            scraperJson = new GeneralSplitterFactory(scraperDefs);
-//            logger.info("Scraper successfully added for: " + file.getName());
-//
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        } catch (IncorrectScraperJSONException e) {
-//            e.printStackTrace();
-//        }
-//
-//    }
-
-//    private Path getJobFile(Path scraperLocation) {
-//        return Paths.get(scraperLocation.toAbsolutePath().toString(),"job.json");
-//    }
-
-//    /**
-//     * Initialise and build all scrapers in a single directory.
-//     * @param scrapersLocation
-//     */
-//    private void initScrapers(Path scrapersLocation) throws IOException {
-//
-//        List<Path> scrapers = Files.walk(scrapersLocation)
-//                .filter(file -> file.getFileName().toString().equals("job.json"))
-//                .collect(Collectors.toList());
-////        System.out.println(scrapers.size());
-//        for (Path path : scrapers) {
-//            try {
-//                File file = path.toFile();
-//                String processed = Utils.processJSON(file);
-//                Map<String, List<Map<String, String>>> scraperDefs = buildScraperDefinition(GeneralSplitterFactory.parseJsonTagSet(processed));
-//                logger.info("Adding scraper: " + file.getParentFile().getName());
-//                scraperCache.put(file.getParentFile().getName(), new GeneralSplitterFactory(scraperDefs));
-//                logger.info("Added scraper for: " + file.getParentFile().getName() + " " + scraperCache.get(file.getParentFile().getName().replace(".json", "")));
-//                System.out.println("Added scraper for: " + file.getParentFile().getName() + " " + scraperCache.get(file.getParentFile().getName().replace(".json", "")));
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//            } catch (IncorrectScraperJSONException e) {
-//                e.printStackTrace();
-//            }
-//        }
-//    }
-
     private GeneralSplitterFactory loadScraper(String key) throws IOException, IncorrectScraperJSONException {
         File file;
         if(singularScaper) {

@@ -20,8 +20,8 @@ public class TestSpringCrawler {
     public void TestSpringCrawler() {
 //        CLIRunner sc = new CLIRunner();
 //        String seed = "http://www.0.com:5000";
-//        String seed = "http://english.pnn.ps/";
-        String seed = "https://english.pnn.ps/";
+        String seed = "http://english.pnn.ps/";
+//        String seed = "https://english.pnn.ps/";
 //        String seed = "http://www.israelnationalnews.com/";
 //        String seed = "https://www.jpost.com/";
 //        String seed = "https://www.timesofisrael.com/";
@@ -43,7 +43,7 @@ public class TestSpringCrawler {
         ca.urlFilter = ".*";
         ca.userAgent = "casmconsulting.co.uk";
         ca.id = "testspring";
-        ca.index = false;
+        ca.index = true;
 
         List<String> params = new ArrayList<>();
         params.add(SingleSeedCollector.SEED);

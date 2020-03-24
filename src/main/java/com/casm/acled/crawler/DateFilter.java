@@ -19,6 +19,7 @@ import javax.xml.stream.XMLStreamException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.LocalDate;
+import java.util.Optional;
 
 
 public class DateFilter extends AbstractDocumentFilter {
@@ -42,23 +43,22 @@ public class DateFilter extends AbstractDocumentFilter {
     protected boolean isDocumentMatched(String reference, InputStream input, ImporterMetadata metadata, boolean parsed) throws ImporterHandlerException {
 
         String dateStr = metadata.get(ACLEDScraperPreProcessor.SCRAPEDATE).get(0);
+
         boolean rejected = false;
         if(dateStr == null || dateStr.length() <= 0) {
             logger.debug("INFO: No date found for url: " + reference);
             rejected = false;
         }
-        try{
-            LocalDate date = DateUtil.getDate(dateStr);
+
+        Optional<LocalDate> maybeDate = DateUtil.getDate(dateStr);
 //            logger.info("INFO: filtering article by date: " + reference + " date: " + date + " " + threshold.toString()
 //                    + " article date: " + dateStr + "after?: " + date.isAfter(threshold));
-            if(date != null) {
-                if(date.isBefore(threshold)) {
-                    logger.info("DATE-PRIOR-TO-THRESH " + date.toString() + " | " + dateStr);
-                    rejected = true;
-                }
+        if( maybeDate.isPresent( ) ) {
+            LocalDate date = maybeDate.get( );
+            if( date.isBefore( threshold ) ) {
+                logger.info("DATE-PRIOR-TO-THRESH " + maybeDate.toString( ) + " | " + dateStr);
+                rejected = true;
             }
-        } catch (Exception e) {
-            logger.error("Error parsing date: " + reference);
         }
 
         return rejected;

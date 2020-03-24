@@ -4,6 +4,7 @@ import com.joestelmach.natty.Parser;
 import org.junit.Test;
 
 import java.time.LocalDate;
+import java.util.Optional;
 
 public class TestDataParser {
 
@@ -20,9 +21,9 @@ public class TestDataParser {
         // 06.02.2020 Perşembe 16:25  - Son Güncelleme: 06.02.2020 Perşembe 16:48
 
         String date = " Our Correspondent | Published: March 01, 2018 01:17:42 | Updated: March 01, 2018 11:10:53";
-        LocalDate parsedD = DateUtil.getDate(date);
+        Optional<LocalDate> parsedD = DateUtil.getDate(date);
         System.out.println("Original: " + date);
-        System.out.println("Parsed: " + parsedD);
+        System.out.println("Parsed: " + parsedD.get());
 
         System.out.println();
 //        try {
@@ -33,5 +34,19 @@ public class TestDataParser {
 //            e.printStackTrace();
 //        }
     }
+
+
+    @Test
+    public void TestDataParser2() {
+
+//        String date = "19/12/16 16:12";
+        String date = "Thursday, 27 February, 2020 - 15:30";
+        Optional<LocalDate> parsedD = DateUtil.getDate(date);
+        System.out.println("Original: " + date);
+        System.out.println("Parsed: " + parsedD.get());
+
+        System.out.println();
+    }
+
 
 }
