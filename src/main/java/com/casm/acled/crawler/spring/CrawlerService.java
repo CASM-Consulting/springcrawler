@@ -1,11 +1,11 @@
 package com.casm.acled.crawler.spring;
 
 import com.casm.acled.crawler.*;
+import com.casm.acled.crawler.scraper.ACLEDScraper;
 import com.casm.acled.crawler.utils.Util;
 import com.casm.acled.dao.entities.ArticleDAO;
 import com.casm.acled.dao.entities.SourceDAO;
 import com.casm.acled.dao.entities.SourceListDAO;
-import com.norconex.collector.core.checksum.IDocumentChecksummer;
 import com.norconex.collector.core.checksum.impl.MD5DocumentChecksummer;
 import com.norconex.collector.core.data.store.impl.mvstore.MVStoreCrawlDataStoreFactory;
 import com.norconex.collector.http.crawler.HttpCrawlerConfig;
@@ -21,16 +21,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import uk.ac.susx.tag.norconex.database.ConcurrentContentHashStore;
-import uk.ac.susx.tag.norconex.document.WebScraperMetadataChecksum;
 import uk.ac.susx.tag.norconex.jobqueuemanager.CrawlerArguments;
 import uk.ac.susx.tag.norconex.jobqueuemanager.SingleSeedCollector;
-import uk.ac.susx.tag.norconex.scraping.GeneralSplitterFactory;
 import uk.ac.susx.tag.norconex.utils.WebsiteReport;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.HttpURLConnection;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -118,33 +115,42 @@ public class CrawlerService {
 
             String explicitScraper = crawlerArguments.scraper;
 
-            if(explicitScraper != null && !explicitScraper.equals("null")) {
-                if(Files.exists(scrapersPath.resolve(explicitScraper).resolve(ACLEDScraperPreProcessor.JOB_JSON))) {
-                    config.setPreImportProcessors(new ACLEDScraperPreProcessor(Paths.get(crawlerArguments.scrapers,crawlerArguments.scraper)),new ACLEDMetadataPreProcessor(metadata));
-                } else {
-                    throw new ScraperNotFoundException(explicitScraper);
-                }
-            } else {
-                String id = Util.getDomain(seed).replaceAll("\\.","");
+            ACLEDScraper scraper = resolveScraper(scrapersPath, explicitScraper, seed);
 
-                if(Files.exists(scrapersPath.resolve(id).resolve(ACLEDScraperPreProcessor.JOB_JSON))) {
-                    config.setPreImportProcessors(new ACLEDScraperPreProcessor(Paths.get(crawlerArguments.scrapers)),new ACLEDMetadataPreProcessor(metadata));
-                } else {
-                    throw new ScraperNotFoundException(id);
-                }
-            }
+            config.setPreImportProcessors(scraper,new ACLEDMetadataPreProcessor(metadata));
 
             // Add the crawler-to-spring-magic post-processor
-            config.setPostImportProcessors(new ACLEDPostProcessor(articleDAO, sourceDAO, sourceListDAO,false));
+            config.setPostImportProcessors(new ACLEDImporter(articleDAO, sourceDAO, sourceListDAO,false));
             
         }
-
+//        importerConfig.setParserFactory();
         importerConfig.setPostParseHandlers(handlers.toArray(new IImporterHandler[handlers.size()]));
         config.setImporterConfig(importerConfig);
 
         collector.setConfiguration(config);
 
         collector.start();
+    }
+
+    private ACLEDScraper resolveScraper(Path scrapersPath, String explicitScraper, String seed) {
+        ACLEDScraper scraper;
+        if(explicitScraper != null && !explicitScraper.equals("null")) {
+            if(Files.exists(scrapersPath.resolve(explicitScraper).resolve(ACLEDScraper.JOB_JSON))) {
+                scraper = new ACLEDScraper(scrapersPath.resolve(explicitScraper));
+            } else {
+                throw new ScraperNotFoundException(explicitScraper);
+            }
+        } else {
+            String id = Util.getDomain(seed).replaceAll("\\.","");
+
+            if(Files.exists(scrapersPath.resolve(id).resolve(ACLEDScraper.JOB_JSON))) {
+                scraper = new ACLEDScraper(scrapersPath);
+            } else {
+                throw new ScraperNotFoundException(id);
+            }
+        }
+
+        return scraper;
     }
 
     private static void buildACLEDArticleFilters(List<IImporterHandler> handlers) {

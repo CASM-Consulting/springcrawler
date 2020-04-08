@@ -4,7 +4,7 @@ package com.casm.acled.crawler.utils;
 import com.casm.acled.camunda.BusinessKeys;
 import com.casm.acled.configuration.ObjectMapperConfiguration;
 import com.casm.acled.crawler.IncorrectScraperJSONException;
-import com.casm.acled.crawler.dates.DateUtil;
+import com.casm.acled.crawler.scraper.dates.*;
 import com.casm.acled.dao.entities.ArticleDAO;
 import com.casm.acled.dao.entities.SourceDAO;
 import com.casm.acled.dao.entities.SourceListDAO;
@@ -73,13 +73,9 @@ public class Util implements CommandLineRunner {
     }
 
     // Processes a M52 job json to scraper rules
-    public static String processJobJSON(String json) throws IncorrectScraperJSONException {
+    public static String processJobJSON(String json) {
         JSONObject jobj = new JSONObject(json);
-        try {
-            return jobj.getJSONArray("components").getJSONObject(0).getJSONObject("opts").getJSONArray("fields").toString();
-        } catch (Exception e) {
-            throw new IncorrectScraperJSONException();
-        }
+        return jobj.getJSONArray("components").getJSONObject(0).getJSONObject("opts").getJSONArray("fields").toString();
     }
 
     public static String processScraperJSON(String json){
@@ -88,7 +84,7 @@ public class Util implements CommandLineRunner {
     }
 
     // returns a web scraper based on a job spect of last_scrape file
-    public static String processJSON(File scraperLocation) throws IOException, IncorrectScraperJSONException {
+    public static String processJSON(File scraperLocation) throws IOException {
         String json = Files.asCharSource(scraperLocation, Charset.defaultCharset()).read();
         return (scraperLocation.getName().equals("last_scrape.json")) ? processScraperJSON(json) : processJobJSON(json);
     }

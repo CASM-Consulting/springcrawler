@@ -1,4 +1,4 @@
-package com.casm.acled.crawler.dates;
+package com.casm.acled.crawler.scraper.dates;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;

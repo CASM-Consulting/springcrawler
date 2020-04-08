@@ -1,8 +1,8 @@
-package com.casm.acled.crawler.dates;
+package com.casm.acled.crawler.scraper.dates;
 
 import java.time.LocalDate;
 import java.util.Optional;
 
-interface DateParser {
+public interface DateParser {
     Optional<LocalDate> parse(String date);
 }

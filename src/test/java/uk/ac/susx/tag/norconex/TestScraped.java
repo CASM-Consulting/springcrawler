@@ -1,6 +1,6 @@
 package uk.ac.susx.tag.norconex;
 
-import com.casm.acled.crawler.ACLEDScraperPreProcessor;
+import com.casm.acled.crawler.scraper.ACLEDScraper;
 import com.casm.acled.crawler.IncorrectScraperJSONException;
 import com.casm.acled.crawler.utils.Util;
 import org.jsoup.Jsoup;
@@ -16,7 +16,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import static com.casm.acled.crawler.ACLEDScraperPreProcessor.buildScraperDefinition;
+import static com.casm.acled.crawler.scraper.ACLEDScraper.buildScraperDefinition;
 
 public class TestScraped {
 
@@ -60,7 +60,7 @@ public class TestScraped {
 //            GeneralSplitterFactory splitterFact = new GeneralSplitterFactory(tags);
             Document doc = Jsoup.connect(url).timeout(10000).userAgent("Mozilla").get();
             LinkedList<Post> splitDoc = tagset.create().split(doc);
-            System.out.println(splitDoc.getFirst().get(ACLEDScraperPreProcessor.title));
+            System.out.println(splitDoc.getFirst().get(ACLEDScraper.title));
             System.out.println(splitDoc.size());
         } catch (IOException e) {
             e.printStackTrace();

@@ -1,6 +1,6 @@
 package uk.ac.susx.tag.norconex;
 
-import com.casm.acled.crawler.dates.DateUtil;
+import com.casm.acled.crawler.scraper.dates.DateUtil;
 import org.junit.Test;
 
 public class TestDateFilter {

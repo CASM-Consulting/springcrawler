@@ -1,6 +1,6 @@
 package com.casm.acled.crawler;
 
-import com.casm.acled.crawler.dates.DateUtil;
+import com.casm.acled.crawler.scraper.dates.DateUtil;
 import com.casm.acled.crawler.utils.Util;
 import com.norconex.collector.http.doc.HttpDocument;
 import com.norconex.collector.http.processor.IHttpDocumentProcessor;

@@ -2,7 +2,7 @@ package com.casm.acled.crawler;
 
 // casm
 import com.casm.acled.camunda.BusinessKeys;
-import com.casm.acled.crawler.dates.DateUtil;
+import com.casm.acled.crawler.scraper.dates.DateUtil;
 import com.casm.acled.dao.entities.SourceDAO;
 import com.casm.acled.dao.entities.SourceListDAO;
 import com.casm.acled.entities.EntityVersions;
@@ -38,17 +38,17 @@ import static com.casm.acled.crawler.utils.Util.metadataGet;
 /**
  * Commits the scraped data produced by @ACLEDScraperPreProcessor to the relevant fields in acled_article
  */
-public class ACLEDPostProcessor implements IHttpDocumentProcessor {
+public class ACLEDImporter implements IHttpDocumentProcessor {
 
-    protected static final Logger logger = LoggerFactory.getLogger(ACLEDPostProcessor.class);
+    protected static final Logger logger = LoggerFactory.getLogger(ACLEDImporter.class);
 
     private final ArticleDAO articleDAO;
     private final SourceDAO sourceDAO;
     private final SourceListDAO sourceListDAO;
     private final boolean sourceRequired;
 
-    public ACLEDPostProcessor(ArticleDAO articleDAO, SourceDAO sourceDAO,
-                              SourceListDAO sourceListDAO, boolean sourceRequired) {
+    public ACLEDImporter(ArticleDAO articleDAO, SourceDAO sourceDAO,
+                         SourceListDAO sourceListDAO, boolean sourceRequired) {
 
         this.articleDAO = articleDAO;
         this.sourceDAO = sourceDAO;

@@ -1,8 +1,10 @@
-package com.casm.acled.crawler;
+package com.casm.acled.crawler.scraper;
 
 // gson
 
 // crawling imports
+import com.casm.acled.crawler.IncorrectScraperJSONException;
+import com.casm.acled.crawler.ScraperNotFoundException;
 import com.casm.acled.crawler.utils.Util;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.client.HttpClient;
@@ -30,9 +32,9 @@ import uk.ac.susx.tag.norconex.scraping.IForumSplitter;
 import uk.ac.susx.tag.norconex.scraping.POJOHTMLMatcherDefinition;
 import uk.ac.susx.tag.norconex.scraping.Post;
 
-public class ACLEDScraperPreProcessor implements IHttpDocumentProcessor {
+public class ACLEDScraper implements IHttpDocumentProcessor {
 
-    protected static final Logger logger = LoggerFactory.getLogger(ACLEDScraperPreProcessor.class);
+    protected static final Logger logger = LoggerFactory.getLogger(ACLEDScraper.class);
 
     public static final String SCRAPERS = "casm.jqm.scrapers";
 //    public static final String SCRAPEDJSON = "scraped.json";
@@ -48,70 +50,37 @@ public class ACLEDScraperPreProcessor implements IHttpDocumentProcessor {
     public static final String metaTITLE = "title";
     public static final String metaARTICLE = "article";
 
-    private final Map<String, GeneralSplitterFactory> scraperCache;
-
-    private final Path scraperPath;
 
     public static final String JOB_JSON = "job.json";
-    private final String jobJson;
-    private static final String SINGULAR_KEY = "SINGULAR_KEY";
 
-    private final boolean singularScaper;
+    private final Path scraperPath;
+    private GeneralSplitterFactory scraper;
 
-    public ACLEDScraperPreProcessor(Path scraperPath) {
+    public ACLEDScraper(Path scraperPath) {
         this(scraperPath, JOB_JSON);
     }
 
-    public ACLEDScraperPreProcessor(Path scraperPath, String jobJson) {
-        this.scraperPath = scraperPath;
-        this.jobJson = jobJson;
+    public ACLEDScraper(Path scraperPath, String jobJson) {
+        this.scraperPath = scraperPath.resolve(jobJson);
         if(Files.notExists(scraperPath)) {
             throw new ScraperNotFoundException(scraperPath + " doesn't exist");
-        } else if(Files.exists(scraperPath.resolve(this.jobJson))) {
-            singularScaper = true;
-        } else {
-            singularScaper = false;
         }
-
-        scraperCache = new HashMap<>();
 
     }
-    private GeneralSplitterFactory loadScraper(String key) throws IOException, IncorrectScraperJSONException {
-        File file;
-        if(singularScaper) {
-            key = ".";
-        }
-        file = scraperPath.resolve(key).resolve(jobJson).toFile();
 
-        if(!file.exists()) {
-            logger.warn("No scraper for {}", file.toString());
+    public static ACLEDScraper load(Path path) throws IOException {
+        ACLEDScraper scraper = new ACLEDScraper(path);
+        scraper.loadScraper();
+        return scraper;
+    }
 
-            throw new ScraperNotFoundException(file.toString());
-        }
-        String processed = Util.processJSON(file);
+    private void loadScraper() throws IOException {
+
+        String processed = Util.processJSON(scraperPath.toFile());
 
         Map<String, List<Map<String, String>>> scraperDef = buildScraperDefinition(GeneralSplitterFactory.parseJsonTagSet(processed));
 
-        GeneralSplitterFactory scraper = new GeneralSplitterFactory(scraperDef);
-
-        return scraper;
-    }
-
-    private synchronized GeneralSplitterFactory getScraper(String id) throws IOException, IncorrectScraperJSONException {
-        GeneralSplitterFactory scraper;
-        String key = id;
-        if(singularScaper) {
-            key = SINGULAR_KEY;
-        }
-
-        if(scraperCache.containsKey(key)) {
-            scraper = scraperCache.get(key);
-        } else {
-            scraper = loadScraper(key);
-            scraperCache.put(key, scraper);
-        }
-
-        return scraper;
+        scraper = new GeneralSplitterFactory(scraperDef);
     }
 
     public WebPage scrapePage(WebPage page) throws ScraperNotFoundException, IOException, IncorrectScraperJSONException {
@@ -121,14 +90,8 @@ public class ACLEDScraperPreProcessor implements IHttpDocumentProcessor {
         // If there is a factory set for this preprocessor use that else search for one via the page's domain of origin
         // Prefered functionality is to set a single preprocessor (more robust)
         String id = domain.replaceAll("\\.","");
-        GeneralSplitterFactory factory = getScraper(id);
 
-        if(factory == null){
-            logger.error("No scraper was found for the domain " + id);
-            throw new ScraperNotFoundException(domain);
-        }
-
-        IForumSplitter splitter = factory.create();
+        IForumSplitter splitter = scraper.create();
 
         LinkedList<Post> newspages = splitter.split(Jsoup.parse(page.getHtml()));
         if(newspages.size() > 0) {

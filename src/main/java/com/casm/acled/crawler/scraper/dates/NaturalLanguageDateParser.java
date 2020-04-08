@@ -1,4 +1,4 @@
-package com.casm.acled.crawler.dates;
+package com.casm.acled.crawler.scraper.dates;
 
 import java.time.LocalDate;
 import java.util.Optional;

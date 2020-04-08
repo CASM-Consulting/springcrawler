@@ -1,9 +1,9 @@
 package com.casm.acled.crawler;
 
 // apache commons
-import com.casm.acled.crawler.dates.DateUtil;
+import com.casm.acled.crawler.scraper.dates.DateUtil;
+import com.casm.acled.crawler.scraper.ACLEDScraper;
 import com.norconex.importer.handler.filter.OnMatch;
-import jdk.nashorn.internal.parser.DateParser;
 import org.apache.commons.configuration.XMLConfiguration;
 
 // norconex
@@ -30,16 +30,15 @@ public class DateFilter extends AbstractDocumentFilter {
     private static final int DEFAULT = 1;
     private final LocalDate threshold;
 
-    public DateFilter(DateParser dateParser, LocalDate threshold) {
+    public DateFilter(LocalDate threshold) {
         this.threshold = threshold;
         this.setOnMatch(OnMatch.EXCLUDE);
-
     }
 
     @Override
     protected boolean isDocumentMatched(String reference, InputStream input, ImporterMetadata metadata, boolean parsed) throws ImporterHandlerException {
 
-        String dateStr = metadata.get(ACLEDScraperPreProcessor.SCRAPEDATE).get(0);
+        String dateStr = metadata.get(ACLEDScraper.SCRAPEDATE).get(0);
 
         boolean rejected = false;
         if(dateStr == null || dateStr.length() <= 0) {
