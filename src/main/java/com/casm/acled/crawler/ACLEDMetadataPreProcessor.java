@@ -1,14 +1,12 @@
 package com.casm.acled.crawler;
 
-import com.casm.acled.crawler.utils.DateUtil;
+import com.casm.acled.crawler.dates.DateUtil;
 import com.casm.acled.crawler.utils.Util;
 import com.norconex.collector.http.doc.HttpDocument;
-import com.norconex.collector.http.doc.HttpMetadata;
 import com.norconex.collector.http.processor.IHttpDocumentProcessor;
 import org.apache.http.client.HttpClient;
 
 import java.time.LocalDate;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;

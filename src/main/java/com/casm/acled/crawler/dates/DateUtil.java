@@ -1,4 +1,4 @@
-package com.casm.acled.crawler.utils;
+package com.casm.acled.crawler.dates;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -9,6 +9,8 @@ import com.mdimension.jchronic.Options;
 import com.mdimension.jchronic.tags.Pointer;
 import com.mdimension.jchronic.utils.Span;
 import org.ocpsoft.prettytime.nlp.PrettyTimeParser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -16,17 +18,16 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static java.util.stream.Collectors.counting;
-import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.*;
 
 public class DateUtil {
+
+    protected static final Logger logger = LoggerFactory.getLogger(DateUtil.class);
+
     private static final String[] timeFormats = {"HH:mm:ss", "HH:mm"};
     private static final String[] dateSeparators = {"/", "-", " "};
 
@@ -307,6 +308,8 @@ public class DateUtil {
         return result;
     }
 
+
+
     public static Optional<LocalDate> getDate(String date) {
 
         date = normaliseDate(date);
@@ -314,12 +317,72 @@ public class DateUtil {
         Optional<LocalDate> jchronicGuess = getJChronic(date);
         Optional<LocalDate> prettyGuess = getPretty(date);
 //        Optional<LocalDate> nattyGuess = getNatty(date);
-        Optional<LocalDate> defaultGuess = getDefault(date);
+//        Optional<LocalDate> defaultGuess = getDefault(date);
 
-        Optional<LocalDate> bestGuess = resolveBestGuess(ImmutableList.of(jchronicGuess, prettyGuess, defaultGuess));
+        Optional<LocalDate> bestGuess = resolveBestGuess(ImmutableList.of(jchronicGuess, prettyGuess));
+//        Optional<LocalDate> bestGuess = resolveBestGuess(ImmutableList.of(jchronicGuess, prettyGuess, defaultGuess));
 //        Optional<LocalDate> bestGuess = resolveBestGuess(ImmutableList.of(jchronicGuess, prettyGuess, nattyGuess, defaultGuess));
 //        Optional<LocalDate> bestGuess = resolveBestGuess(ImmutableList.of(jchronicGuess, defaultGuess));
 
         return bestGuess;
     }
+
+    public static Optional<LocalDate> getDateWithoutNormalisation(String date) {
+
+        Optional<LocalDate> jchronicGuess = getJChronic(date);
+        Optional<LocalDate> prettyGuess = getPretty(date);
+//        Optional<LocalDate> nattyGuess = getNatty(date);
+//        Optional<LocalDate> defaultGuess = getDefault(date);
+
+        Optional<LocalDate> bestGuess = resolveBestGuess(ImmutableList.of(jchronicGuess, prettyGuess));
+//        Optional<LocalDate> bestGuess = resolveBestGuess(ImmutableList.of(jchronicGuess, prettyGuess, defaultGuess));
+//        Optional<LocalDate> bestGuess = resolveBestGuess(ImmutableList.of(jchronicGuess, prettyGuess, nattyGuess, defaultGuess));
+//        Optional<LocalDate> bestGuess = resolveBestGuess(ImmutableList.of(jchronicGuess, defaultGuess));
+
+        return bestGuess;
+    }
+
+    public DateParser getParser(List<String> formatSpcs) {
+
+        List<DateParser> parsers = new ArrayList<>();
+
+        for(String formatSpec : formatSpcs) {
+            int n = formatSpec.indexOf(":");
+            String protocol = formatSpec.substring(0, n);
+            String spec = formatSpec.substring(n);
+            switch (protocol) {
+                case "ISO8601": {
+                    DateTimeFormatter dtf = getFormatter(spec);
+                    DateFormatParser dfp = new DateFormatParser(dtf);
+                    parsers.add(dfp);
+                    break;
+                }
+                case "NL":
+                    String[] triggers = spec.split(",");
+                    NaturalLanguageDateParser nldp = new NaturalLanguageDateParser(triggers);
+                    parsers.add(nldp);
+                    break;
+                default:{
+                    throw new RuntimeException("Date parser protocol not found: " + protocol);
+                }
+            }
+        }
+
+        DateParser dateParser = new CompositeDateParser(parsers);
+
+        return dateParser;
+    }
+
+    public DateTimeFormatter getFormatter(String formatSpec) {
+        int n = formatSpec.indexOf(":");
+        String langTag = formatSpec.substring(0, n);
+        String pattern = formatSpec.substring(n);
+
+        Locale locale = Locale.forLanguageTag(langTag);
+
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern(pattern, locale);
+
+        return  dtf;
+    }
+
 }

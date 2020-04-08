@@ -2,17 +2,15 @@ package com.casm.acled.crawler;
 
 // casm
 import com.casm.acled.camunda.BusinessKeys;
-import com.casm.acled.crawler.utils.DateUtil;
+import com.casm.acled.crawler.dates.DateUtil;
 import com.casm.acled.dao.entities.SourceDAO;
 import com.casm.acled.dao.entities.SourceListDAO;
-import com.casm.acled.dao.util.Util;
 import com.casm.acled.entities.EntityVersions;
 import com.casm.acled.entities.article.Article;
 import com.casm.acled.entities.source.Source;
 import com.casm.acled.entities.sourcelist.SourceList;
 
 // json
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 // norconex
 import com.norconex.collector.http.doc.HttpDocument;
@@ -28,15 +26,11 @@ import com.casm.acled.dao.entities.ArticleDAO;
 // logging
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.ac.susx.tag.norconex.document.WebScraperChecksum;
 import uk.ac.susx.tag.norconex.jobqueuemanager.CrawlerArguments;
 
 // java
-import java.io.IOException;
 import java.time.LocalDate;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import static com.casm.acled.crawler.utils.Util.metadataGet;

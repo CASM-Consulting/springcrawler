@@ -1,8 +1,9 @@
 package com.casm.acled.crawler;
 
 // apache commons
-import com.casm.acled.crawler.utils.DateUtil;
+import com.casm.acled.crawler.dates.DateUtil;
 import com.norconex.importer.handler.filter.OnMatch;
+import jdk.nashorn.internal.parser.DateParser;
 import org.apache.commons.configuration.XMLConfiguration;
 
 // norconex
@@ -29,11 +30,7 @@ public class DateFilter extends AbstractDocumentFilter {
     private static final int DEFAULT = 1;
     private final LocalDate threshold;
 
-    public DateFilter() {
-        this(LocalDate.now().minusWeeks(DEFAULT));
-    }
-
-    public DateFilter(LocalDate threshold) {
+    public DateFilter(DateParser dateParser, LocalDate threshold) {
         this.threshold = threshold;
         this.setOnMatch(OnMatch.EXCLUDE);
 
