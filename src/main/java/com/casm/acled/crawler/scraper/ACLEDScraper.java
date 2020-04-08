@@ -3,7 +3,6 @@ package com.casm.acled.crawler.scraper;
 // gson
 
 // crawling imports
-import com.casm.acled.crawler.IncorrectScraperJSONException;
 import com.casm.acled.crawler.ScraperNotFoundException;
 import com.casm.acled.crawler.utils.Util;
 import org.apache.commons.io.IOUtils;
@@ -37,14 +36,10 @@ public class ACLEDScraper implements IHttpDocumentProcessor {
     protected static final Logger logger = LoggerFactory.getLogger(ACLEDScraper.class);
 
     public static final String SCRAPERS = "casm.jqm.scrapers";
-//    public static final String SCRAPEDJSON = "scraped.json";
-    public static final String SCRAPEDARTICLE = "scraped.article";
-    public static final String SCRAPEDATE = "scraped.date";
-    public static final String SCRAPEDTITLE = "scraped.title";
 
-    public static final String article = "field.name/article";
-    public static final String title = "field.name/title";
-    public static final String date = "field.name/date";
+    public static final String ARTICLE = "field.name/article";
+    public static final String TITLE = "field.name/title";
+    public static final String DATE = "field.name/date";
 
     public static final String metaDATE = "date";
     public static final String metaTITLE = "title";
@@ -65,7 +60,6 @@ public class ACLEDScraper implements IHttpDocumentProcessor {
         if(Files.notExists(scraperPath)) {
             throw new ScraperNotFoundException(scraperPath + " doesn't exist");
         }
-
     }
 
     public static ACLEDScraper load(Path path) throws IOException {
@@ -83,37 +77,48 @@ public class ACLEDScraper implements IHttpDocumentProcessor {
         scraper = new GeneralSplitterFactory(scraperDef);
     }
 
-    public WebPage scrapePage(WebPage page) throws ScraperNotFoundException, IOException, IncorrectScraperJSONException {
+    private Optional<String> maybeGet(Post post, String key) {
+        if(post.containsKey(key) &&
+                post.get(key).size() > 0  &&
+                post.get(key).get(0).length() > 0) {
+            return Optional.of(post.get(key).get(0));
+        } else {
+            return Optional.empty();
+        }
 
-        String domain = Util.getDomain(page.getUrl());
+    }
 
-        // If there is a factory set for this preprocessor use that else search for one via the page's domain of origin
-        // Prefered functionality is to set a single preprocessor (more robust)
-        String id = domain.replaceAll("\\.","");
+
+
+    public WebPage scrapePage(WebPage page) {
 
         IForumSplitter splitter = scraper.create();
 
-        LinkedList<Post> newspages = splitter.split(Jsoup.parse(page.getHtml()));
-        if(newspages.size() > 0) {
-            Post newspage = newspages.get(0);
+        LinkedList<Post> posts = splitter.split(Jsoup.parse(page.getHtml()));
 
-            if(newspage.containsKey(article) &&
-                    newspage.get(article).size() > 0  &&
-                    newspage.get(article).get(0).length() > 0) {
-                page.setArticle(newspage.get(article).get(0));
+        if(posts.size() > 0) {
+            Post post = posts.get(0);
+
+            Optional<String> article = maybeGet(post, ARTICLE);
+            Optional<String> date = maybeGet(post, DATE);
+            Optional<String> title = maybeGet(post, TITLE);
+
+            if(article.isPresent()) {
+                page.setArticle(article.get());
+            } else {
+                //raise alarm!
             }
-            else {
-                return page;
+
+            if(title.isPresent()) {
+                page.setTitle(title.get());
+            } else {
+                //raise alarm!
             }
-            if (newspage.containsKey(title) &&
-                    newspage.get(title).size() > 0 &&
-                    newspage.get(title).get(0).length() > 0){
-                page.setTitle(newspage.get(title).get(0));
-            }
-            if(newspage.containsKey(date) &&
-                    newspage.get(date).size() > 0 &&
-                    newspage.get(date).get(0).length() > 0){
-                page.setDate(newspage.get(date).get(0));
+
+            if(date.isPresent()) {
+                page.setDate(date.get());
+            } else {
+                //raise alarm!
             }
         }
 
@@ -135,9 +140,7 @@ public class ACLEDScraper implements IHttpDocumentProcessor {
         }
         return fields;
     }
-
-
-
+    
     @Override
     public void processDocument(HttpClient httpClient, HttpDocument doc) {
 
@@ -146,7 +149,7 @@ public class ACLEDScraper implements IHttpDocumentProcessor {
             final String url = doc.getReference();
 
             StringWriter sw = new StringWriter();
-            doc.getContent().rewind();
+
             try {
                 IOUtils.copy(doc.getContent(), sw, doc.getContentEncoding());
             } catch (IOException e) {
@@ -159,24 +162,17 @@ public class ACLEDScraper implements IHttpDocumentProcessor {
             final int depth = doc.getMetadata().getInt(HttpMetadata.COLLECTOR_DEPTH);
 
             final WebPage webPage = new WebPage(url,html,parent,depth);
-            try {
-                scrapePage(webPage);
-            } catch (ScraperNotFoundException e) {
-                logger.warn("Scraper not found for article {}", url);
-                throw e;
-            } catch (IOException | IncorrectScraperJSONException e) {
-                logger.warn(e.getMessage(), e);
-                throw new RuntimeException(e);
-            }
+
+            scrapePage(webPage);
 
             if(webPage.getArticle() != null && webPage.getArticle().length() > 0) {
                 List<String> pages = new ArrayList<>();
-                doc.getMetadata().put(SCRAPEDARTICLE,Arrays.asList(webPage.getArticle()));
+                doc.getMetadata().put(ScraperFields.SCRAPEDARTICLE,Arrays.asList(webPage.getArticle()));
                 if(webPage.getTitle() != null && webPage.getTitle().length() > 0) {
-                    doc.getMetadata().put(SCRAPEDTITLE, Arrays.asList(webPage.getTitle()));
+                    doc.getMetadata().put(ScraperFields.SCRAPEDTITLE, Arrays.asList(webPage.getTitle()));
                 }
                 if(webPage.getDate() != null && webPage.getDate().length() > 0) {
-                    doc.getMetadata().put(SCRAPEDATE, Arrays.asList(webPage.getDate()));
+                    doc.getMetadata().put(ScraperFields.SCRAPEDATE, Arrays.asList(webPage.getDate()));
                 }
             }
 

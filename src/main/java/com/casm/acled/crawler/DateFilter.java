@@ -1,8 +1,8 @@
 package com.casm.acled.crawler;
 
 // apache commons
+import com.casm.acled.crawler.scraper.ScraperFields;
 import com.casm.acled.crawler.scraper.dates.DateUtil;
-import com.casm.acled.crawler.scraper.ACLEDScraper;
 import com.norconex.importer.handler.filter.OnMatch;
 import org.apache.commons.configuration.XMLConfiguration;
 
@@ -38,7 +38,7 @@ public class DateFilter extends AbstractDocumentFilter {
     @Override
     protected boolean isDocumentMatched(String reference, InputStream input, ImporterMetadata metadata, boolean parsed) throws ImporterHandlerException {
 
-        String dateStr = metadata.get(ACLEDScraper.SCRAPEDATE).get(0);
+        String dateStr = metadata.get(ScraperFields.SCRAPEDATE).get(0);
 
         boolean rejected = false;
         if(dateStr == null || dateStr.length() <= 0) {

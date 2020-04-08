@@ -26,10 +26,7 @@ public class TestJSONParser {
 //            Assert.assertEquals(processed,parsed);
         } catch (IOException e) {
             Assert.fail();
-        } catch (IncorrectScraperJSONException e) {
-            e.printStackTrace();
         }
-
 
     }
 }

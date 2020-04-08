@@ -60,11 +60,9 @@ public class TestScraped {
 //            GeneralSplitterFactory splitterFact = new GeneralSplitterFactory(tags);
             Document doc = Jsoup.connect(url).timeout(10000).userAgent("Mozilla").get();
             LinkedList<Post> splitDoc = tagset.create().split(doc);
-            System.out.println(splitDoc.getFirst().get(ACLEDScraper.title));
+            System.out.println(splitDoc.getFirst().get(ACLEDScraper.TITLE));
             System.out.println(splitDoc.size());
         } catch (IOException e) {
-            e.printStackTrace();
-        } catch (IncorrectScraperJSONException e) {
             e.printStackTrace();
         }
     }
