@@ -64,9 +64,12 @@ public class ACLEDPostProcessor implements IHttpDocumentProcessor {
     }
 
     private boolean previouslyScraped(HttpDocument doc) {
-        return doc.getMetadata().get(CrawlerArguments.PREVIOUSLYSCRAPED) == null ||
-                doc.getMetadata().get(CrawlerArguments.PREVIOUSLYSCRAPED).size() > 0 &&
-                Boolean.valueOf(doc.getMetadata().get(CrawlerArguments.PREVIOUSLYSCRAPED).get(0));
+        String val = metadataGet(doc.getMetadata(), CrawlerArguments.PREVIOUSLYSCRAPED);
+        if(val == null) {
+            return false;
+        } else {
+            return Boolean.valueOf(val);
+        }
     }
 
     @Override
@@ -83,13 +86,14 @@ public class ACLEDPostProcessor implements IHttpDocumentProcessor {
             Article article = EntityVersions.get(Article.class)
                     .current();
 
+            text.append(date).append("\n");
+
             if(title != null) {
                 text.append(title).append("\n");
                 article = article.put(Article.TITLE, title);
             }
 
-            text.append(date).append("\n")
-                .append(articleText);
+            text.append(articleText);
 
             Optional<LocalDate> parsedDate = DateUtil.getDate(date);
 

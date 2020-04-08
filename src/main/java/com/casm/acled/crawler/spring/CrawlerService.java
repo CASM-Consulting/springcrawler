@@ -5,6 +5,8 @@ import com.casm.acled.crawler.utils.Util;
 import com.casm.acled.dao.entities.ArticleDAO;
 import com.casm.acled.dao.entities.SourceDAO;
 import com.casm.acled.dao.entities.SourceListDAO;
+import com.norconex.collector.core.checksum.IDocumentChecksummer;
+import com.norconex.collector.core.checksum.impl.MD5DocumentChecksummer;
 import com.norconex.collector.core.data.store.impl.mvstore.MVStoreCrawlDataStoreFactory;
 import com.norconex.collector.http.crawler.HttpCrawlerConfig;
 import com.norconex.collector.http.doc.HttpMetadata;
@@ -93,7 +95,13 @@ public class CrawlerService {
 
         Path contentHashStorePath = Paths.get(crawlerArguments.crawldb, Util.getDomain(crawlerArguments.seeds.get(0)),"crawlstore");
         ConcurrentContentHashStore contentHashStore = new ConcurrentContentHashStore(contentHashStorePath);
-        config.setDocumentChecksummer(new WebScraperMetadataChecksum(contentHashStore));
+//        config.setDocumentChecksummer(new WebScraperMetadataChecksum(contentHashStore));
+
+        MD5DocumentChecksummer checksummer = new MD5DocumentChecksummer();
+        checksummer.setSourceFields(CrawlerArguments.SCRAPEDARTICLE);
+        checksummer.setTargetField(CrawlerArguments.CONTENTHASH);
+        config.setDocumentChecksummer(checksummer);
+
 
         logger.info("index only: {}", crawlerArguments.index);
         // Only performs this step when we are wanting to produce to a table
@@ -102,7 +110,7 @@ public class CrawlerService {
             // Add the source information to the metadata
             Map<String,List<String>> metadata = buildACLEDMetadata(crawlerArguments.sourcedomain, crawlerArguments.seeds.get(0));
             metadata.put(CrawlerArguments.SOURCENAME, Arrays.asList(crawlerArguments.source));
-            metadata.put(CrawlerArguments.COUNTRIES, Arrays.asList(crawlerArguments.countries));
+//            metadata.put(CrawlerArguments.COUNTRIES, Arrays.asList(crawlerArguments.countries));
 
             buildACLEDArticleFilters(handlers);
 
@@ -154,7 +162,6 @@ public class CrawlerService {
     }
 
     private static Map<String,List<String>> buildACLEDMetadata(String sourcedomain, String seed) {
-        logger.info("INFO: The web content with be scraped and produced to the database.");
         Map<String,List<String>> map = new HashMap<>();
         List<String> source;
         if(sourcedomain != null) {
