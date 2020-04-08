@@ -87,7 +87,7 @@ public class CLIRunner implements CommandLineRunner {
 //    }
 
     @Override
-    public void run(String[] args)  {
+    public void run(String[] args) throws Exception {
 
         List<String> splitArgs = new ArrayList<>();
         for(String arg : args){

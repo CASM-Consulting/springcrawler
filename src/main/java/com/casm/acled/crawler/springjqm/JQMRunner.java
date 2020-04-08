@@ -25,8 +25,7 @@ public class JQMRunner implements Runnable {
     private JobManagerProvider jmp;
 
     @Override
-    public void run()
-    {
+    public void run() {
 
 //        throw new RuntimeException("debug here!");
 
@@ -49,7 +48,12 @@ public class JQMRunner implements Runnable {
                 .build()
                 .parse(corrArgs);
 
-        crawlerService.run(crawlerArguments);
-        System.out.println("Job " + jmp.getObject().jobInstanceID() + " is done!");
+        try {
+
+            crawlerService.run(crawlerArguments);
+            System.out.println("Job " + jmp.getObject().jobInstanceID() + " is done!");
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }

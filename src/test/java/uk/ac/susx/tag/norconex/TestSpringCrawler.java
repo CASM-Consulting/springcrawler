@@ -43,7 +43,7 @@ public class TestSpringCrawler {
         ca.urlFilter = ".*";
         ca.userAgent = "casmconsulting.co.uk";
         ca.id = "testspring";
-        ca.index = true;
+        ca.index = false;
 
         List<String> params = new ArrayList<>();
         params.add(SingleSeedCollector.SEED);

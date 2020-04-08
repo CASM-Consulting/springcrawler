@@ -16,6 +16,7 @@ import com.norconex.importer.handler.filter.OnMatch;
 import com.norconex.importer.handler.filter.impl.EmptyMetadataFilter;
 import com.norconex.importer.handler.filter.impl.RegexMetadataFilter;
 import com.norconex.importer.handler.tagger.impl.KeepOnlyTagger;
+import org.apache.sis.internal.jaxb.metadata.EX_Extent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -63,7 +64,7 @@ public class CrawlerService {
         return url;
     }
 
-    public void run(CrawlerArguments crawlerArguments)  {
+    public void run(CrawlerArguments crawlerArguments) throws Exception {
 
         String seed = crawlerArguments.seeds.get(0);
 
@@ -99,7 +100,6 @@ public class CrawlerService {
         checksummer.setTargetField(CrawlerArguments.CONTENTHASH);
         config.setDocumentChecksummer(checksummer);
 
-
         logger.info("index only: {}", crawlerArguments.index);
         // Only performs this step when we are wanting to produce to a table
         if(!crawlerArguments.index){
@@ -132,24 +132,20 @@ public class CrawlerService {
         collector.start();
     }
 
-    private ACLEDScraper resolveScraper(Path scrapersPath, String explicitScraper, String seed) {
+    private ACLEDScraper resolveScraper(Path scrapersPath, String explicitScraper, String seed) throws IOException {
         ACLEDScraper scraper;
-        if(explicitScraper != null && !explicitScraper.equals("null")) {
-            if(Files.exists(scrapersPath.resolve(explicitScraper).resolve(ACLEDScraper.JOB_JSON))) {
-                scraper = new ACLEDScraper(scrapersPath.resolve(explicitScraper));
-            } else {
-                throw new ScraperNotFoundException(explicitScraper);
-            }
-        } else {
-            String id = Util.getDomain(seed).replaceAll("\\.","");
+        Path path;
+        String id = Util.getDomain(seed).replaceAll("\\.","");
 
-            if(Files.exists(scrapersPath.resolve(id).resolve(ACLEDScraper.JOB_JSON))) {
-                scraper = new ACLEDScraper(scrapersPath);
-            } else {
-                throw new ScraperNotFoundException(id);
-            }
+        if(explicitScraper != null && ACLEDScraper.validPath(scrapersPath.resolve(explicitScraper))) {
+            path = scrapersPath.resolve(explicitScraper);
+        } else if(ACLEDScraper.validPath(scrapersPath.resolve(id))) {
+            path = scrapersPath.resolve(id);
+        } else {
+            throw new ScraperNotFoundException(id);
         }
 
+        scraper = ACLEDScraper.load(path);
         return scraper;
     }
 

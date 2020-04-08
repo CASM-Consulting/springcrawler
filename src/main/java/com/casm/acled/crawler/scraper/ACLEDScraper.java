@@ -8,7 +8,6 @@ import com.casm.acled.crawler.utils.Util;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.client.HttpClient;
 import com.norconex.collector.http.doc.HttpDocument;
-import com.norconex.collector.http.doc.HttpMetadata;
 import com.norconex.collector.http.processor.IHttpDocumentProcessor;
 import com.norconex.commons.lang.file.ContentType;
 
@@ -35,8 +34,6 @@ public class ACLEDScraper implements IHttpDocumentProcessor {
 
     protected static final Logger logger = LoggerFactory.getLogger(ACLEDScraper.class);
 
-    public static final String SCRAPERS = "casm.jqm.scrapers";
-
     public static final String ARTICLE = "field.name/article";
     public static final String TITLE = "field.name/title";
     public static final String DATE = "field.name/date";
@@ -47,28 +44,26 @@ public class ACLEDScraper implements IHttpDocumentProcessor {
     private GeneralSplitterFactory scraper;
 
     public ACLEDScraper(Path scraperPath) {
-        this(scraperPath, JOB_JSON);
-    }
-
-    public ACLEDScraper(Path scraperPath, String jobJson) {
-        this.scraperPath = scraperPath.resolve(jobJson);
+        this.scraperPath = scraperPath.resolve(JOB_JSON);
         if(Files.notExists(scraperPath)) {
             throw new ScraperNotFoundException(scraperPath + " doesn't exist");
         }
     }
 
+    public static boolean validPath(Path path) {
+        return Files.exists(path.resolve(ACLEDScraper.JOB_JSON));
+    }
+
     public static ACLEDScraper load(Path path) throws IOException {
         ACLEDScraper scraper = new ACLEDScraper(path);
-        scraper.loadScraper();
+        scraper.load();
         return scraper;
     }
 
-    private void loadScraper() throws IOException {
+    private void load() throws IOException {
 
         String processed = Util.processJSON(scraperPath.toFile());
-
         Map<String, List<Map<String, String>>> scraperDef = buildScraperDefinition(GeneralSplitterFactory.parseJsonTagSet(processed));
-
         scraper = new GeneralSplitterFactory(scraperDef);
     }
 
@@ -80,7 +75,6 @@ public class ACLEDScraper implements IHttpDocumentProcessor {
         } else {
             return Optional.empty();
         }
-
     }
     /**
      * Transform json pojo object to splitter structure
@@ -103,11 +97,11 @@ public class ACLEDScraper implements IHttpDocumentProcessor {
         try {
             IOUtils.copy(doc.getContent(), sw, doc.getContentEncoding());
         } catch (IOException e) {
-            throw new RuntimeException("ERROR: Failed to retrieve web content for url: ");
+            String url = doc.getReference();
+            throw new RuntimeException("ERROR: Failed to retrieve web content for url: " + url);
         }
 
         String html = sw.toString();
-
         return html;
     }
 
@@ -115,15 +109,9 @@ public class ACLEDScraper implements IHttpDocumentProcessor {
     public void processDocument(HttpClient httpClient, HttpDocument doc) {
 
         if(isText(doc)) {
-
-            String url = doc.getReference();
-
             String html = getRawHTML(doc);
-
             IForumSplitter splitter = scraper.create();
-
             LinkedList<Post> posts = splitter.split(Jsoup.parse(html));
-
             if(posts.size() > 0) {
                 Post post = posts.get(0);
 
@@ -133,28 +121,18 @@ public class ACLEDScraper implements IHttpDocumentProcessor {
 
                 if(article.isPresent()) {
                     doc.getMetadata().put(ScraperFields.SCRAPEDARTICLE,Arrays.asList(article.get()));
-                } else {
-                    //raise alarm!
                 }
 
                 if(title.isPresent()) {
                     doc.getMetadata().put(ScraperFields.SCRAPEDTITLE, Arrays.asList(title.get()));
-
-                } else {
-                    //raise alarm!
                 }
 
                 if(date.isPresent()) {
                     doc.getMetadata().put(ScraperFields.SCRAPEDATE, Arrays.asList(date.get()));
-                } else {
-                    //raise alarm!
                 }
             }
-
         }
-
     }
-
     // Check this is text based only content for M52
     public boolean isText(HttpDocument doc) {
         ContentType ct = doc.getContentType();
@@ -163,5 +141,4 @@ public class ACLEDScraper implements IHttpDocumentProcessor {
                 ContentType.CSV.getContentFamily().getId().equals(contentFam) || ContentType.XML.getContentFamily().getId().equals(contentFam)) ?
                 true : false;
     }
-
 }
