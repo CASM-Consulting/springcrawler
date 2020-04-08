@@ -41,11 +41,6 @@ public class ACLEDScraper implements IHttpDocumentProcessor {
     public static final String TITLE = "field.name/title";
     public static final String DATE = "field.name/date";
 
-    public static final String metaDATE = "date";
-    public static final String metaTITLE = "title";
-    public static final String metaARTICLE = "article";
-
-
     public static final String JOB_JSON = "job.json";
 
     private final Path scraperPath;
@@ -87,45 +82,6 @@ public class ACLEDScraper implements IHttpDocumentProcessor {
         }
 
     }
-
-
-
-    public WebPage scrapePage(WebPage page) {
-
-        IForumSplitter splitter = scraper.create();
-
-        LinkedList<Post> posts = splitter.split(Jsoup.parse(page.getHtml()));
-
-        if(posts.size() > 0) {
-            Post post = posts.get(0);
-
-            Optional<String> article = maybeGet(post, ARTICLE);
-            Optional<String> date = maybeGet(post, DATE);
-            Optional<String> title = maybeGet(post, TITLE);
-
-            if(article.isPresent()) {
-                page.setArticle(article.get());
-            } else {
-                //raise alarm!
-            }
-
-            if(title.isPresent()) {
-                page.setTitle(title.get());
-            } else {
-                //raise alarm!
-            }
-
-            if(date.isPresent()) {
-                page.setDate(date.get());
-            } else {
-                //raise alarm!
-            }
-        }
-
-        return page;
-
-    }
-
     /**
      * Transform json pojo object to splitter structure
      * @param matcherList
@@ -140,86 +96,61 @@ public class ACLEDScraper implements IHttpDocumentProcessor {
         }
         return fields;
     }
-    
+
+    private String getRawHTML(HttpDocument doc) {
+        StringWriter sw = new StringWriter();
+
+        try {
+            IOUtils.copy(doc.getContent(), sw, doc.getContentEncoding());
+        } catch (IOException e) {
+            throw new RuntimeException("ERROR: Failed to retrieve web content for url: ");
+        }
+
+        String html = sw.toString();
+
+        return html;
+    }
+
     @Override
     public void processDocument(HttpClient httpClient, HttpDocument doc) {
 
         if(isText(doc)) {
 
-            final String url = doc.getReference();
+            String url = doc.getReference();
 
-            StringWriter sw = new StringWriter();
+            String html = getRawHTML(doc);
 
-            try {
-                IOUtils.copy(doc.getContent(), sw, doc.getContentEncoding());
-            } catch (IOException e) {
-                throw new RuntimeException("ERROR: Failed to retrieve web content for url: " + url);
+            IForumSplitter splitter = scraper.create();
+
+            LinkedList<Post> posts = splitter.split(Jsoup.parse(html));
+
+            if(posts.size() > 0) {
+                Post post = posts.get(0);
+
+                Optional<String> article = maybeGet(post, ARTICLE);
+                Optional<String> date = maybeGet(post, DATE);
+                Optional<String> title = maybeGet(post, TITLE);
+
+                if(article.isPresent()) {
+                    doc.getMetadata().put(ScraperFields.SCRAPEDARTICLE,Arrays.asList(article.get()));
+                } else {
+                    //raise alarm!
+                }
+
+                if(title.isPresent()) {
+                    doc.getMetadata().put(ScraperFields.SCRAPEDTITLE, Arrays.asList(title.get()));
+
+                } else {
+                    //raise alarm!
+                }
+
+                if(date.isPresent()) {
+                    doc.getMetadata().put(ScraperFields.SCRAPEDATE, Arrays.asList(date.get()));
+                } else {
+                    //raise alarm!
+                }
             }
 
-            final String html = sw.toString();
-
-            final String parent = doc.getMetadata().getString(HttpMetadata.COLLECTOR_REFERRER_REFERENCE);
-            final int depth = doc.getMetadata().getInt(HttpMetadata.COLLECTOR_DEPTH);
-
-            final WebPage webPage = new WebPage(url,html,parent,depth);
-
-            scrapePage(webPage);
-
-            if(webPage.getArticle() != null && webPage.getArticle().length() > 0) {
-                List<String> pages = new ArrayList<>();
-                doc.getMetadata().put(ScraperFields.SCRAPEDARTICLE,Arrays.asList(webPage.getArticle()));
-                if(webPage.getTitle() != null && webPage.getTitle().length() > 0) {
-                    doc.getMetadata().put(ScraperFields.SCRAPEDTITLE, Arrays.asList(webPage.getTitle()));
-                }
-                if(webPage.getDate() != null && webPage.getDate().length() > 0) {
-                    doc.getMetadata().put(ScraperFields.SCRAPEDATE, Arrays.asList(webPage.getDate()));
-                }
-            }
-
-        }
-
-    }
-
-
-    /**
-     * Class used to serialise web page metadata to json
-     * TODO: Make scraped metadata less hardcoded
-     */
-    public class WebPage {
-
-        private final String url;
-        private final String html;
-        private final String parent;
-        private final int depth;
-        private String article;
-        private String title;
-        private String date;
-
-        public WebPage(String url, String html, String parent, int depth) {
-            this.url = url;
-            this.html = html;
-            this.parent = parent;
-            this.depth = depth;
-        }
-
-        public String getArticle() {return article;}
-        public String getTitle() {return title;}
-        public String getDate() {return date;}
-        public String getUrl() {return url;}
-        public String getHtml() {return html;}
-        public String getParent() {return parent;}
-        public int getDepth() {return depth;}
-
-        public void setArticle(String article) {
-            this.article = article;
-        }
-
-        public void setTitle(String title) {
-            this.title = title;
-        }
-
-        public void setDate(String date) {
-            this.date = date;
         }
 
     }
@@ -227,9 +158,9 @@ public class ACLEDScraper implements IHttpDocumentProcessor {
     // Check this is text based only content for M52
     public boolean isText(HttpDocument doc) {
         ContentType ct = doc.getContentType();
-        String contenFam = ct.getContentFamily().getId();
-        return (ContentType.TEXT.getContentFamily().getId().equals(contenFam) || ContentType.HTML.getContentFamily().getId().equals(contenFam) ||
-                ContentType.CSV.getContentFamily().getId().equals(contenFam) || ContentType.XML.getContentFamily().getId().equals(contenFam)) ?
+        String contentFam = ct.getContentFamily().getId();
+        return (ContentType.TEXT.getContentFamily().getId().equals(contentFam) || ContentType.HTML.getContentFamily().getId().equals(contentFam) ||
+                ContentType.CSV.getContentFamily().getId().equals(contentFam) || ContentType.XML.getContentFamily().getId().equals(contentFam)) ?
                 true : false;
     }
 
