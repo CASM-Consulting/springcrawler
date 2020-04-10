@@ -1,7 +1,10 @@
 package com.casm.acled.crawler.scraper.dates;
 
+import com.casm.acled.crawler.utils.Util;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.joestelmach.natty.DateGroup;
 import com.joestelmach.natty.Parser;
 import com.mdimension.jchronic.Chronic;
@@ -12,6 +15,10 @@ import org.ocpsoft.prettytime.nlp.PrettyTimeParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
@@ -385,4 +392,74 @@ public class DateUtil {
         return  dtf;
     }
 
+    public static Map<String, String> extractDatesFromLastScrapeJson(Path scrapersPath) {
+
+        final Map<String, String> dates = new HashMap<>();
+        try {
+            Files.walk(scrapersPath, 1).forEach(path -> {
+                Path lastScrapePath = path.resolve("last_scrape.json");
+                if(Files.exists(lastScrapePath)) {
+                    try {
+                        String name = path.getFileName().toString();
+                        Map data = new Gson().fromJson(Files.newBufferedReader(lastScrapePath), Map.class);
+                        String date = (String)data.get("field.name/date_0");
+                        dates.put(name, date);
+                    } catch (IOException e) {
+                        logger.warn(e.getMessage(), e);
+                    }
+                }
+
+            });
+        } catch (IOException e) {
+            logger.warn(e.getMessage(), e);
+        }
+
+        return dates;
+    }
+
+    public static Map<String, Set<TimeZone>> getAvailableTimeZones()
+    {
+        Map<String, Set<TimeZone>> availableTimezones =
+                new HashMap<String, Set<TimeZone>>();
+
+        // Loop through all available locales
+
+        for (Locale locale : Locale.getAvailableLocales())
+        {
+            final String countryCode = locale.getCountry();
+            final String countryName = locale.getDisplayCountry();
+
+            // Locate the timezones added for this country so far
+            // (This can be moved to inside the loop if depending
+            // on whether country with no available timezones should
+            // be in the result map with an empty set,
+            // or not included at all)
+
+            Set<TimeZone> timezones = availableTimezones.get(countryName);
+            if (timezones==null)
+            {
+                timezones = new HashSet<>();
+                availableTimezones.put(countryName, timezones);
+            }
+
+            // Find all timezones for that country (code) using ICU4J
+
+            for (String id :
+                    com.ibm.icu.util.TimeZone.getAvailableIDs(countryCode))
+            {
+                // Add timezone to result map
+
+                timezones.add(TimeZone.getTimeZone(id));
+            }
+        }
+        return availableTimezones;
+    }
+
+
+    public static void main(String[] args) {
+        for(Map.Entry<String,String> date : extractDatesFromLastScrapeJson(Paths.get("allscrapers")).entrySet()) {
+//            System.out.println(date.getKey() + "\t\t" + date.getValue());
+            System.out.println(date.getValue());
+        }
+    }
 }
