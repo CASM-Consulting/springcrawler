@@ -7,8 +7,7 @@ import uk.ac.susx.tag.norconex.crawlpolling.SubmissionService;
 import uk.ac.susx.tag.norconex.jobqueuemanager.CrawlerSubmissionService;
 import uk.ac.susx.tag.norconex.jobqueuemanager.SingleSeedCollector;
 
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.URI;
 import java.util.Properties;
 
 public class TestCrawlerSubmission {
@@ -40,12 +39,8 @@ public class TestCrawlerSubmission {
         jobRequest.setKeyword1(seed);
 
         String domain = "test-host";
-        try {
-            URL url = new URL(seed);
-            domain = url.getHost();
-        } catch (MalformedURLException e) {
-            Assert.fail();
-        }
+        URI url = URI.create(seed);
+        domain = url.getHost();
 
 
         jobRequest.addParameter(SingleSeedCollector.SEED, SingleSeedCollector.SEED + " " + seed);

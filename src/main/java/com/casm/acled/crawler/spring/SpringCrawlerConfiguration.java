@@ -19,6 +19,8 @@ import javax.sql.DataSource;
 @Import({ObjectMapperConfiguration.class})
 public class SpringCrawlerConfiguration {
 
+
+    //this shouldn't be necessary, but application.properties seems to be ignored by JQM Spring
     @Bean
     @Primary
     public DataSource dataSource() {

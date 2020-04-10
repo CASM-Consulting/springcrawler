@@ -32,7 +32,7 @@ import org.springframework.context.annotation.Import;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.URI;
 import java.nio.charset.Charset;
 import java.time.LocalDate;
 import java.util.*;
@@ -64,12 +64,8 @@ public class Util implements CommandLineRunner {
 
     // Returns the originating domain of a given url - minus any trailing 'www'
     public static String getDomain(String urlString)  {
-        try {
-            URL url = new URL(urlString);
-            return (url.getHost().startsWith("www")) ? url.getHost().substring(4) : url.getHost();
-        } catch (MalformedURLException e){
-            throw new RuntimeException(e);
-        }
+        URI url = URI.create(urlString);
+        return (url.getHost().startsWith("www")) ? url.getHost().substring(4) : url.getHost();
     }
 
     // Processes a M52 job json to scraper rules
