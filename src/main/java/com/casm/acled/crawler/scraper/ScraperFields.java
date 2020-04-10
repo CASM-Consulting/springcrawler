@@ -2,7 +2,8 @@ package com.casm.acled.crawler.scraper;
 
 public class ScraperFields {
     //    public static final String SCRAPEDJSON = "scraped.json";
-        public static final String SCRAPEDARTICLE = "scraped.article";
-    public static final String SCRAPEDATE = "scraped.date";
-    public static final String SCRAPEDTITLE = "scraped.title";
+    public static final String SCRAPED_ARTICLE = "scraped.article";
+    public static final String SCRAPED_DATE = "scraped.date";
+    public static final String SCRAPED_TITLE = "scraped.title";
+    public static final String STANDARD_DATE = "STANDARD_DATE";
 }

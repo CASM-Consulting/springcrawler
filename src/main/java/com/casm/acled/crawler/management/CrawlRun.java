@@ -9,6 +9,8 @@ public class CrawlRun {
 
     private final Source source;
 
+    public static final String SOURCE_ID = "SOURCE_ID";
+
     private final LocalDateTime from;
     private final LocalDateTime to;
 

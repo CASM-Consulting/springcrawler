@@ -1,6 +1,7 @@
 package com.casm.acled.crawler.scraper.dates;
 
 import java.time.LocalDate;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -13,11 +14,11 @@ class CompositeDateParser implements DateParser {
     }
 
     @Override
-    public Optional<LocalDate> parse(String date) {
-        Optional<LocalDate> attempt =  Optional.empty();
+    public Optional<ZonedDateTime> parse(String date) {
+        Optional<ZonedDateTime> attempt =  Optional.empty();
 
         for(DateParser parser : parsers ) {
-            Optional<LocalDate> parse = parser.parse(date);
+            Optional<ZonedDateTime> parse = parser.parse(date);
             if(parse.isPresent()) {
                 attempt = parse;
                 break;

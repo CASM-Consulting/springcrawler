@@ -188,7 +188,7 @@ public class Scheduler implements Runnable {
 
         JobRequest jobRequest = JobRequest.create("","");
 
-        jobRequest.addParameter( "SOURCE_ID", Integer.toString( source.id() ) );
+        jobRequest.addParameter( CrawlRun.SOURCE_ID, Integer.toString( source.id() ) );
 
         int id = client.enqueue(jobRequest);
 
@@ -255,6 +255,8 @@ public class Scheduler implements Runnable {
 
     @Override
     public void run() {
+
+
         ensureSchedules();
     }
 }

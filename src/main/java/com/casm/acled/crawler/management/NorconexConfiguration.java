@@ -1,8 +1,9 @@
 package com.casm.acled.crawler.management;
 
 import com.casm.acled.crawler.DateFilter;
+import com.casm.acled.crawler.scraper.ScraperFields;
+import com.casm.acled.crawler.scraper.dates.CustomDateMetadataFilter;
 import com.casm.acled.crawler.utils.Util;
-import com.norconex.collector.core.checksum.impl.MD5DocumentChecksummer;
 import com.norconex.collector.core.crawler.ICrawlerConfig;
 import com.norconex.collector.core.data.store.impl.mvstore.MVStoreCrawlDataStoreFactory;
 import com.norconex.collector.core.filter.impl.RegexReferenceFilter;
@@ -14,20 +15,20 @@ import com.norconex.collector.http.url.impl.GenericLinkExtractor;
 import com.norconex.importer.ImporterConfig;
 import com.norconex.importer.handler.IImporterHandler;
 import com.norconex.importer.handler.filter.OnMatch;
+import com.norconex.importer.handler.filter.impl.DateMetadataFilter;
 import com.norconex.importer.handler.filter.impl.EmptyMetadataFilter;
 import com.norconex.importer.handler.filter.impl.RegexMetadataFilter;
 import com.norconex.importer.parser.GenericDocumentParserFactory;
-import uk.ac.susx.tag.norconex.document.ArticleExtractorChecksum;
 import uk.ac.susx.tag.norconex.jobqueuemanager.CrawlerArguments;
-import uk.ac.susx.tag.norconex.jobqueuemanager.SingleSeedCollector;
 
-import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.sql.Date;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class NorconexConfiguration {
 
@@ -46,14 +47,14 @@ public class NorconexConfiguration {
     private String seed;
     private long politeness;
     private int numThreads;
-    private String regxFiltPatterns;
-    private LocalDateTime from;
-    private LocalDateTime to;
+    private List<String> regexFilterPatterns;
+    private ZonedDateTime from;
+    private ZonedDateTime to;
 
     private static String PROGRESS = "progress";
     private static String LOGS = "logs";
 
-    public NorconexConfiguration(LocalDateTime from, LocalDateTime to) {
+    public NorconexConfiguration(ZonedDateTime from, ZonedDateTime to) {
         this.from = from;
         this.to = to;
         importer = new ImporterConfig();
@@ -81,10 +82,11 @@ public class NorconexConfiguration {
     private void configureCrawler() {
 
 
-        MD5DocumentChecksummer checksummer = new MD5DocumentChecksummer();
-        checksummer.setSourceFields(CrawlerArguments.SCRAPEDARTICLE);
-        checksummer.setTargetField(CrawlerArguments.CONTENTHASH);
-        crawler.setDocumentChecksummer(checksummer);
+//        MD5DocumentChecksummer checksummer = new MD5DocumentChecksummer();
+//        checksummer.setSourceFields(CrawlerArguments.SCRAPEDARTICLE);
+//        checksummer.setTargetField(CrawlerArguments.CONTENTHASH);
+//        crawler.setDocumentChecksummer(checksummer);
+//        crawler.setDocumentChecksummer(new ArticleExtractorChecksum());
 
         // Basic crawler config
         crawler.setUserAgent(userAgent);
@@ -92,24 +94,12 @@ public class NorconexConfiguration {
         crawler.setIgnoreRobotsMeta(ignoreRobots);
         crawler.setIgnoreRobotsTxt(ignoreRobots);
         crawler.setIgnoreCanonicalLinks(false);
-        crawler.setDocumentChecksummer(new ArticleExtractorChecksum());
         crawler.setIgnoreSitemap(ignoreSiteMap);
-
-        crawler.setCrawlDataStoreFactory(new MVStoreCrawlDataStoreFactory());
-
-        // Control the threadpool size for each crawler
         crawler.setNumThreads(numThreads);
-
-        // Location of crawl output, db etc...
-        crawler.setWorkDir(crawlStore.toFile());
-
-        // only store a crawl cache M52 deals with content
+        // only store a crawl cache, not content
         crawler.setKeepDownloads(false);
-//        crawler.setId(id);
-
         // Page found but record of its parent lost - process the content and links anyway
         crawler.setOrphansStrategy(ICrawlerConfig.OrphansStrategy.PROCESS);
-
         // Keeps the crawler within the same domain
         URLCrawlScopeStrategy ucs = new URLCrawlScopeStrategy();
         ucs.setStayOnDomain(true);
@@ -117,26 +107,17 @@ public class NorconexConfiguration {
         ucs.setStayOnPort(false);
         ucs.setStayOnProtocol(false);
         crawler.setUrlCrawlScopeStrategy(ucs);
-
-//		GenericRecrawlableResolver grr = new GenericRecrawlableResolver();
-//		grr.setMinFrequencies();
-//		this.setRecrawlableResolver(grr);
-
-//		GenericURLNormalizer urlNormaliser = new GenericURLNormalizer();
-//		urlNormaliser.setNormalizations(GenericURLNormalizer.Normalization);
-
         // set to false so crawl cache is only those of interest
         crawler.setKeepOutOfScopeLinks(false);
 
-//        crawler.setStartURLs(seeds);
-//
-//        // use this if you want to adhere to sitemap.
-//        if(!ignoreSiteMap) {
+        crawler.setWorkDir(crawlStore.toFile());
+
+        crawler.setCrawlDataStoreFactory(new MVStoreCrawlDataStoreFactory());
+
+//        crawler.setId(id);
 //            crawler.setStartSitemapURLs(seeds);
-//        }
+//        crawler.setStartURLs(seeds);
 
-
-        crawler.setImporterConfig(importer);
 
         // Used to set the politeness delay for consecutive post calls to the site (helps prevent being blocked)
         GenericDelayResolver gdr = new GenericDelayResolver();
@@ -153,12 +134,16 @@ public class NorconexConfiguration {
         // create the url filters - e.g. regex filters
         // url regex match
         // parent link prevention
-        RegexReferenceFilter[] referenceFilters = new RegexReferenceFilter[]{new RegexReferenceFilter(regxFiltPatterns)};
-//			.map(regex -> new RegexReferenceFilter(regex))
-//			.collect(Collectors.toList()).toArray(new RegexReferenceFilter[regxFiltPatterns.size()]);
-        crawler.setReferenceFilters(referenceFilters);
-
+        if(regexFilterPatterns!=null) {
+            crawler.setReferenceFilters(
+                    regexFilterPatterns.stream()
+                            .map(regex -> new RegexReferenceFilter(regex))
+                            .collect(Collectors.toList())
+                            .toArray(new RegexReferenceFilter[regexFilterPatterns.size()])
+            );
+        }
     }
+
 
     private void configureImporter() {
 
@@ -167,6 +152,9 @@ public class NorconexConfiguration {
         int week = 7;
         DateFilter df = new DateFilter(LocalDate.now().minusDays(week));
 
+        DateMetadataFilter dateMetadataFilter = new CustomDateMetadataFilter(ScraperFields.SCRAPED_DATE, null);
+        dateMetadataFilter.addCondition(DateMetadataFilter.Operator.GREATER_THAN, Date.from(from.toInstant()));
+        dateMetadataFilter.addCondition(DateMetadataFilter.Operator.LOWER_EQUAL, Date.from(to.toInstant()));
 
         List<IImporterHandler> handlers = new ArrayList<>();
 
@@ -176,8 +164,9 @@ public class NorconexConfiguration {
 
 
         // set this to correctly manage file sizes etc...
-        importer.setMaxFileCacheSize(10);
-        importer.setMaxFilePoolCacheSize(200);
+//        importer.setMaxFileCacheSize(10);
+//        importer.setMaxFilePoolCacheSize(200);
+        //effectively disables importer
         GenericDocumentParserFactory gdpf = new GenericDocumentParserFactory();
         gdpf.setIgnoredContentTypesRegex(".*");
         importer.setParserFactory(gdpf);

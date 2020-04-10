@@ -38,7 +38,7 @@ public class DateFilter extends AbstractDocumentFilter {
     @Override
     protected boolean isDocumentMatched(String reference, InputStream input, ImporterMetadata metadata, boolean parsed) throws ImporterHandlerException {
 
-        String dateStr = metadata.get(ScraperFields.SCRAPEDATE).get(0);
+        String dateStr = metadata.get(ScraperFields.SCRAPED_DATE).get(0);
 
         boolean rejected = false;
         if(dateStr == null || dateStr.length() <= 0) {
