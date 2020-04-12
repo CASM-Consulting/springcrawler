@@ -211,16 +211,12 @@ public class Scheduler implements Runnable {
             }
         }
 
-
         return globalActiveSources;
     }
 
 
-
-
     @Override
     public void run() {
-
 
         ensureSchedules();
     }

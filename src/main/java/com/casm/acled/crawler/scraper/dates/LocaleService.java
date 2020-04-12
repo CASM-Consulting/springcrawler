@@ -1,7 +1,12 @@
 package com.casm.acled.crawler.scraper.dates;
 
 import com.casm.acled.crawler.management.Reporting;
+import com.casm.acled.dao.entities.DeskDAO;
+import com.casm.acled.dao.entities.SourceDAO;
+import com.casm.acled.dao.entities.SourceListDAO;
+import com.casm.acled.entities.region.Desk;
 import com.casm.acled.entities.source.Source;
+import com.casm.acled.entities.sourcelist.SourceList;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.ibm.icu.util.ULocale;
@@ -9,21 +14,31 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import java.util.*;
 
-public class LocaleHelper {
+@Service
+public class LocaleService {
 
-    protected static final Logger logger = LoggerFactory.getLogger(LocaleHelper.class);
+    protected static final Logger logger = LoggerFactory.getLogger(LocaleService.class);
 
     private final Map<String, Set<TimeZone>> timeZonesByCountry;
     private final Map<String, Set<ULocale>> localesByCountry;
+
+    @Autowired
+    private DeskDAO deskDAO;
+    @Autowired
+    private SourceListDAO sourceListDAO;
+    @Autowired
+    private SourceDAO sourceDAO;
 
     private static final Map<String,String> countryMap = ImmutableMap.of(
             "Palestine", "Palestinian Territories"
     );
 
-    public LocaleHelper() {
+    public LocaleService() {
         timeZonesByCountry = timeZonesByCountry();
         localesByCountry = localesByCountry();
     }
@@ -199,7 +214,7 @@ public class LocaleHelper {
 
     public void determineLocalesAndTimeZones(List<Source> sources) {
 
-        LocaleHelper dph = new LocaleHelper();
+        LocaleService dph = new LocaleService();
         for(Source source : sources) {
             Optional<TimeZone> maybeTimeZone = dph.determineTimeZone(source);
             Optional<ULocale> maybeLocale = dph.determineLocale(source);
@@ -212,5 +227,28 @@ public class LocaleHelper {
 //                System.out.println(source);
             }
         }
+    }
+
+    private void determineSourceLocalesAndListTimeZones(String listName) {
+
+        SourceList sourceList = sourceListDAO.getBy(SourceList.LIST_NAME, listName).get(0);
+        List<Source> sources = sourceDAO.byList(sourceList);
+        LocaleService dph = new LocaleService();
+
+        dph.determineLocalesAndTimeZones(sources);
+    }
+
+    public void determineLocalesAndTimeZones() {
+        for(Desk desk : deskDAO.getAll()) {
+
+            List<SourceList> lists = sourceListDAO.byDesk(desk.id());
+
+            for(SourceList list : lists) {
+
+                determineSourceLocalesAndListTimeZones(list.get(SourceList.LIST_NAME));
+            }
+        }
+
+        Reporting reporting = Reporting.get();
     }
 }
