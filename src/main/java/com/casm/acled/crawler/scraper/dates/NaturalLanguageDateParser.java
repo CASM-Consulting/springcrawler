@@ -1,6 +1,7 @@
 package com.casm.acled.crawler.scraper.dates;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 
@@ -12,9 +13,9 @@ class NaturalLanguageDateParser implements DateParser {
     }
 
     @Override
-    public Optional<ZonedDateTime> parse(String date) {
+    public Optional<LocalDateTime> parse(String date) {
         boolean makeAttempt = false;
-        Optional<ZonedDateTime> attempt = Optional.empty();
+        Optional<LocalDateTime> attempt = Optional.empty();
         for(String trigger : triggers) {
             if(date.toLowerCase().contains(trigger.toLowerCase())) {
                 makeAttempt = true;
@@ -22,7 +23,7 @@ class NaturalLanguageDateParser implements DateParser {
         }
         if(makeAttempt) {
             if(attempt.isPresent()) {
-                attempt = Optional.of(ZonedDateTime.from(DateUtil.getDateWithoutNormalisation(date).get()));
+                attempt = Optional.of(LocalDateTime.from(DateUtil.getDateWithoutNormalisation(date).get()));
             }
         }
         return attempt;

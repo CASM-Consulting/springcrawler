@@ -7,6 +7,7 @@ import com.norconex.importer.handler.ImporterHandlerException;
 import com.norconex.importer.handler.filter.impl.DateMetadataFilter;
 
 import java.io.InputStream;
+import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
@@ -37,11 +38,11 @@ public class CustomDateMetadataFilter extends DateMetadataFilter {
                                         ImporterMetadata metadata, boolean parsed)
             throws ImporterHandlerException {
 
-        Optional<ZonedDateTime> maybeDateTime = dateParser.parse(metadata.get(field).get(0));
+        Optional<LocalDateTime> maybeDateTime = dateParser.parse(metadata.get(field).get(0));
 
         if (maybeDateTime.isPresent()) {
-            ZonedDateTime zdt = maybeDateTime.get();
-            String standardDateString = zdt.format(dtf);
+            LocalDateTime ldt = maybeDateTime.get();
+            String standardDateString = ldt.format(dtf);
             metadata.put(ScraperFields.STANDARD_DATE, ImmutableList.of(standardDateString));
 
             return super.isDocumentMatched(reference, input, metadata, parsed);

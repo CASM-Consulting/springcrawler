@@ -1,8 +1,6 @@
 package com.casm.acled.crawler.scraper.dates;
 
-import com.beust.jcommander.JCommander;
 import com.casm.acled.configuration.ObjectMapperConfiguration;
-import com.casm.acled.crawler.spring.CrawlerService;
 import com.casm.acled.dao.entities.SourceDAO;
 import com.casm.acled.dao.entities.SourceListDAO;
 import com.casm.acled.entities.source.Source;
@@ -22,8 +20,6 @@ import org.springframework.boot.autoconfigure.validation.ValidationAutoConfigura
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
-import uk.ac.susx.tag.norconex.database.ConcurrentContentHashStore;
-import uk.ac.susx.tag.norconex.jobqueuemanager.CrawlerArguments;
 
 import java.util.*;
 
@@ -34,9 +30,9 @@ import java.util.*;
 @Import({ObjectMapperConfiguration.class})
 // And we also need the DAOs.
 @ComponentScan(basePackages={"com.casm.acled.dao", "com.casm.acled.crawler.spring"})
-public class DateHelperRunner implements CommandLineRunner {
+public class LocaleHelperRunner implements CommandLineRunner {
 
-    protected static final Logger logger = LoggerFactory.getLogger(DateHelperRunner.class);
+    protected static final Logger logger = LoggerFactory.getLogger(LocaleHelperRunner.class);
 
     @Autowired
     private SourceListDAO sourceListDAO;
@@ -45,7 +41,7 @@ public class DateHelperRunner implements CommandLineRunner {
 
     public static void main(String[] args) {
 
-        SpringApplication app = new SpringApplication(DateHelperRunner.class);
+        SpringApplication app = new SpringApplication(LocaleHelperRunner.class);
         app.setBannerMode(Banner.Mode.OFF);
         app.setWebApplicationType(WebApplicationType.NONE);
         ConfigurableApplicationContext ctx = app.run(args);
@@ -53,22 +49,20 @@ public class DateHelperRunner implements CommandLineRunner {
         ctx.close();
     }
 
-    private void determineSourceListTimeZones(String listName) {
+    private void determineSourceLocalesAndListTimeZones(String listName) {
 
         SourceList sourceList = sourceListDAO.getBy(SourceList.LIST_NAME, listName).get(0);
         List<Source> sources = sourceDAO.byList(sourceList);
-        DateParserHelper dph = new DateParserHelper();
-        for(Source source : sources) {
-            Optional<TimeZone> maybeTimeZone = dph.determineTimeZone(source);
-            if(!maybeTimeZone.isPresent()) {
-                System.out.println(source);
-            }
-        }
+        LocaleHelper dph = new LocaleHelper();
+
+        dph.determineTimeZones(sources);
     }
 
     @Override
     public void run(String[] args) throws Exception {
 
-        determineSourceListTimeZones("Levant");
+
+
+        determineSourceLocalesAndListTimeZones("Levant");
     }
 }

@@ -349,18 +349,18 @@ public class DateUtil {
         return bestGuess;
     }
 
-    public DateParser getParser(List<String> formatSpcs) {
+    public DateParser getParser(List<String> formatSpecs, Locale defaultLocale) {
 
         List<DateParser> parsers = new ArrayList<>();
 
-        for(String formatSpec : formatSpcs) {
+        for(String formatSpec : formatSpecs) {
             int n = formatSpec.indexOf(":");
             String protocol = formatSpec.substring(0, n);
             String spec = formatSpec.substring(n);
             switch (protocol) {
                 case "ISO8601": {
                     DateTimeFormatter dtf = getFormatter(spec);
-                    DateFormatParser dfp = new DateFormatParser(dtf);
+                    DateFormatParser dfp = new DateFormatParser(dtf, defaultLocale);
                     parsers.add(dfp);
                     break;
                 }
@@ -417,43 +417,6 @@ public class DateUtil {
         return dates;
     }
 
-    public static Map<String, Set<TimeZone>> getAvailableTimeZones()
-    {
-        Map<String, Set<TimeZone>> availableTimezones =
-                new HashMap<String, Set<TimeZone>>();
-
-        // Loop through all available locales
-
-        for (Locale locale : Locale.getAvailableLocales())
-        {
-            final String countryCode = locale.getCountry();
-            final String countryName = locale.getDisplayCountry();
-
-            // Locate the timezones added for this country so far
-            // (This can be moved to inside the loop if depending
-            // on whether country with no available timezones should
-            // be in the result map with an empty set,
-            // or not included at all)
-
-            Set<TimeZone> timezones = availableTimezones.get(countryName);
-            if (timezones==null)
-            {
-                timezones = new HashSet<>();
-                availableTimezones.put(countryName, timezones);
-            }
-
-            // Find all timezones for that country (code) using ICU4J
-
-            for (String id :
-                    com.ibm.icu.util.TimeZone.getAvailableIDs(countryCode))
-            {
-                // Add timezone to result map
-
-                timezones.add(TimeZone.getTimeZone(id));
-            }
-        }
-        return availableTimezones;
-    }
 
 
     public static void main(String[] args) {
