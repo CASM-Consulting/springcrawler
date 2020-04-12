@@ -1,8 +1,11 @@
 package com.casm.acled.crawler.scraper.dates;
 
 import com.casm.acled.configuration.ObjectMapperConfiguration;
+import com.casm.acled.crawler.management.Reporting;
+import com.casm.acled.dao.entities.DeskDAO;
 import com.casm.acled.dao.entities.SourceDAO;
 import com.casm.acled.dao.entities.SourceListDAO;
+import com.casm.acled.entities.region.Desk;
 import com.casm.acled.entities.source.Source;
 import com.casm.acled.entities.sourcelist.SourceList;
 import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
@@ -35,9 +38,12 @@ public class LocaleHelperRunner implements CommandLineRunner {
     protected static final Logger logger = LoggerFactory.getLogger(LocaleHelperRunner.class);
 
     @Autowired
+    private DeskDAO deskDAO;
+    @Autowired
     private SourceListDAO sourceListDAO;
     @Autowired
     private SourceDAO sourceDAO;
+
 
     public static void main(String[] args) {
 
@@ -55,14 +61,25 @@ public class LocaleHelperRunner implements CommandLineRunner {
         List<Source> sources = sourceDAO.byList(sourceList);
         LocaleHelper dph = new LocaleHelper();
 
-        dph.determineTimeZones(sources);
+        dph.determineLocalesAndTimeZones(sources);
     }
 
     @Override
     public void run(String[] args) throws Exception {
 
 
+        for(Desk desk : deskDAO.getAll()) {
 
-        determineSourceLocalesAndListTimeZones("Levant");
+            List<SourceList> lists = sourceListDAO.byDesk(desk.id());
+
+            for(SourceList list : lists) {
+
+                determineSourceLocalesAndListTimeZones(list.get(SourceList.LIST_NAME));
+            }
+        }
+
+
+        Reporting reporting = Reporting.get();
+
     }
 }

@@ -1,5 +1,6 @@
 package com.casm.acled.crawler.scraper.dates;
 
+import com.casm.acled.crawler.management.Reporting;
 import com.casm.acled.entities.source.Source;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -82,6 +83,8 @@ public class LocaleHelper {
 
     public Optional<ULocale> determineLocale(Source source) {
 
+        Reporting reporting = Reporting.get();
+
         Optional<ULocale> maybeLocale = Optional.empty();
 
         String country = getCountry(source);
@@ -97,20 +100,18 @@ public class LocaleHelper {
 //                System.out.println(country);
 //                System.out.println(possibleLocales);
 
-                logger.error("Time zone not determined: {}/{} - {} : n = {}", source.get(Source.NAME), source.id(),  country, possibleLocales.size());
+                reporting.report("Locale not determined",  source.id(), "Source", "%s - %s - possible %s", source.get(Source.NAME), country, possibleLocales.size());
             }
         } else {
-            logger.error("Country not found: {}/{} - {}", source.get(Source.NAME), source.id(), country);
+            reporting.report("Country not found",  source.id(), "Source","%s - %s", source.get(Source.NAME), country);
         }
 
-
         return maybeLocale;
-
     }
 
-
-
     public Optional<TimeZone> determineTimeZone(Source source) {
+
+        Reporting reporting = Reporting.get();
 
         Optional<TimeZone> maybeTimezone = Optional.empty();
 
@@ -129,13 +130,13 @@ public class LocaleHelper {
                 if(!maybeTimezone.isPresent()) {
 //                    System.out.println(country);
 //                    System.out.println(possibleZones);
-                    logger.error("Time zone not determined: {}/{} - {} : n = {}", source.id(), source.get(Source.NAME),  country, possibleZones.size());
+                    reporting.report("Time zone not determined",  source.id(), "Source", "%s - %s - possible %s", source.get(Source.NAME), country, possibleZones.size());
+
                 }
             }
         } else {
-            logger.error("Country not found: {}/{} - {}", source.id(), source.get(Source.NAME), country);
+            reporting.report("Country not found",  source.id(), "Source","%s - %s", source.get(Source.NAME), country);
         }
-
 
         return maybeTimezone;
     }
@@ -170,8 +171,6 @@ public class LocaleHelper {
             final String countryCode = locale.getCountry();
             final String countryName = locale.getDisplayCountry();
 
-
-
             // Locate the timezones added for this country so far
             // (This can be moved to inside the loop if depending
             // on whether country with no available timezones should
@@ -198,7 +197,7 @@ public class LocaleHelper {
         return availableTimezones;
     }
 
-    public void determineTimeZones(List<Source> sources) {
+    public void determineLocalesAndTimeZones(List<Source> sources) {
 
         LocaleHelper dph = new LocaleHelper();
         for(Source source : sources) {
