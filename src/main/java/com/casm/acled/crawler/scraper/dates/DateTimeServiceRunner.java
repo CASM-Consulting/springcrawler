@@ -1,6 +1,7 @@
 package com.casm.acled.crawler.scraper.dates;
 
 import com.casm.acled.configuration.ObjectMapperConfiguration;
+import com.casm.acled.crawler.reporting.Event;
 import com.casm.acled.crawler.reporting.Reporter;
 import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
 import org.camunda.bpm.spring.boot.starter.rest.CamundaBpmRestJerseyAutoConfiguration;
@@ -45,7 +46,8 @@ public class DateTimeServiceRunner implements CommandLineRunner {
 
         dateTimeService.attemptAllDateTimeParsers(DateParsers.dp1);
 
-        System.out.println(reporter);
+        System.out.println(reporter.reports(r->r.event().equals(Event.DATE_PARSE_SUCCESS.name())));
+        System.out.println(reporter.reports(r->r.event().equals(Event.DATE_PARSE_FAILED.name())));
     }
 
     public static void main(String[] args) {

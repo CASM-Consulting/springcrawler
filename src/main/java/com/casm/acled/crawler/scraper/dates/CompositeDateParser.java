@@ -1,5 +1,6 @@
 package com.casm.acled.crawler.scraper.dates;
 
+import com.google.common.collect.ImmutableList;
 import com.ibm.icu.text.SimpleDateFormat;
 
 import java.time.LocalDateTime;
@@ -7,6 +8,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 class CompositeDateParser implements DateParser {
 
@@ -38,17 +40,15 @@ class CompositeDateParser implements DateParser {
         for(String formatSpec : formatSpecs) {
             int n = formatSpec.indexOf(":");
             String protocol = formatSpec.substring(0, n);
-            String spec = formatSpec.substring(n);
+            String spec = formatSpec.substring(n+1);
             switch (protocol) {
                 case "ISO": {
-                    SimpleDateFormat dtf = DateFormatParser.of(spec);
-                    DateFormatParser dfp = new DateFormatParser(dtf);
+                    DateFormatParser dfp = new DateFormatParser(spec);
                     parsers.add(dfp);
                     break;
                 }
                 case "NL":
-                    String[] triggers = spec.split(",");
-                    NaturalLanguageDateParser nldp = new NaturalLanguageDateParser(triggers);
+                    NaturalLanguageDateParser nldp = new NaturalLanguageDateParser(spec);
                     parsers.add(nldp);
                     break;
                 default:{
@@ -60,6 +60,12 @@ class CompositeDateParser implements DateParser {
         DateParser dateParser = new CompositeDateParser(parsers);
 
         return dateParser;
+    }
+
+
+    @Override
+    public List<String> getFormatSpec() {
+        return parsers.stream().flatMap(p->p.getFormatSpec().stream()).collect(Collectors.toList());
     }
 
 }

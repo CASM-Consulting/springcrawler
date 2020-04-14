@@ -78,6 +78,12 @@ public class Util implements CommandLineRunner {
         return url;
     }
 
+    public static String getID(String url)  {
+        String id = Util.getDomain(url).replaceAll("\\.","");
+        return id;
+    }
+
+
     // Returns the originating domain of a given url - minus any trailing 'www'
     public static String getDomain(String urlString)  {
         urlString = ensureHTTP(urlString, true);

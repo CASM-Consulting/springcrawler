@@ -1,26 +1,19 @@
 package com.casm.acled.crawler.scraper.dates;
 
-import com.casm.acled.crawler.spring.CrawlerService;
-import com.ibm.icu.text.DateFormat;
-import com.ibm.icu.text.DateFormatSymbols;
-import com.ibm.icu.text.DateTimePatternGenerator;
-import com.ibm.icu.text.SimpleDateFormat;
-import com.ibm.icu.util.Calendar;
+import com.google.common.collect.ImmutableList;
+import com.ibm.icu.text.*;
 import com.ibm.icu.util.ULocale;
-import org.docx4j.wml.U;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.text.ParseException;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.Date;
-import java.util.Locale;
+import java.util.List;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 class DateFormatParser implements DateParser {
 
@@ -28,22 +21,60 @@ class DateFormatParser implements DateParser {
 
     private final SimpleDateFormat formatter;
 
-    public DateFormatParser(SimpleDateFormat formatter) {
-        this.formatter = formatter;
+    private final String formatSpec;
+
+    private boolean removeOrdinals;
+    private boolean fixBST;
+    private final Pattern ordinalPattern = Pattern.compile("(\\d+)(?:st|nd|rd|th)");
+    private final Pattern bstPattern = Pattern.compile("(?i)bdst");
+    private Pattern extractPattern;
+
+    public DateFormatParser(String formatSpec) {
+        this.formatSpec = formatSpec;
+        removeOrdinals = false;
+        fixBST = false;
+        extractPattern = null;
+        formatter = buildSimpleDateFormat(formatSpec);
     }
 
     @Override
     public Optional<LocalDateTime> parse(String date) {
         Optional<LocalDateTime> attempt = Optional.empty();
+        date = preProcessDate(date);
         try {
             Date d = formatter.parse(date);
             LocalDateTime parsed = LocalDateTime.ofInstant(d.toInstant(), ZoneId.systemDefault());
             attempt = Optional.of(parsed);
         } catch (ParseException e) {
 
-            DateUtil.logger.warn(e.getMessage());
+            logger.warn(e.getMessage());
         }
         return attempt;
+    }
+
+    public SimpleDateFormat formatter() {
+        return formatter;
+    }
+
+    private String preProcessDate(String date) {
+        if(removeOrdinals) {
+            date = remoteOrdinals(date);
+        }
+        if(extractPattern != null) {
+            Matcher m = extractPattern.matcher(date);
+            if(m.matches()) {
+                date = m.group(1);
+            }
+        }
+        if(fixBST) {
+            date = bstPattern.matcher(date).replaceAll("BST");
+        }
+        return date;
+    }
+
+    private String remoteOrdinals(String date) {
+        String replacement = ordinalPattern.matcher(date).replaceAll("$1");
+        return replacement;
     }
 
     private static SimpleDateFormat fixAMPM(SimpleDateFormat formatter){
@@ -57,60 +88,47 @@ class DateFormatParser implements DateParser {
         return formatter;
     }
 
-    private static SimpleDateFormat processFlag(SimpleDateFormat formatter, String flag) {
-        switch (flag) {
-            case "AMPM":
-                formatter = fixAMPM(formatter);
-                break;
-            default:
-                logger.warn("Unrecognised DateFormatParser flag : " + flag);
-                break;
+    private SimpleDateFormat processFlag(SimpleDateFormat formatter, String flag) {
+        if(flag.equals("AMPM")) {
+            formatter = fixAMPM(formatter);
+        } else if(flag.equals("ORD")) {
+            removeOrdinals = true;
+        } else if(flag.startsWith("RE")) {
+            extractPattern = Pattern.compile(flag.substring(2));
+        } else if(flag.startsWith("BST")) {
+            fixBST = true;
+        } else {
+            logger.warn("Unrecognised DateFormatParser flag : " + flag);
         }
 
         return formatter;
     }
 
-    public static SimpleDateFormat of(String formatSpec) {
-        int n = formatSpec.lastIndexOf(":");
-        String[] localeFlags = formatSpec.substring(n+1).split(",");
+    @Override
+    public List<String> getFormatSpec() {
+        return ImmutableList.of(formatSpec);
+    }
 
-        ULocale locale = new ULocale(localeFlags[0]);
+    public SimpleDateFormat buildSimpleDateFormat(String formatSpec) {
+        String delim = formatSpec.substring(0,1);
+
+        String[] parts = formatSpec.split(delim);
+        String pattern = parts[1];
+        ULocale locale = new ULocale(parts[2]);
+
         // set up the generator
         DateTimePatternGenerator generator
                 = DateTimePatternGenerator.getInstance(locale);
 
-//        String pattern = generator.getBestPattern(formatSpec.substring(0, n));
-        String pattern = formatSpec.substring(0, n);
-
         // get a pattern for an abbreviated month and day
         SimpleDateFormat formatter = new SimpleDateFormat(pattern,locale);
 
-//        formatter.setNumberFormat();
-
-
-        for(int i = 1; i < localeFlags.length; ++i) {
-            formatter = processFlag(formatter, localeFlags[i]);
+        for(int i = 3; i < parts.length; ++i) {
+            formatter = processFlag(formatter, parts[i]);
         }
 
         return formatter;
     }
 
-    public static void main(String[] args) throws Exception {
 
-
-//        Date d = new SimpleDateFormat("yyyy-MM-DD  HH:mm:ss").parse("1999-05-01 00:00:00");
-//        System.out.println(d);
-//
-//        System.out.println(of("MMMM d, yyyy:en").parse("January 18, 2019"));
-//        final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("d MMMM yyyy, HH:mm:ss", ULocale.forLanguageTag("en"));
-//
-//        System.out.println(simpleDateFormat.parse("1 March 2020, 10:10:10"));
-        String txt = of("MMMM d, yyyy, h:mm a:np,AMPM").format(new Date(119, 11, 2, 16, 57,0));
-        System.out.println(txt);
-//        String test = "diciembre 2, 2019, 4:57 pm";
-
-//        System.out.println(of("MMMM d, yyyy, h:mm a:es_ES").parse(of("MMMM d, yyyy, h:mm a:es_ES").format(new Date(119, 11, 2, 16, 57,0))));
-//        System.out.println(of("MMMM d, yyyy, h:mm a:es_ES,AMPM").f(test));
-
-    }
 }

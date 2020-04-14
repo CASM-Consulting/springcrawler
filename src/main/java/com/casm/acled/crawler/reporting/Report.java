@@ -48,6 +48,22 @@ public class Report {
         return of(event, null, null, null);
     }
 
+    public Instant timestamp() {
+        return timestamp;
+    };
+    public String event() {
+        return event;
+    };
+    public String id() {
+        return id;
+    };
+    public String type() {
+        return type;
+    };
+    public String message() {
+        return message;
+    };
+
     @Override
     public String toString() {
         return "Report{" +

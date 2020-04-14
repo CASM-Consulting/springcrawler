@@ -25,6 +25,7 @@ import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 
 @Service
 public class DateTimeService {
@@ -78,14 +79,27 @@ public class DateTimeService {
 
         for(Source source : sources) {
             try {
-                attemptDateTimeParse(source, defaultDateParser);
+                attemptDateTimeParse(source, defaultDateParser, lastScrapeExampleGetter);
             } catch (IOException e) {
                 reporter.report(Report.of(Event.SCRAPER_NOT_FOUND).message(e.getMessage()));
             }
         }
     }
 
-    public void attemptDateTimeParse(Source source, DateParser defaultDateParser) throws IOException {
+
+
+    private final  Function<Source, Optional<String>> lastScrapeExampleGetter = source -> {
+        String url = source.get(Source.LINK);
+
+        String id = Util.getID(url);
+
+        Path path = scrapersPath.resolve(id);
+        Optional<String> maybeDate = DateUtil.extractDateFromLastScrapeJson(path);
+
+        return maybeDate;
+    };
+
+    public void attemptDateTimeParse(Source source, DateParser defaultDateParser, Function<Source, Optional<String>> exampleGetter) throws IOException {
 
         String url = source.get(Source.LINK);
 
@@ -94,13 +108,13 @@ public class DateTimeService {
             return;
         }
 
-        String id = Util.getDomain(url).replaceAll("\\.","");
+        String id = Util.getID(url);
 
         Path path = scrapersPath.resolve(id);
 
         if(ACLEDScraper.validPath(path)) {
 
-            Optional<String> maybeDate = DateUtil.extractDateFromLastScrapeJson(path);
+            Optional<String> maybeDate = exampleGetter.apply(source);
 
             if(maybeDate.isPresent()) {
                 String date = maybeDate.get();
@@ -110,12 +124,15 @@ public class DateTimeService {
                     Optional<LocalDateTime> maybeParsed = defaultDateParser.parse(date);
                     if(maybeParsed.isPresent()){
 
-                        reporter.report(Report.of(Event.DATE_PARSE_SUCCESS, id));
+                        reporter.report(Report.of(Event.DATE_PARSE_SUCCESS, id).message(date));
+//                        source.put(Source.DATE_FORMAT)
+
                     } else {
                         reporter.report(Report.of(Event.DATE_PARSE_FAILED, id).message(date));
                     }
                 } else {
-                    CompositeDateParser.of(formatSpecs);
+                    DateParser dateParser = CompositeDateParser.of(formatSpecs);
+                    Optional<LocalDateTime> maybeParsed = defaultDateParser.parse(date);
                 }
 
             } else {
@@ -124,7 +141,7 @@ public class DateTimeService {
             }
 
         } else {
-            reporter.report(Report.of(Event.SCRAPER_NOT_FOUND));
+            reporter.report(Report.of(Event.SCRAPER_NOT_FOUND,  id));
         }
     }
 
