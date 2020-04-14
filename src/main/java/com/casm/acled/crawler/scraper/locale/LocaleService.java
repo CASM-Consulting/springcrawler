@@ -1,6 +1,9 @@
-package com.casm.acled.crawler.scraper.dates;
+package com.casm.acled.crawler.scraper.locale;
 
-import com.casm.acled.crawler.management.Reporting;
+import com.casm.acled.crawler.reporting.Event;
+import com.casm.acled.crawler.reporting.Report;
+import com.casm.acled.crawler.reporting.Reporter;
+import com.casm.acled.crawler.reporting.ReportingException;
 import com.casm.acled.dao.entities.DeskDAO;
 import com.casm.acled.dao.entities.SourceDAO;
 import com.casm.acled.dao.entities.SourceListDAO;
@@ -24,6 +27,8 @@ public class LocaleService {
 
     protected static final Logger logger = LoggerFactory.getLogger(LocaleService.class);
 
+    private final Reporter reporting;
+
     private final Map<String, Set<TimeZone>> timeZonesByCountry;
     private final Map<String, Set<ULocale>> localesByCountry;
 
@@ -41,6 +46,8 @@ public class LocaleService {
     public LocaleService() {
         timeZonesByCountry = timeZonesByCountry();
         localesByCountry = localesByCountry();
+        reporting = Reporter.get();
+
     }
 
     private static class ComparableTimeZone {
@@ -96,13 +103,9 @@ public class LocaleService {
         return country;
     }
 
-    public Optional<ULocale> determineLocale(Source source) {
 
-        Reporting reporting = Reporting.get();
-
+    public Optional<ULocale> determineLocale(String country) {
         Optional<ULocale> maybeLocale = Optional.empty();
-
-        String country = getCountry(source);
 
         if(localesByCountry.containsKey(country)) {
 
@@ -115,18 +118,30 @@ public class LocaleService {
 //                System.out.println(country);
 //                System.out.println(possibleLocales);
 
-                reporting.report("Locale not determined",  source.id(), "Source", "%s - %s - possible %s", source.get(Source.NAME), country, possibleLocales.size());
+                throw new ReportingException(Report.of(Event.LOCALE_NOT_FOUND).message("country %s - possible %s", country, possibleLocales.size()));
             }
         } else {
-            reporting.report("Country not found",  source.id(), "Source","%s - %s", source.get(Source.NAME), country);
+            reporting.report(Report.of(Event.COUNTRY_NOT_FOUND).message("country %s", country));
         }
 
         return maybeLocale;
     }
 
+    public Optional<ULocale> determineLocale(Source source) {
+
+        String country = getCountry(source);
+        try {
+
+            return determineLocale(country);
+        } catch (ReportingException e) {
+            reporting.report(e.get().id(source.id()).type(Source.class.getName()));
+            return Optional.empty();
+        }
+    }
+
     public Optional<TimeZone> determineTimeZone(Source source) {
 
-        Reporting reporting = Reporting.get();
+        Reporter reporting = Reporter.get();
 
         Optional<TimeZone> maybeTimezone = Optional.empty();
 
@@ -145,12 +160,12 @@ public class LocaleService {
                 if(!maybeTimezone.isPresent()) {
 //                    System.out.println(country);
 //                    System.out.println(possibleZones);
-                    reporting.report("Time zone not determined",  source.id(), "Source", "%s - %s - possible %s", source.get(Source.NAME), country, possibleZones.size());
+                    reporting.report(Report.of(Event.TIMEZONE_NOT_FOUND,  source.id(), "Source", "%s - %s - possible %s", source.get(Source.NAME), country, possibleZones.size()));
 
                 }
             }
         } else {
-            reporting.report("Country not found",  source.id(), "Source","%s - %s", source.get(Source.NAME), country);
+            reporting.report(Report.of(Event.COUNTRY_NOT_FOUND,  source.id(), "Source","%s - %s", source.get(Source.NAME), country));
         }
 
         return maybeTimezone;
@@ -249,6 +264,6 @@ public class LocaleService {
             }
         }
 
-        Reporting reporting = Reporting.get();
+        Reporter reporting = Reporter.get();
     }
 }

@@ -1,4 +1,4 @@
-package com.casm.acled.crawler.scraper.dates;
+package com.casm.acled.crawler.scraper.locale;
 
 import com.casm.acled.configuration.ObjectMapperConfiguration;
 import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
@@ -23,7 +23,7 @@ import org.springframework.context.annotation.Import;
 //@Import({ObjectMapperConfiguration.class, CLIRunner.ShutdownConfig.class})
 @Import({ObjectMapperConfiguration.class})
 // And we also need the DAOs.
-@ComponentScan(basePackages={"com.casm.acled.dao", "com.casm.acled.crawler.spring"})
+@ComponentScan(basePackages={"com.casm.acled.dao", "com.casm.acled.crawler"})
 public class LocaleServiceRunner implements CommandLineRunner {
 
     protected static final Logger logger = LoggerFactory.getLogger(LocaleServiceRunner.class);

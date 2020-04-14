@@ -285,7 +285,7 @@
 
         <dependency>
             <groupId>com.enioka.jqm</groupId>
-            <artifactId>jqm-engine</artifactId>
+            <artifactId>jqm-api</artifactId>
             <version>${jqm.version}</version>
             <exclusions>
                 <exclusion>
@@ -315,6 +315,11 @@
                     <artifactId>jqm-api-client-hibernate</artifactId>
                 </exclusion>
             </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>com.enioka.jqm</groupId>
+            <artifactId>jqm-api-client-jersey</artifactId>
+            <version>${jqm.version}</version>
         </dependency>
 
 

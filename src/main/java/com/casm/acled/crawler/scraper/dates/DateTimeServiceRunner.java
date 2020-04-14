@@ -1,7 +1,7 @@
-package com.casm.acled.crawler.scraper.keywords;
-
+package com.casm.acled.crawler.scraper.dates;
 
 import com.casm.acled.configuration.ObjectMapperConfiguration;
+import com.casm.acled.crawler.reporting.Reporter;
 import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
 import org.camunda.bpm.spring.boot.starter.rest.CamundaBpmRestJerseyAutoConfiguration;
 import org.slf4j.Logger;
@@ -18,29 +18,39 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
 
+import java.nio.file.Paths;
+
 @EnableAutoConfiguration(exclude={HibernateJpaAutoConfiguration.class, CamundaBpmAutoConfiguration.class, CamundaBpmRestJerseyAutoConfiguration.class, ValidationAutoConfiguration.class})
 // We need the special object mapper, though.
 //@Import({ObjectMapperConfiguration.class, CLIRunner.ShutdownConfig.class})
 @Import({ObjectMapperConfiguration.class})
 // And we also need the DAOs.
 @ComponentScan(basePackages={"com.casm.acled.dao", "com.casm.acled.crawler"})
-public class KeywordsServiceRunner implements CommandLineRunner {
+public class DateTimeServiceRunner implements CommandLineRunner {
 
-    protected static final Logger logger = LoggerFactory.getLogger(KeywordsServiceRunner.class);
+    protected static final Logger logger = LoggerFactory.getLogger(DateTimeServiceRunner.class);
 
     @Autowired
-    private KeywordsService keywordsHelper;
+    private DateTimeService dateTimeService;
 
+
+    @Autowired
+    private Reporter reporter;
 
 
     @Override
     public void run(String... args) throws Exception {
-        keywordsHelper.determineKeywordsList();
+
+        dateTimeService.setScrapersPath(Paths.get("allscrapers"));
+
+        dateTimeService.attemptAllDateTimeParsers(DateParsers.dp1);
+
+        System.out.println(reporter);
     }
 
     public static void main(String[] args) {
 
-        SpringApplication app = new SpringApplication(KeywordsServiceRunner.class);
+        SpringApplication app = new SpringApplication(DateTimeServiceRunner.class);
         app.setBannerMode(Banner.Mode.OFF);
         app.setWebApplicationType(WebApplicationType.NONE);
         ConfigurableApplicationContext ctx = app.run(args);

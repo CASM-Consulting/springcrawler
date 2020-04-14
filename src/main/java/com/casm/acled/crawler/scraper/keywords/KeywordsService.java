@@ -1,7 +1,6 @@
 package com.casm.acled.crawler.scraper.keywords;
 
-import com.casm.acled.crawler.management.Reporting;
-import com.casm.acled.crawler.scraper.dates.LocaleService;
+import com.casm.acled.crawler.reporting.Reporter;
 import com.casm.acled.dao.entities.DeskDAO;
 import com.casm.acled.dao.entities.SourceDAO;
 import com.casm.acled.dao.entities.SourceListDAO;
@@ -53,13 +52,13 @@ public class KeywordsService {
 
                     if(maybeLink.isPresent()) {
                         SourceSourceList link = maybeLink.get();
-                        determineKeywords(list, link, list.get(SourceList.LIST_NAME));
+                        determineKeywords(list, link, source);
                     }
                 }
             }
         }
-        
-        Reporting reporting = Reporting.get();
+
+        Reporter reporting = Reporter.get();
     }
 
     private Set<String> determineKeywords(SourceList sourceList, SourceSourceList link, Source source) {

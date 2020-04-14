@@ -36,6 +36,7 @@ import java.net.URI;
 import java.nio.charset.Charset;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -62,10 +63,27 @@ public class Util implements CommandLineRunner {
     @Autowired
     private SourceDAO sourceDAO;
 
+    private static final Pattern PROTOCOL = Pattern.compile(".*:[/]{2}", Pattern.CASE_INSENSITIVE);
+
+    public static String ensureHTTP(String url, boolean https) {
+
+        Matcher matcher = PROTOCOL.matcher(url.toLowerCase());
+
+        if(matcher.find()) {
+            // get rid of any previous or malformed protocol
+            url = matcher.replaceFirst("");
+        }
+        url =  (https) ? "https://" + url : "http://" + url;
+
+        return url;
+    }
+
     // Returns the originating domain of a given url - minus any trailing 'www'
     public static String getDomain(String urlString)  {
-        URI url = URI.create(urlString);
-        return (url.getHost().startsWith("www")) ? url.getHost().substring(4) : url.getHost();
+        urlString = ensureHTTP(urlString, true);
+        URI uri = URI.create(urlString);
+        String host = uri.getHost();
+        return (host.startsWith("www")) ? host.substring(4) : host;
     }
 
     // Processes a M52 job json to scraper rules

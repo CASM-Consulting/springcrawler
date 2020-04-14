@@ -34,15 +34,14 @@ public class Scheduler implements Runnable {
 
     private final Map<Integer, JobInstance> jobs;
 
+    private final JqmClient client;
+
+
     public Scheduler() {
 
-        JqmClient client = JqmClientFactory.getClient();
+        client = JqmClientFactory.getClient();
 
         jobs = new HashMap<>();
-
-        for(JobInstance job : client.getJobs()) {
-            jobs.put(job.getId(), job);
-        }
 
         try {
             //tuesdays and fridays at 8 pm
@@ -52,7 +51,14 @@ public class Scheduler implements Runnable {
         }
     }
 
+
+
     private void ensureSchedules() {
+
+        for(JobInstance job : client.getJobs()) {
+            jobs.put(job.getId(), job);
+        }
+
         Set<Source> sources = gatherSources();
 
         for(Source source : sources) {
@@ -65,7 +71,6 @@ public class Scheduler implements Runnable {
         Optional<JobInstance> maybeJob = Optional.empty();
         if(jobId != null) {
             try {
-                JqmClient client = JqmClientFactory.getClient();
 
                 JobInstance job = client.getJob(jobId);
 
@@ -183,8 +188,6 @@ public class Scheduler implements Runnable {
 
 
     private JobInstance runCrawl(Source source) {
-
-        JqmClient client = JqmClientFactory.getClient();
 
         JobRequest jobRequest = JobRequest.create("","");
 

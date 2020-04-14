@@ -4,6 +4,7 @@ import com.beust.jcommander.JCommander;
 import com.casm.acled.crawler.spring.CrawlerService;
 import com.enioka.jqm.handler.JobManagerProvider;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Required;
 import org.springframework.stereotype.Component;
 import uk.ac.susx.tag.norconex.jobqueuemanager.CrawlerArguments;
 
@@ -17,11 +18,10 @@ public class JQMRunner implements Runnable {
     @Autowired
     private CrawlerService crawlerService;
 
-    @Resource(name = "runtimeParameters")
-//    @Autowired
+    @Autowired(required=false)
     private Map<String, String> runtimeParameters;
 
-    @Resource
+    @Autowired(required=false)
     private JobManagerProvider jmp;
 
     @Override

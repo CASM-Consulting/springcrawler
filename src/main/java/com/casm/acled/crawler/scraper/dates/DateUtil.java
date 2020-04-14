@@ -349,47 +349,19 @@ public class DateUtil {
         return bestGuess;
     }
 
-    public DateParser getParser(List<String> formatSpecs, Locale defaultLocale) {
-
-        List<DateParser> parsers = new ArrayList<>();
-
-        for(String formatSpec : formatSpecs) {
-            int n = formatSpec.indexOf(":");
-            String protocol = formatSpec.substring(0, n);
-            String spec = formatSpec.substring(n);
-            switch (protocol) {
-                case "ISO8601": {
-                    DateTimeFormatter dtf = getFormatter(spec);
-                    DateFormatParser dfp = new DateFormatParser(dtf, defaultLocale);
-                    parsers.add(dfp);
-                    break;
-                }
-                case "NL":
-                    String[] triggers = spec.split(",");
-                    NaturalLanguageDateParser nldp = new NaturalLanguageDateParser(triggers);
-                    parsers.add(nldp);
-                    break;
-                default:{
-                    throw new RuntimeException("Date parser protocol not found: " + protocol);
-                }
+    public static Optional<String> extractDateFromLastScrapeJson(Path path) {
+        Path lastScrapePath = path.resolve("last_scrape.json");
+        Optional<String> date = Optional.empty();
+        if(Files.exists(lastScrapePath)) {
+            try {
+                String name = path.getFileName().toString();
+                Map data = new Gson().fromJson(Files.newBufferedReader(lastScrapePath), Map.class);
+                date = Optional.ofNullable((String)data.get("field.name/date_0"));
+            } catch (IOException e) {
+                logger.warn(e.getMessage(), e);
             }
         }
-
-        DateParser dateParser = new CompositeDateParser(parsers);
-
-        return dateParser;
-    }
-
-    public DateTimeFormatter getFormatter(String formatSpec) {
-        int n = formatSpec.indexOf(":");
-        String langTag = formatSpec.substring(0, n);
-        String pattern = formatSpec.substring(n);
-
-        Locale locale = Locale.forLanguageTag(langTag);
-
-        DateTimeFormatter dtf = DateTimeFormatter.ofPattern(pattern, locale);
-
-        return  dtf;
+        return date;
     }
 
     public static Map<String, String> extractDatesFromLastScrapeJson(Path scrapersPath) {
@@ -397,16 +369,12 @@ public class DateUtil {
         final Map<String, String> dates = new HashMap<>();
         try {
             Files.walk(scrapersPath, 1).forEach(path -> {
-                Path lastScrapePath = path.resolve("last_scrape.json");
-                if(Files.exists(lastScrapePath)) {
-                    try {
-                        String name = path.getFileName().toString();
-                        Map data = new Gson().fromJson(Files.newBufferedReader(lastScrapePath), Map.class);
-                        String date = (String)data.get("field.name/date_0");
-                        dates.put(name, date);
-                    } catch (IOException e) {
-                        logger.warn(e.getMessage(), e);
-                    }
+
+                Optional<String> maybeDate = extractDateFromLastScrapeJson(path);
+                if(maybeDate.isPresent()) {
+
+                    String name = path.getFileName().toString();
+                    dates.put(name, maybeDate.get());
                 }
 
             });
