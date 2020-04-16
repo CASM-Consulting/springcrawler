@@ -28,12 +28,14 @@ class DateFormatParser implements DateParser {
     private final Pattern ordinalPattern = Pattern.compile("(\\d+)(?:st|nd|rd|th)");
     private final Pattern bstPattern = Pattern.compile("(?i)bdst");
     private Pattern extractPattern;
+    private Pattern stripPattern;
 
     public DateFormatParser(String formatSpec) {
         this.formatSpec = formatSpec;
         removeOrdinals = false;
         fixBST = false;
         extractPattern = null;
+        stripPattern = null;
         formatter = buildSimpleDateFormat(formatSpec);
     }
 
@@ -58,7 +60,7 @@ class DateFormatParser implements DateParser {
 
     private String preProcessDate(String date) {
         if(removeOrdinals) {
-            date = remoteOrdinals(date);
+            date = removeOrdinals(date);
         }
         if(extractPattern != null) {
             Matcher m = extractPattern.matcher(date);
@@ -66,14 +68,22 @@ class DateFormatParser implements DateParser {
                 date = m.group(1);
             }
         }
+        if(stripPattern != null) {
+            date = stripByPattern(date);
+        }
         if(fixBST) {
             date = bstPattern.matcher(date).replaceAll("BST");
         }
         return date;
     }
 
-    private String remoteOrdinals(String date) {
+    private String removeOrdinals(String date) {
         String replacement = ordinalPattern.matcher(date).replaceAll("$1");
+        return replacement;
+    }
+
+    private String stripByPattern(String date) {
+        String replacement = stripPattern.matcher(date).replaceAll("");
         return replacement;
     }
 
@@ -97,6 +107,8 @@ class DateFormatParser implements DateParser {
             extractPattern = Pattern.compile(flag.substring(2));
         } else if(flag.startsWith("BST")) {
             fixBST = true;
+        } else if(flag.startsWith("STRIP")) {
+            stripPattern = Pattern.compile(flag.substring(5));
         } else {
             logger.warn("Unrecognised DateFormatParser flag : " + flag);
         }
@@ -110,7 +122,7 @@ class DateFormatParser implements DateParser {
     }
 
     public SimpleDateFormat buildSimpleDateFormat(String formatSpec) {
-        String delim = formatSpec.substring(0,1);
+        String delim = Pattern.quote(formatSpec.substring(0,1));
 
         String[] parts = formatSpec.split(delim);
         String pattern = parts[1];
