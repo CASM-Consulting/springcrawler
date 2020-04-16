@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.text.ParseException;
+import java.text.ParsePosition;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
@@ -41,14 +42,17 @@ class DateFormatParser implements DateParser {
     public Optional<LocalDateTime> parse(String date) {
         Optional<LocalDateTime> attempt = Optional.empty();
         date = preProcessDate(date);
-        try {
-            Date d = formatter.parse(date);
+        ParsePosition pos = new ParsePosition(0);
+        Date d = formatter.parse(date, pos);
+        if (d == null) {
+            logger.warn("Parse failed at {}", pos.getErrorIndex());
+        } else if (pos.getIndex() != date.length()) {
+            logger.warn("Parse incomplete at {}", pos.getIndex());
+        }else {
             LocalDateTime parsed = LocalDateTime.ofInstant(d.toInstant(), ZoneId.systemDefault());
             attempt = Optional.of(parsed);
-        } catch (ParseException e) {
-
-            logger.warn(e.getMessage());
         }
+
         return attempt;
     }
 
@@ -121,7 +125,7 @@ class DateFormatParser implements DateParser {
                 = DateTimePatternGenerator.getInstance(locale);
 
         // get a pattern for an abbreviated month and day
-        SimpleDateFormat formatter = new SimpleDateFormat(pattern,locale);
+        SimpleDateFormat formatter = new SimpleDateFormat(pattern, locale);
 
         for(int i = 3; i < parts.length; ++i) {
             formatter = processFlag(formatter, parts[i]);
