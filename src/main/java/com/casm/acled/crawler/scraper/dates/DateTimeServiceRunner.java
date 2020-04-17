@@ -34,7 +34,6 @@ public class DateTimeServiceRunner implements CommandLineRunner {
     @Autowired
     private DateTimeService dateTimeService;
 
-
     @Autowired
     private Reporter reporter;
 
@@ -44,7 +43,7 @@ public class DateTimeServiceRunner implements CommandLineRunner {
 
         dateTimeService.setScrapersPath(Paths.get("allscrapers"));
 
-        dateTimeService.attemptAllDateTimeParsers(DateParsers.dp1);
+        dateTimeService.attemptAllDateTimeParsers(DateParsers.all);
 
         System.out.println(reporter.reports(r->r.event().equals(Event.DATE_PARSE_SUCCESS.name())));
         System.out.println(reporter.reports(r->r.event().equals(Event.DATE_PARSE_FAILED.name())));
