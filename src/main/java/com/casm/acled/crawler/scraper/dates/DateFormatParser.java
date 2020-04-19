@@ -26,8 +26,12 @@ class DateFormatParser implements DateParser {
 
     private boolean removeOrdinals;
     private boolean fixBST;
+    private boolean normaliseWhitespace; // &nbsp etc;
+
     private final Pattern ordinalPattern = Pattern.compile("(\\d+)(?:st|nd|rd|th)");
     private final Pattern bstPattern = Pattern.compile("(?i)bdst");
+    private final Pattern whitespacePattern = Pattern.compile("(\\h+|\\s+)");
+
     private Pattern extractPattern;
     private Pattern stripPattern;
 
@@ -35,6 +39,7 @@ class DateFormatParser implements DateParser {
         this.formatSpec = formatSpec;
         removeOrdinals = false;
         fixBST = false;
+        normaliseWhitespace = true;
         extractPattern = null;
         stripPattern = null;
         formatter = buildSimpleDateFormat(formatSpec);
@@ -63,6 +68,10 @@ class DateFormatParser implements DateParser {
     }
 
     private String preProcessDate(String date) {
+
+        if (normaliseWhitespace) {
+            date = normaliseWhitespaceChars(date);
+        }
         if(removeOrdinals) {
             date = removeOrdinals(date);
         }
@@ -70,6 +79,9 @@ class DateFormatParser implements DateParser {
             Matcher m = extractPattern.matcher(date);
             if(m.matches()) {
                 date = m.group(1);
+            } else {
+                // Fail if no match.
+                return "";
             }
         }
         if(stripPattern != null) {
@@ -89,6 +101,12 @@ class DateFormatParser implements DateParser {
     private String stripByPattern(String date) {
         String replacement = stripPattern.matcher(date).replaceAll("");
         return replacement;
+    }
+
+    private String normaliseWhitespaceChars(String date) {
+        return whitespacePattern.matcher(date)
+                .replaceAll(" ")
+                .trim();
     }
 
     private static SimpleDateFormat fixAMPM(SimpleDateFormat formatter){
@@ -123,6 +141,11 @@ class DateFormatParser implements DateParser {
     @Override
     public List<String> getFormatSpec() {
         return ImmutableList.of(formatSpec);
+    }
+
+    @Override
+    public String toString() {
+        return String.join(" ||| ", getFormatSpec());
     }
 
     public SimpleDateFormat buildSimpleDateFormat(String formatSpec) {
