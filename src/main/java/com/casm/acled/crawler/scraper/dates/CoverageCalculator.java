@@ -17,9 +17,10 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 /**
+ * Wraps a DateParser to track coverage and specific (un)successful parses.
+ *
  * Created by ci53 on 19/04/2020.
  */
-
 class DateParserCoverage {
 
     private DateParser parser;
@@ -66,6 +67,9 @@ class DateParserCoverage {
 
 }
 
+/**
+ * Data I/O and general utils
+ */
 class CoverageUtils {
 
     private static final Logger LOG = LoggerFactory.getLogger(CoverageUtils.class);
@@ -116,53 +120,12 @@ class CoverageUtils {
                     .collect(Collectors.toList());
         }
     }
-
-//    /**
-//     * Element-wise OR between `List<Boolean>`
-//     *
-//     * @param lists
-//     * @return
-//     */
-//    static List<Boolean> orLists(List<List<Boolean>> lists) {
-//        List<Boolean> orList = new ArrayList<>(lists.get(0));
-//        int overlapCount = 0;
-//
-//        for (List<Boolean> currList : lists.subList(1, lists.size())) {
-//            for (int i = 0; i < currList.size(); i++) {
-//
-//                // Brute check for overlap
-//                if (orList.get(i) && currList.get(i)) {
-//                    overlapCount++;
-//                }
-//
-//                orList.set(i, orList.get(i) || currList.get(i));
-//            }
-//        }
-//
-//        LOG.warn(overlapCount + " overlaps!");
-//
-//        return orList;
-//    }
-
-//    static List<List<DateParser>> findSuccessfulParsers(List<DateParser> parsers, List<String> dates) {
-//
-//        List<List<DateParser>> successfulParsers = new ArrayList<>(dates.size());
-//
-//        for (String date : dates) {
-//            List<DateParser> dps = new ArrayList<>();
-//
-//            // Apply all parsers to given date, add successful
-//            for (DateParser parser : parsers) {
-//                if (parser.parse(date).isPresent()) {
-//                    dps.add(parser);
-//                }
-//            }
-//            successfulParsers.add(dps);
-//        }
-//        return successfulParsers;
-//    }
 }
 
+/**
+ * Co-ordinates a bunch of `DateParserCoverage` wrappers to produce overlap
+ * and coverage statistics.
+ */
 public class CoverageCalculator {
 
     private static final Logger LOG = LoggerFactory.getLogger(CoverageCalculator.class);
@@ -304,51 +267,5 @@ public class CoverageCalculator {
         CoverageCalculator cc = new CoverageCalculator(parsers, examples);
         cc.calculate();
         cc.logStats();
-
-//        // Apply parsers (get back used parsers for each example)
-//        List<List<DateParser>> parseResults = CoverageUtils.findSuccessfulParsers(DateParsers.PARSERS, examples);
-//
-//        // Log results
-//        for (int i = 0; i < examples.size(); i++) {
-//            if (parseResults.get(i).size() > 1) {
-//                List<DateParser> res = parseResults.get(i);
-//
-//                String overlappingSpecs = res.stream()
-//                        .flatMap(dp -> dp.getFormatSpec().stream())
-//                        .map(p -> "\"" + p + "\"")
-//                        .collect(Collectors.joining(" OVERLAPS "));
-//
-//                LOG.warn("parser overlap for '" + examples.get(i) + "' (" + overlappingSpecs + ")");
-//            } else if (parseResults.get(i).isEmpty()) {
-//                LOG.info("no parse for '" + examples.get(i) + "'");
-//            } else {
-//                //
-//            }
-//        }
-//
-//        // XXX: refactor - per-parser coverage + overall coverage
-//
-//        List<List<Boolean>> coverageMasks = new ArrayList<>(DateParsers.PARSERS.size());
-//
-//        // Test each parser
-//        for (DateParser parser : DateParsers.PARSERS) {
-//            List<Boolean> coverageMask = CoverageCalculator.getCoverageMask(parser, examples);
-//            coverageMasks.add(coverageMask);
-//
-//            System.out.println();
-//            logger.info("Parser: " + parser.getFormatSpec());
-//            coverageFromMask(coverageMask);
-//
-//            for (int i = 0; i < examples.size(); i++) {
-//                if (coverageMask.get(i)) {
-////                    logger.info(examples.get(i));
-//                }
-//            }
-//        }
-//
-//        System.out.println();
-//        List<Boolean> totalCoverageMask = orLists(coverageMasks);
-//        coverageFromMask(totalCoverageMask);
-//    }
     }
 }
