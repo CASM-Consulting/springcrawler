@@ -52,9 +52,9 @@ class DateFormatParser implements DateParser {
         ParsePosition pos = new ParsePosition(0);
         Date d = formatter.parse(date, pos);
         if (d == null) {
-            logger.warn("Parse failed at {}", pos.getErrorIndex());
+            logger.debug("Parse failed at {}", pos.getErrorIndex());
         } else if (pos.getIndex() != date.length()) {
-            logger.warn("Parse incomplete at {}", pos.getIndex());
+            logger.debug("Parse incomplete at {}", pos.getIndex());
         }else {
             LocalDateTime parsed = LocalDateTime.ofInstant(d.toInstant(), ZoneId.systemDefault());
             attempt = Optional.of(parsed);
@@ -168,6 +168,4 @@ class DateFormatParser implements DateParser {
 
         return formatter;
     }
-
-
 }
