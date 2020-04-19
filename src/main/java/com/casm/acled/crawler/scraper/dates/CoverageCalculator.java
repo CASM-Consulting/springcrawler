@@ -18,8 +18,6 @@ import java.util.stream.Stream;
 
 /**
  * Wraps a DateParser to track coverage and specific (un)successful parses.
- *
- * Created by ci53 on 19/04/2020.
  */
 class DateParserCoverage {
 
@@ -257,15 +255,19 @@ public class CoverageCalculator {
 
         // Load examples
         List<String> examples = CoverageUtils.loadExamplesFromCsv(args[0]);
-        //List<String> examples = CoverageUtils.loadExamplesFromLineSep(args[0]);
 
+        // Wrap each `DateParser` as `DateParserCoverage`
         List<DateParserCoverage> parsers = DateParsers.PARSERS
                 .stream()
                 .map(DateParserCoverage::new)
                 .collect(Collectors.toList());
 
         CoverageCalculator cc = new CoverageCalculator(parsers, examples);
+
+        // Parse and keep track of stats.
         cc.calculate();
+
+        // Print
         cc.logStats();
     }
 }
