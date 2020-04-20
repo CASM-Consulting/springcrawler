@@ -90,7 +90,7 @@ class CoverageUtils {
 
     static List<String> loadExamplesFromLineSep(String path, long limit) throws IOException {
         try (Stream<String> stream = Files.lines(Paths.get(path))) {
-            return stream
+            return stream.limit(limit)
                     .map(String::trim)
                     .filter(p -> !p.isEmpty() && !p.equals("null"))
                     .collect(Collectors.toList());
@@ -254,6 +254,7 @@ public class CoverageCalculator {
 //        List<String> examples = ImmutableList.of("JUBA, May 7 (Agencies) | Publish Date: 5/7/2019 12:04:09 PM IST");
 
         // Load examples
+//        List<String> examples = CoverageUtils.loadExamplesFromLineSep(args[0]);
         List<String> examples = CoverageUtils.loadExamplesFromCsv(args[0]);
 
         // Wrap each `DateParser` as `DateParserCoverage`
