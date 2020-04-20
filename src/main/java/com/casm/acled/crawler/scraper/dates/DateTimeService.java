@@ -14,6 +14,7 @@ import com.casm.acled.dao.entities.SourceSourceListDAO;
 import com.casm.acled.entities.region.Desk;
 import com.casm.acled.entities.source.Source;
 import com.casm.acled.entities.sourcelist.SourceList;
+import com.google.common.collect.ImmutableList;
 import com.ibm.icu.util.ULocale;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,38 +58,33 @@ public class DateTimeService {
         this.scrapersPath = scrapersPath;
     }
 
-
-
-
-    public void attemptAllDateTimeParsers(DateParser defaultDateParser) {
+    public void attemptAllDateTimeParsers(List<DateParser> dateParsers) {
         for(Desk desk : deskDAO.getAll()) {
-            attemptDeskDateTimeParsers(desk, defaultDateParser);
+            attemptDeskDateTimeParsers(desk, dateParsers);
         }
     }
 
-    public void attemptDeskDateTimeParsers(Desk desk, DateParser defaultDateParser) {
+    public void attemptDeskDateTimeParsers(Desk desk, List<DateParser> dateParsers) {
         List<SourceList> lists = sourceListDAO.byDesk(desk.id());
 
         for(SourceList list : lists) {
-            attemptSourceListDateTimeParsers(list, defaultDateParser);
+            attemptSourceListDateTimeParsers(list, dateParsers);
         }
     }
 
-    public void attemptSourceListDateTimeParsers(SourceList list, DateParser defaultDateParser) {
+    public void attemptSourceListDateTimeParsers(SourceList list, List<DateParser> dateParsers) {
         List<Source> sources = sourceDAO.byList(list);
 
         for(Source source : sources) {
             try {
-                attemptDateTimeParse(source, defaultDateParser, lastScrapeExampleGetter);
+                attemptDateTimeParse(source, dateParsers, lastScrapeExampleGetter);
             } catch (IOException e) {
                 reporter.report(Report.of(Event.SCRAPER_NOT_FOUND).message(e.getMessage()));
             }
         }
     }
 
-
-
-    private final  Function<Source, Optional<String>> lastScrapeExampleGetter = source -> {
+    private final  Function<Source, List<String>> lastScrapeExampleGetter = source -> {
         String url = source.get(Source.LINK);
 
         String id = Util.getID(url);
@@ -96,10 +92,14 @@ public class DateTimeService {
         Path path = scrapersPath.resolve(id);
         Optional<String> maybeDate = DateUtil.extractDateFromLastScrapeJson(path);
 
-        return maybeDate;
+        if(maybeDate.isPresent()) {
+            return ImmutableList.of(maybeDate.get());
+        } else {
+            return ImmutableList.of();
+        }
     };
 
-    public void attemptDateTimeParse(Source source, DateParser defaultDateParser, Function<Source, Optional<String>> exampleGetter) throws IOException {
+    public void attemptDateTimeParse(Source source, List<DateParser> dateParsers, Function<Source, List<String>> exampleGetter) throws IOException {
 
         String url = source.get(Source.LINK);
 
@@ -114,30 +114,43 @@ public class DateTimeService {
 
         if(ACLEDScraper.validPath(path)) {
 
-            Optional<String> maybeDate = exampleGetter.apply(source);
+            List<String> exampleDates = exampleGetter.apply(source);
 
-            if(maybeDate.isPresent()) {
-                String date = maybeDate.get();
-                List<String> formatSpecs = source.get(Source.DATE_FORMAT);
+            if(exampleDates.isEmpty()) {
+                reporter.report(Report.of(Event.DATE_NOT_FOUND, id));
+            }
 
-                if(formatSpecs == null ) {
-                    Optional<LocalDateTime> maybeParsed = defaultDateParser.parse(date);
-                    if(maybeParsed.isPresent()){
+            Optional<DateParser> passingParser = Optional.empty();
 
-                        reporter.report(Report.of(Event.DATE_PARSE_SUCCESS, id).message(date));
-//                        source.put(Source.DATE_FORMAT)
+            for(DateParser dateParser : dateParsers) {
 
+                boolean passed = true;
+
+                for(String date : exampleDates) {
+                    List<String> formatSpecs = source.get(Source.DATE_FORMAT);
+
+                    if(formatSpecs == null ) {
+                        Optional<LocalDateTime> maybeParsed = dateParser.parse(date);
+                        if(maybeParsed.isPresent()){
+
+                            reporter.report(Report.of(Event.DATE_PARSE_SUCCESS, id).message(date));
+                        } else {
+                            reporter.report(Report.of(Event.DATE_PARSE_FAILED, id).message(date));
+                            passed = false;
+                            break;
+                        }
                     } else {
-                        reporter.report(Report.of(Event.DATE_PARSE_FAILED, id).message(date));
+                        DateParser existing = CompositeDateParser.of(formatSpecs);
+                        Optional<LocalDateTime> maybeParsed = existing.parse(date);
+                        //check parser
                     }
-                } else {
-                    DateParser dateParser = CompositeDateParser.of(formatSpecs);
-                    Optional<LocalDateTime> maybeParsed = defaultDateParser.parse(date);
                 }
 
-            } else {
+                if(passed) {
+                    passingParser = Optional.of(dateParser);
 
-                reporter.report(Report.of(Event.DATE_NOT_FOUND, id));
+                    //TODO: assign parser to source
+                }
             }
 
         } else {

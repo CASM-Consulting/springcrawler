@@ -258,7 +258,7 @@ public class CoverageCalculator {
         List<String> examples = CoverageUtils.loadExamplesFromCsv(args[0]);
 
         // Wrap each `DateParser` as `DateParserCoverage`
-        List<DateParserCoverage> parsers = DateParsers.PARSERS
+        List<DateParserCoverage> parsers = DateParsers.ALL
                 .stream()
                 .map(DateParserCoverage::new)
                 .collect(Collectors.toList());

@@ -4,7 +4,7 @@ import com.google.common.collect.ImmutableList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.List;
 
 public class DateParsers {
 
@@ -299,12 +299,8 @@ public class DateParsers {
     public static final DateParser dp72 = CompositeDateParser.of(ImmutableList.of(
             "ISO:/MMM d, YYYY HH:mm/en/ORD/RE^Published:\\s+(.+\\d)$" //'Published:  February 20, 2020 11:41'
     ));
-//
-//    public static final DateParser dp72 = CompositeDateParser.of(ImmutableList.of(
-//            "ISO:/d 'de' MMM 'de' YYYY '-' HH:mm/es/ORD/RE^[|]\\s+(.+)" //'| 22 de Febrero de 2020 - 00:00'
-//    ));
 
-    static final List<DateParser> PARSERS = ImmutableList.of(
+    public static final List<DateParser> ALL = ImmutableList.of(
             dp1,
             dp2,
             dp3,
@@ -377,6 +373,5 @@ public class DateParsers {
             dp70,
             dp71,
             dp72
-//            dp73
     );
 }
