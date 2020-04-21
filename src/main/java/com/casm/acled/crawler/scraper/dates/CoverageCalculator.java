@@ -141,6 +141,9 @@ public class CoverageCalculator {
     private long overlapsCount;
     private List<Boolean> successMask;
 
+    private boolean warnParseOverlap = false;
+    private boolean warnNoParse = true;
+
     // Dates to calculate coverage over
     private List<String> dates;
 
@@ -215,10 +218,10 @@ public class CoverageCalculator {
 
             List<DateParserCoverage> parserMatches = successfulCoverage.get(i);
 
-            if (parserMatches.isEmpty()) {
+            if (parserMatches.isEmpty() && this.warnNoParse) {
                 LOG.warn("no parse for '" + dates.get(i) + "'");
 
-            } else if (parserMatches.size() > 1) {
+            } else if (parserMatches.size() > 1 && this.warnParseOverlap) {
                 String overlappingSpecs = parserMatches.stream()
                         .flatMap(pc -> pc.getParser().getFormatSpec().stream())
                         .map(p -> "\"" + p + "\"")
@@ -235,9 +238,17 @@ public class CoverageCalculator {
             );
             LOG.info("------------------------------------------");
 
+            int maxShow = 10;
+            int examplesShown = 0;
+
             for (int i = 0; i < dates.size(); i++) {
                 if (dpc.getSuccessMask().get(i)) {
-                    LOG.debug(dates.get(i));
+                    LOG.info(dates.get(i));
+                    examplesShown++;
+
+                    if (examplesShown >= maxShow) {
+                        break;
+                    }
                 }
             }
         }
