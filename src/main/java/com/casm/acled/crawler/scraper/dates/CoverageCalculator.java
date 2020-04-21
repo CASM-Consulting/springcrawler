@@ -143,6 +143,7 @@ public class CoverageCalculator {
 
     private boolean warnParseOverlap = false;
     private boolean warnNoParse = true;
+    private int maxShownExamples = 10;
 
     // Dates to calculate coverage over
     private List<String> dates;
@@ -209,6 +210,23 @@ public class CoverageCalculator {
         return overlapsCount;
     }
 
+    public int numParsers() {
+        return this.coverageCalcs.size();
+    }
+
+
+    public void setWarnParseOverlap(boolean warnParseOverlap) {
+        this.warnParseOverlap = warnParseOverlap;
+    }
+
+    public void setWarnNoParse(boolean warnNoParse) {
+        this.warnNoParse = warnNoParse;
+    }
+
+    public void setMaxShownExamples(int maxShown) {
+        this.maxShownExamples = maxShownExamples;
+    }
+
     /**
      * Log individual and overall coverage stats.
      */
@@ -238,15 +256,16 @@ public class CoverageCalculator {
             );
             LOG.info("------------------------------------------");
 
-            int maxShow = 10;
+
+            // Log some examples of successfully parsed dates
             int examplesShown = 0;
 
             for (int i = 0; i < dates.size(); i++) {
                 if (dpc.getSuccessMask().get(i)) {
                     LOG.info(dates.get(i));
-                    examplesShown++;
 
-                    if (examplesShown >= maxShow) {
+                    examplesShown++;
+                    if (examplesShown >= this.maxShownExamples) {
                         break;
                     }
                 }
@@ -254,8 +273,8 @@ public class CoverageCalculator {
         }
 
         LOG.info("Summary");
-        LOG.info("Success: {}, Failure: {}, Coverage: {}, Overlaps: {}",
-                getSuccessCount(), getFailureCount(), getCoverage(), getOverlapsCount()
+        LOG.info("Success: {}, Failure: {}, Coverage: {}, Overlaps: {}, Parsers: {}",
+                getSuccessCount(), getFailureCount(), getCoverage(), getOverlapsCount(), numParsers()
         );
     }
 
@@ -275,6 +294,10 @@ public class CoverageCalculator {
                 .collect(Collectors.toList());
 
         CoverageCalculator cc = new CoverageCalculator(parsers, examples);
+
+        cc.setMaxShownExamples(10);
+        cc.setWarnNoParse(false);
+        cc.setWarnParseOverlap(false);
 
         // Parse and keep track of stats.
         cc.calculate();
