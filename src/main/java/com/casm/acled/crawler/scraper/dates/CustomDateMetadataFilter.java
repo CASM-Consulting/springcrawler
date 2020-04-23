@@ -20,7 +20,7 @@ public class CustomDateMetadataFilter extends DateMetadataFilter {
     private final String field;
     private final DateParser dateParser;
 
-    private static String STANDARD_FORMAT = "YYYY-MM-DD HH:MM:SS ZZZ";
+    private static String STANDARD_FORMAT = "yyyy-MM-dd HH:mm:ss3";
 
     private final DateTimeFormatter dtf;
 
@@ -58,5 +58,8 @@ public class CustomDateMetadataFilter extends DateMetadataFilter {
 
     }
 
+    public static LocalDateTime toDate(String date) {
+        return LocalDateTime.parse(date, DateTimeFormatter.ofPattern(STANDARD_FORMAT));
+    }
 
 }

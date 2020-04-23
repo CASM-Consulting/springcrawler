@@ -2,6 +2,8 @@ package com.casm.acled.crawler;
 
 // casm
 import com.casm.acled.camunda.BusinessKeys;
+import com.casm.acled.crawler.scraper.ScraperFields;
+import com.casm.acled.crawler.scraper.dates.CustomDateMetadataFilter;
 import com.casm.acled.crawler.scraper.dates.DateUtil;
 import com.casm.acled.dao.entities.SourceDAO;
 import com.casm.acled.dao.entities.SourceListDAO;
@@ -30,6 +32,7 @@ import uk.ac.susx.tag.norconex.jobqueuemanager.CrawlerArguments;
 
 // java
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -72,10 +75,12 @@ public class ACLEDImporter implements IHttpDocumentProcessor {
         if(!previouslyScraped(doc)) {
 
             HttpMetadata metadata = doc.getMetadata();
-            String articleText = metadataGet(metadata, CrawlerArguments.SCRAPEDARTICLE);
-            String date = metadataGet(metadata,CrawlerArguments.SCRAPEDATE);
 
-            String title = metadataGet(metadata, CrawlerArguments.SCRAPEDTITLE);
+            String articleText = metadataGet(metadata, ScraperFields.SCRAPED_ARTICLE);
+            String title = metadataGet(metadata, ScraperFields.SCRAPED_TITLE);
+            String date = metadataGet(metadata, ScraperFields.SCRAPED_DATE);
+            String standardDate = metadataGet(metadata, ScraperFields.STANDARD_DATE);
+
             StringBuilder text = new StringBuilder();
             Article article = EntityVersions.get(Article.class)
                     .current();
@@ -89,18 +94,16 @@ public class ACLEDImporter implements IHttpDocumentProcessor {
 
             text.append(articleText);
 
-            Optional<LocalDate> parsedDate = DateUtil.getDate(date);
+            LocalDateTime parsedDate = CustomDateMetadataFilter.toDate(standardDate);
 
             String url = doc.getReference();
 
             article = article.put(Article.TEXT, text.toString())
                     .put(Article.URL, url);
 
-            if(parsedDate.isPresent()) {
-                article = article.put(Article.DATE, parsedDate.get());
-            }
+            article = article.put(Article.DATE, parsedDate.toLocalDate());
 
-            LocalDate crawlDate = DateUtil.fromDateString(metadataGet(metadata, ACLEDMetadataPreProcessor.CRAWLDATE));
+            LocalDate crawlDate = LocalDate.now();
 
             article = article.put(Article.CRAWL_DATE, crawlDate);
 

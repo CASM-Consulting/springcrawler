@@ -124,7 +124,7 @@ public class ACLEDScraper implements IHttpDocumentProcessor {
                 Optional<String> title = maybeGet(post, TITLE);
 
                 if(article.isPresent()) {
-                    doc.getMetadata().put(ScraperFields.SCRAPED_ARTICLE,Arrays.asList(article.get()));
+                    doc.getMetadata().put(ScraperFields.SCRAPED_ARTICLE, Arrays.asList(article.get()));
                 }
 
                 if(title.isPresent()) {

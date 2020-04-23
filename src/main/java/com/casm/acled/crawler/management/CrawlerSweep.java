@@ -15,7 +15,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -89,7 +88,7 @@ public class CrawlerSweep {
     public void submitJobs(List<Source> sources) {
         for(Source source : sources) {
             JobRequest jobRequest = JobRequest.create(JQM_APP_NAME, JQM_USER);
-            jobRequest.addParameter( CrawlRun.SOURCE_ID, Integer.toString( source.id() ) );
+            jobRequest.addParameter( Crawl.SOURCE_ID, Integer.toString( source.id() ) );
         }
     }
 

@@ -1,8 +1,10 @@
 package com.casm.acled.crawler.management;
 
 import com.casm.acled.crawler.DateFilter;
+import com.casm.acled.crawler.scraper.ACLEDScraper;
 import com.casm.acled.crawler.scraper.ScraperFields;
 import com.casm.acled.crawler.scraper.dates.CustomDateMetadataFilter;
+import com.casm.acled.crawler.scraper.dates.DateParser;
 import com.casm.acled.crawler.scraper.keywords.KeywordFilter;
 import com.casm.acled.crawler.utils.Util;
 import com.norconex.collector.core.crawler.ICrawlerConfig;
@@ -39,7 +41,7 @@ public class NorconexConfiguration {
     private final HttpCrawlerConfig crawler;
     private final ImporterConfig importer;
 
-    private Path crawlStore = Paths.get("");
+    private Path crawlStore;
     private String userAgent = "CASM Consulting LLP";
     private int numThreads = 3;
     private boolean ignoreRobots = false;
@@ -54,17 +56,18 @@ public class NorconexConfiguration {
     private static String PROGRESS = "progress";
     private static String LOGS = "logs";
 
-    public NorconexConfiguration(/*ZonedDateTime from, ZonedDateTime to*/) {
+    public NorconexConfiguration(Path workDir) {
 //        this.from = from;
 //        this.to = to;
         importer = new ImporterConfig();
         collector = new HttpCollectorConfig();
         crawler = new HttpCrawlerConfig();
 
-        configureCollector();
-        configureCrawler();
-        configureImporter();
+        crawlStore = workDir;
 
+        configureImporter();
+        configureCrawler();
+        configureCollector();
     }
 
     public HttpCollectorConfig collector () {
@@ -77,14 +80,19 @@ public class NorconexConfiguration {
         return importer;
     };
 
+    public void setId(String id) {
+        collector.setId(id);
+        crawler.setId(id);
+    }
+
     private void configureCollector() {
 
+        collector.setCrawlerConfigs(crawler);
         collector.setProgressDir(crawlStore.resolve(PROGRESS).toString());
         collector.setLogsDir(crawlStore.resolve(LOGS).toString());
     }
 
     private void configureCrawler() {
-
 
 //        MD5DocumentChecksummer checksummer = new MD5DocumentChecksummer();
 //        checksummer.setSourceFields(CrawlerArguments.SCRAPEDARTICLE);
@@ -92,6 +100,8 @@ public class NorconexConfiguration {
 //        crawler.setDocumentChecksummer(checksummer);
 //        crawler.setDocumentChecksummer(new ArticleExtractorChecksum());
 
+
+        crawler.setImporterConfig(importer);
         // Basic crawler config
         crawler.setUserAgent(userAgent);
         crawler.setMaxDepth(depth); // -1 for inf
@@ -138,33 +148,39 @@ public class NorconexConfiguration {
         // create the url filters - e.g. regex filters
         // url regex match
         // parent link prevention
-        if(regexFilterPatterns!=null) {
-            crawler.setReferenceFilters(
-                    regexFilterPatterns.stream()
-                            .map(regex -> new RegexReferenceFilter(regex))
-                            .collect(Collectors.toList())
-                            .toArray(new RegexReferenceFilter[regexFilterPatterns.size()])
-            );
-        }
+//        if(regexFilterPatterns!=null) {
+//            crawler.setReferenceFilters(
+//                    regexFilterPatterns.stream()
+//                            .map(regex -> new RegexReferenceFilter(regex))
+//                            .collect(Collectors.toList())
+//                            .toArray(new RegexReferenceFilter[regexFilterPatterns.size()])
+//            );
+//        }
     }
 
 
-    public void setFilter(ZonedDateTime from, ZonedDateTime to, List<String> query)  {
-        DateMetadataFilter dateMetadataFilter = new CustomDateMetadataFilter(ScraperFields.SCRAPED_DATE, null);
+    public void setFilters(ZonedDateTime from, ZonedDateTime to, DateParser dateParser, List<String> query)  {
+        DateMetadataFilter dateMetadataFilter = new CustomDateMetadataFilter(ScraperFields.SCRAPED_DATE, dateParser);
 
         dateMetadataFilter.addCondition(DateMetadataFilter.Operator.GREATER_THAN, Date.from(from.toInstant()));
         dateMetadataFilter.addCondition(DateMetadataFilter.Operator.LOWER_EQUAL, Date.from(to.toInstant()));
 
         List<IImporterHandler> handlers = new ArrayList<>();
 
-        KeywordFilter regexFilter = new KeywordFilter(CrawlerArguments.SCRAPEDARTICLE, query);
+        KeywordFilter regexFilter = new KeywordFilter(ScraperFields.SCRAPED_ARTICLE, query);
 
-        EmptyMetadataFilter emptyArticle = new EmptyMetadataFilter(OnMatch.EXCLUDE,CrawlerArguments.SCRAPEDARTICLE);
+        EmptyMetadataFilter emptyArticle = new EmptyMetadataFilter(OnMatch.EXCLUDE, ScraperFields.SCRAPED_ARTICLE);
+
         handlers.add(emptyArticle);
         handlers.add(regexFilter);
         handlers.add(dateMetadataFilter);
 
         importer.setPostParseHandlers(handlers.toArray(new IImporterHandler[handlers.size()]));
+    }
+
+    public void setScraper(ACLEDScraper scraper) {
+
+        crawler.setPreImportProcessors(scraper);
     }
 
     private void configureImporter() {
