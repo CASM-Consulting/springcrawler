@@ -3,6 +3,7 @@ package com.casm.acled.crawler.management;
 import com.casm.acled.crawler.DateFilter;
 import com.casm.acled.crawler.scraper.ScraperFields;
 import com.casm.acled.crawler.scraper.dates.CustomDateMetadataFilter;
+import com.casm.acled.crawler.scraper.keywords.KeywordFilter;
 import com.casm.acled.crawler.utils.Util;
 import com.norconex.collector.core.crawler.ICrawlerConfig;
 import com.norconex.collector.core.data.store.impl.mvstore.MVStoreCrawlDataStoreFactory;
@@ -23,6 +24,7 @@ import uk.ac.susx.tag.norconex.jobqueuemanager.CrawlerArguments;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.Date;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
@@ -37,33 +39,35 @@ public class NorconexConfiguration {
     private final HttpCrawlerConfig crawler;
     private final ImporterConfig importer;
 
-    private Path crawlStore;
-    private String userAgent;
-    private int threadsPerSeed;
-    private boolean ignoreRobots;
-    private boolean ignoreSiteMap;
-    private int depth;
-    private String urlRegex;
-    private String seed;
-    private long politeness;
-    private int numThreads;
+    private Path crawlStore = Paths.get("");
+    private String userAgent = "CASM Consulting LLP";
+    private int numThreads = 3;
+    private boolean ignoreRobots = false;
+    private boolean ignoreSiteMap = false;
+    private int depth = 5;
+    private String urlRegex ;
+    private long politeness = 100;
     private List<String> regexFilterPatterns;
-    private ZonedDateTime from;
-    private ZonedDateTime to;
+//    private ZonedDateTime from;
+//    private ZonedDateTime to;
 
     private static String PROGRESS = "progress";
     private static String LOGS = "logs";
 
-    public NorconexConfiguration(ZonedDateTime from, ZonedDateTime to) {
-        this.from = from;
-        this.to = to;
+    public NorconexConfiguration(/*ZonedDateTime from, ZonedDateTime to*/) {
+//        this.from = from;
+//        this.to = to;
         importer = new ImporterConfig();
         collector = new HttpCollectorConfig();
         crawler = new HttpCrawlerConfig();
 
+        configureCollector();
+        configureCrawler();
+        configureImporter();
+
     }
 
-    public HttpCollectorConfig collector (){
+    public HttpCollectorConfig collector () {
         return collector;
     }
     public HttpCrawlerConfig crawler() {
@@ -145,28 +149,31 @@ public class NorconexConfiguration {
     }
 
 
-    private void configureImporter() {
-
-        RegexMetadataFilter regexFilter = new RegexMetadataFilter(CrawlerArguments.SCRAPEDARTICLE, Util.KEYWORDS);
-        EmptyMetadataFilter emptyArticle = new EmptyMetadataFilter(OnMatch.EXCLUDE,CrawlerArguments.SCRAPEDARTICLE);
-        int week = 7;
-        DateFilter df = new DateFilter(LocalDate.now().minusDays(week));
-
+    public void setFilter(ZonedDateTime from, ZonedDateTime to, List<String> query)  {
         DateMetadataFilter dateMetadataFilter = new CustomDateMetadataFilter(ScraperFields.SCRAPED_DATE, null);
+
         dateMetadataFilter.addCondition(DateMetadataFilter.Operator.GREATER_THAN, Date.from(from.toInstant()));
         dateMetadataFilter.addCondition(DateMetadataFilter.Operator.LOWER_EQUAL, Date.from(to.toInstant()));
 
         List<IImporterHandler> handlers = new ArrayList<>();
 
+        KeywordFilter regexFilter = new KeywordFilter(CrawlerArguments.SCRAPEDARTICLE, query);
+
+        EmptyMetadataFilter emptyArticle = new EmptyMetadataFilter(OnMatch.EXCLUDE,CrawlerArguments.SCRAPEDARTICLE);
         handlers.add(emptyArticle);
         handlers.add(regexFilter);
+        handlers.add(dateMetadataFilter);
+
         importer.setPostParseHandlers(handlers.toArray(new IImporterHandler[handlers.size()]));
+    }
 
+    private void configureImporter() {
 
-        // set this to correctly manage file sizes etc...
+        // set this to correctly manage file sizes etc... (sw ???)
 //        importer.setMaxFileCacheSize(10);
 //        importer.setMaxFilePoolCacheSize(200);
-        //effectively disables importer
+
+        //effectively disables default importer framework
         GenericDocumentParserFactory gdpf = new GenericDocumentParserFactory();
         gdpf.setIgnoredContentTypesRegex(".*");
         importer.setParserFactory(gdpf);

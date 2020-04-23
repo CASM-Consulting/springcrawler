@@ -51,8 +51,6 @@ public class Scheduler implements Runnable {
         }
     }
 
-
-
     private void ensureSchedules() {
 
         for(JobInstance job : client.getJobs()) {

@@ -54,10 +54,14 @@ public class ACLEDScraper implements IHttpDocumentProcessor {
         return Files.exists(path.resolve(ACLEDScraper.JOB_JSON));
     }
 
-    public static ACLEDScraper load(Path path) throws IOException {
+    public static ACLEDScraper load(Path path) {
         ACLEDScraper scraper = new ACLEDScraper(path);
-        scraper.load();
-        return scraper;
+        try {
+            scraper.load();
+            return scraper;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private void load() throws IOException {
