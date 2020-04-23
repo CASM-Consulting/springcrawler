@@ -16,7 +16,6 @@ import com.norconex.importer.handler.filter.OnMatch;
 import com.norconex.importer.handler.filter.impl.EmptyMetadataFilter;
 import com.norconex.importer.handler.filter.impl.RegexMetadataFilter;
 import com.norconex.importer.handler.tagger.impl.KeepOnlyTagger;
-import org.apache.sis.internal.jaxb.metadata.EX_Extent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,7 +28,6 @@ import uk.ac.susx.tag.norconex.utils.WebsiteReport;
 import java.io.File;
 import java.io.IOException;
 import java.net.HttpURLConnection;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
@@ -37,9 +35,9 @@ import java.util.*;
 
 
 @Component
-public class CrawlerService {
+public class CrawlerServiceOld {
 
-    protected static final Logger logger = LoggerFactory.getLogger(CrawlerService.class);
+    protected static final Logger logger = LoggerFactory.getLogger(CrawlerServiceOld.class);
 
     @Autowired
     private ArticleDAO articleDAO;

@@ -37,17 +37,9 @@ public class CrawlRunner implements CommandLineRunner {
 
     protected static final Logger logger = LoggerFactory.getLogger(CrawlRunner.class);
 
-    @Autowired
-    private SourceListDAO sourceListDAO;
 
     @Autowired
-    private SourceDAO sourceDAO;
-
-    @Autowired
-    private ArticleDAO articlDAO;
-
-    @Autowired
-    private Reporter reporter;
+    private CrawlService crawlService;
 
 
     @Override
@@ -58,20 +50,7 @@ public class CrawlRunner implements CommandLineRunner {
         LocalDate from = LocalDate.parse(args[2]);
         LocalDate to = LocalDate.parse(args[3]);
 
-        Optional<SourceList> maybesSourceList = sourceListDAO.getById(sourceListId);
-        Optional<Source> maybeSource = sourceDAO.getById(sourceId);
-
-        if(maybesSourceList.isPresent() && maybeSource.isPresent()) {
-
-            ACLEDImporter importer = new ACLEDImporter(articlDAO, sourceDAO, sourceListDAO, true);
-
-            Crawl crawl = new Crawl(maybesSourceList.get(), maybeSource.get(), from, to, importer);
-            crawl.run();
-        } else {
-
-            throw new RuntimeException("source or source list not found!");
-        }
-
+        crawlService.run(sourceListId, sourceId, from, to);
     }
 
     public static void main(String[] args) {

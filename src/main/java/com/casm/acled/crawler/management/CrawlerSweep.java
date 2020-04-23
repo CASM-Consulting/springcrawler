@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -29,7 +30,7 @@ public class CrawlerSweep {
 
     private final JqmClient client;
 
-    private final static String JQM_APP_NAME = "";
+    private final static String JQM_APP_NAME = "JQMSpringCollector";
     private static final String JQM_USER = "crawler-submission-service";
 
     @Autowired
@@ -89,6 +90,12 @@ public class CrawlerSweep {
         for(Source source : sources) {
             JobRequest jobRequest = JobRequest.create(JQM_APP_NAME, JQM_USER);
             jobRequest.addParameter( Crawl.SOURCE_ID, Integer.toString( source.id() ) );
+            jobRequest.addParameter( Crawl.SOURCE_LIST_ID, Integer.toString( 1 ) );
+
+            jobRequest.addParameter( Crawl.FROM, LocalDate.now().minusDays(7).toString() );
+            jobRequest.addParameter( Crawl.TO, LocalDate.now().toString() );
+
+            client.enqueue(jobRequest);
         }
     }
 

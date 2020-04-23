@@ -8,7 +8,7 @@ import com.casm.acled.configuration.ObjectMapperConfiguration;
 // norconex
 
 //camunda
-import com.casm.acled.crawler.spring.CrawlerService;
+import com.casm.acled.crawler.spring.CrawlerServiceOld;
 import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
 import org.camunda.bpm.spring.boot.starter.rest.CamundaBpmRestJerseyAutoConfiguration;
 
@@ -29,15 +29,11 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
 import org.springframework.boot.autoconfigure.validation.ValidationAutoConfiguration;
 import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
 import uk.ac.susx.tag.norconex.database.ConcurrentContentHashStore;
 import uk.ac.susx.tag.norconex.jobqueuemanager.CrawlerArguments;
-
-import javax.annotation.PreDestroy;
 
 @EnableAutoConfiguration(exclude={HibernateJpaAutoConfiguration.class,CamundaBpmAutoConfiguration.class, CamundaBpmRestJerseyAutoConfiguration.class, ValidationAutoConfiguration.class})
 // We need the special object mapper, though.
@@ -50,7 +46,7 @@ public class CLIRunner implements CommandLineRunner {
     protected static final Logger logger = LoggerFactory.getLogger(CLIRunner.class);
 
     @Autowired
-    private CrawlerService crawlerService;
+    private CrawlerServiceOld crawlerService;
 
     private ConcurrentContentHashStore contentHashStore;
 

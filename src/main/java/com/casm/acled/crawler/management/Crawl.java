@@ -24,6 +24,9 @@ public class Crawl {
     private final Source source;
 
     public static final String SOURCE_ID = "SOURCE_ID";
+    public static final String SOURCE_LIST_ID = "SOURCE_LIST_ID";
+    public static final String FROM = "FROM";
+    public static final String TO = "TO";
 
     private final LocalDate from;
     private final LocalDate to;

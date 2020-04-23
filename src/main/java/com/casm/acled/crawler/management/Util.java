@@ -9,6 +9,7 @@ import com.casm.acled.entities.EntityVersions;
 import com.casm.acled.entities.source.Source;
 import com.casm.acled.entities.sourcelist.SourceList;
 import com.google.common.collect.ImmutableList;
+import com.opencsv.CSVReader;
 import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
 import org.camunda.bpm.spring.boot.starter.rest.CamundaBpmRestJerseyAutoConfiguration;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +23,14 @@ import org.springframework.boot.autoconfigure.validation.ValidationAutoConfigura
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
+
+import java.io.IOException;
+import java.io.Reader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Iterator;
+import java.util.List;
 
 @EnableAutoConfiguration(exclude={HibernateJpaAutoConfiguration.class, CamundaBpmAutoConfiguration.class, CamundaBpmRestJerseyAutoConfiguration.class, ValidationAutoConfiguration.class})
 // We need the special object mapper, though.
@@ -71,11 +80,37 @@ public class Util implements CommandLineRunner {
     }
 
 
+    private void createSources(Path seedsPath) throws IOException {
+        try (Reader reader = Files.newBufferedReader(seedsPath)) {
+            CSVReader csvReader = new CSVReader(reader);
+            Iterator<String[]> itr = csvReader.iterator();
+            itr.next();
+            while(itr.hasNext()) {
+                String[] row = itr.next();
+
+                Source source = EntityVersions.get(Source.class).current()
+                        .put(Source.LINK, row[1])
+                        .put(Source.STANDARD_NAME, row[0])
+                        .put(Source.COUNTRY, row[2])
+                        ;
+
+                try {
+                    sourceDAO.create(source);
+//                    System.out.println(source);
+                } catch (RuntimeException e) {
+                    System.out.println(e.getMessage());
+                    //already exists?
+                }
+            }
+        }
+    }
+
     @Override
     public void run(String... args) throws Exception {
 
 //        insertDummySource();
-        updateDummySource();
+//        updateDummySource();
+        createSources(Paths.get("seeds.csv"));
     }
 
     public static void main(String[] args) {
