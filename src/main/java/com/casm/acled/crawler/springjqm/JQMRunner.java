@@ -35,12 +35,19 @@ public class JQMRunner implements Runnable {
 
         System.out.println(runtimeParameters);
 
-        int sourceListId = Integer.parseInt( runtimeParameters.get( Crawl.SOURCE_ID ) );
-        int sourceId = Integer.parseInt( runtimeParameters.get( Crawl.SOURCE_LIST_ID ) );
-        LocalDate from = LocalDate.parse( runtimeParameters.get( Crawl.FROM ) );
-        LocalDate to = LocalDate.parse( runtimeParameters.get( Crawl.TO ) );
+        int sourceListId = Integer.parseInt( runtimeParameters.get( Crawl.SOURCE_LIST_ID ) );
+        int sourceId = Integer.parseInt( runtimeParameters.get( Crawl.SOURCE_ID ) );
 
-        crawlService.run(sourceListId, sourceId, from, to);
+        if( runtimeParameters.containsKey(Crawl.FROM) && runtimeParameters.containsKey(Crawl.TO) ) {
+
+            LocalDate from = LocalDate.parse( runtimeParameters.get( Crawl.FROM ) );
+            LocalDate to = LocalDate.parse( runtimeParameters.get( Crawl.TO ) );
+
+            crawlService.run(sourceListId, sourceId, from, to);
+        } else {
+
+            crawlService.run(sourceListId, sourceId);
+        }
 
         System.out.println("Job " + jmp.getObject().jobInstanceID() + " is done!");
     }

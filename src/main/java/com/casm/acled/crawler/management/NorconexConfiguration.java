@@ -1,5 +1,6 @@
 package com.casm.acled.crawler.management;
 
+import com.casm.acled.crawler.ACLEDMetadataPreProcessor;
 import com.casm.acled.crawler.DateFilter;
 import com.casm.acled.crawler.scraper.ACLEDScraper;
 import com.casm.acled.crawler.scraper.ScraperFields;
@@ -158,6 +159,19 @@ public class NorconexConfiguration {
 //        }
     }
 
+    public void setFilters(List<String> query)  {
+
+        List<IImporterHandler> handlers = new ArrayList<>();
+
+        KeywordFilter regexFilter = new KeywordFilter(ScraperFields.SCRAPED_ARTICLE, query);
+
+        EmptyMetadataFilter emptyArticle = new EmptyMetadataFilter(OnMatch.EXCLUDE, ScraperFields.SCRAPED_ARTICLE);
+
+        handlers.add(emptyArticle);
+        handlers.add(regexFilter);
+
+        importer.setPostParseHandlers(handlers.toArray(new IImporterHandler[handlers.size()]));
+    }
 
     public void setFilters(ZonedDateTime from, ZonedDateTime to, DateParser dateParser, List<String> query)  {
         DateMetadataFilter dateMetadataFilter = new CustomDateMetadataFilter(ScraperFields.SCRAPED_DATE, dateParser);
@@ -178,9 +192,9 @@ public class NorconexConfiguration {
         importer.setPostParseHandlers(handlers.toArray(new IImporterHandler[handlers.size()]));
     }
 
-    public void setScraper(ACLEDScraper scraper) {
+    public void setScraper(ACLEDScraper scraper, ACLEDMetadataPreProcessor metadata) {
 
-        crawler.setPreImportProcessors(scraper);
+        crawler.setPreImportProcessors(scraper, metadata);
     }
 
     private void configureImporter() {

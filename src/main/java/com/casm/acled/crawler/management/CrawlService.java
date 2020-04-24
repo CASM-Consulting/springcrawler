@@ -8,13 +8,14 @@ import com.casm.acled.dao.entities.SourceListDAO;
 import com.casm.acled.entities.source.Source;
 import com.casm.acled.entities.sourcelist.SourceList;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.Optional;
 
 
-@Service
+@Component
 public class CrawlService {
 
     @Autowired
@@ -29,10 +30,21 @@ public class CrawlService {
     @Autowired
     private Reporter reporter;
 
+    public CrawlService() {
+
+    }
+
+    public void run(int sourceListId, int sourceId) {
+        run(sourceListId, sourceId, null, null);
+    }
+
     public void run(int sourceListId, int sourceId, LocalDate from, LocalDate to) {
 
         Optional<SourceList> maybesSourceList = sourceListDAO.getById(sourceListId);
         Optional<Source> maybeSource = sourceDAO.getById(sourceId);
+
+        System.out.println(sourceListId);
+        System.out.println(sourceId);
 
         if(maybesSourceList.isPresent() && maybeSource.isPresent()) {
 

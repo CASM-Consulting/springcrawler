@@ -15,11 +15,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -30,7 +33,7 @@ public class CrawlerSweep {
 
     private final JqmClient client;
 
-    private final static String JQM_APP_NAME = "JQMSpringCollector";
+    private final static String JQM_APP_NAME = "JQMSpringCollectorV1";
     private static final String JQM_USER = "crawler-submission-service";
 
     @Autowired
@@ -40,7 +43,15 @@ public class CrawlerSweep {
     private Reporter reporter;
 
     public CrawlerSweep() {
-        client = JqmClientFactory.getClient();
+        try (
+            Reader reader = Files.newBufferedReader(Paths.get("jqm.properties"))
+        ) {
+            Properties properties = new Properties();
+            properties.load(reader);
+            client = JqmClientFactory.getClient("acled-spring-jqm", properties, true);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public void sweepAvailableScrapers(Path scraperDir) throws IOException {
@@ -92,8 +103,8 @@ public class CrawlerSweep {
             jobRequest.addParameter( Crawl.SOURCE_ID, Integer.toString( source.id() ) );
             jobRequest.addParameter( Crawl.SOURCE_LIST_ID, Integer.toString( 1 ) );
 
-            jobRequest.addParameter( Crawl.FROM, LocalDate.now().minusDays(7).toString() );
-            jobRequest.addParameter( Crawl.TO, LocalDate.now().toString() );
+//            jobRequest.addParameter( Crawl.FROM, LocalDate.now().minusDays(7).toString() );
+//            jobRequest.addParameter( Crawl.TO, LocalDate.now().toString() );
 
             client.enqueue(jobRequest);
         }

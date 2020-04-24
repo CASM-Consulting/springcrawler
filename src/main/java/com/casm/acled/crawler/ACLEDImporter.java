@@ -94,14 +94,17 @@ public class ACLEDImporter implements IHttpDocumentProcessor {
 
             text.append(articleText);
 
-            LocalDateTime parsedDate = CustomDateMetadataFilter.toDate(standardDate);
 
             String url = doc.getReference();
 
             article = article.put(Article.TEXT, text.toString())
+                    .put(Article.SCRAPE_DATE, date)
                     .put(Article.URL, url);
 
-            article = article.put(Article.DATE, parsedDate.toLocalDate());
+            if(standardDate != null) {
+                LocalDateTime parsedDate = CustomDateMetadataFilter.toDate(standardDate);
+                article = article.put(Article.DATE, parsedDate.toLocalDate());
+            }
 
             LocalDate crawlDate = LocalDate.now();
 
@@ -113,11 +116,11 @@ public class ACLEDImporter implements IHttpDocumentProcessor {
 
             if(source.isPresent()) {
                 article = article.put(Article.SOURCE_ID, source.get().id());
-                List<SourceList> lists = sourceListDAO.bySource(source.get());
-                for (SourceList list : lists) {
-                    String bk = BusinessKeys.generate(list.get(SourceList.LIST_NAME));
-                    articleDAO.create(article.businessKey(bk));
-                }
+//                List<SourceList> lists = sourceListDAO.bySource(source.get());
+//                for (SourceList list : lists) {
+//                    String bk = BusinessKeys.generate(list.get(SourceList.LIST_NAME));
+                    articleDAO.create(article);
+//                }
             } else  if(!sourceRequired) {
 //                logger.info("Source not present - adding without source.");
                 articleDAO.create(article);

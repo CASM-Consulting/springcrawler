@@ -1,4 +1,4 @@
-package com.casm.acled.crawler.springcli;
+package com.casm.acled.crawler.springrunners;
 
 import com.beust.jcommander.JCommander;
 

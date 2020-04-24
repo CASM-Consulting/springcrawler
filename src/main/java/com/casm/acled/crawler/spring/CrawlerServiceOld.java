@@ -115,7 +115,7 @@ public class CrawlerServiceOld {
 
             ACLEDScraper scraper = resolveScraper(scrapersPath, explicitScraper, seed);
 
-            config.setPreImportProcessors(scraper,new ACLEDMetadataPreProcessor(metadata));
+//            config.setPreImportProcessors(scraper,new ACLEDMetadataPreProcessor(metadata));
 
             // Add the crawler-to-spring-magic post-processor
             config.setPostImportProcessors(new ACLEDImporter(articleDAO, sourceDAO, sourceListDAO,false));

@@ -1,7 +1,6 @@
 package uk.ac.susx.tag.norconex;
 
-import com.casm.acled.crawler.management.CrawlRunner;
-import com.casm.acled.crawler.springcli.CLIRunner;
+import com.casm.acled.crawler.springrunners.CLIRunner;
 import org.junit.Test;
 import org.springframework.boot.Banner;
 import org.springframework.boot.SpringApplication;
@@ -9,7 +8,6 @@ import org.springframework.boot.WebApplicationType;
 import uk.ac.susx.tag.norconex.jobqueuemanager.CrawlerArguments;
 import uk.ac.susx.tag.norconex.jobqueuemanager.SingleSeedCollector;
 
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;

@@ -20,14 +20,10 @@ public class ACLEDMetadataPreProcessor implements IHttpDocumentProcessor {
     public static final String LINK = "casm.jqm.link";
 
 
-    public final Map<String, List<String>> metadata;
+    public String link;
 
-    public ACLEDMetadataPreProcessor(){
-        this(new HashMap<>());
-    }
-
-    public ACLEDMetadataPreProcessor(Map<String, List<String>> stringStringHashMap) {
-        this.metadata = stringStringHashMap;
+    public ACLEDMetadataPreProcessor(String link) {
+        this.link = link;
     }
 
     @Override
@@ -36,9 +32,9 @@ public class ACLEDMetadataPreProcessor implements IHttpDocumentProcessor {
 //        metadata.put(DEPTH, Arrays.asList(String.valueOf(doc.getMetadata().getInt(HttpMetadata.COLLECTOR_DEPTH))));
 //        doc.getMetadata().getDocumentUrls();
 
-        String crawlDate = DateUtil.toDateString(LocalDate.now());
+        Map<String, List<String>> metadata = doc.getMetadata();
 
-        Util.metadataPut(metadata, CRAWLDATE, crawlDate);
+        Util.metadataPut(metadata, LINK, link);
 
         doc.getMetadata().putAll(metadata);
     }

@@ -1,6 +1,7 @@
 package com.casm.acled.crawler.management;
 
 import com.casm.acled.crawler.ACLEDImporter;
+import com.casm.acled.crawler.ACLEDMetadataPreProcessor;
 import com.casm.acled.crawler.scraper.ACLEDScraper;
 import com.casm.acled.crawler.scraper.dates.CompositeDateParser;
 import com.casm.acled.crawler.scraper.dates.DateParser;
@@ -18,8 +19,8 @@ import java.util.List;
 
 public class Crawl {
 
-    private static final Path ALL_SCRAPERS = Paths.get("allscrapers");
-    private static final Path CACHE_DIR = Paths.get("scraper_cache");
+    private static final Path ALL_SCRAPERS = Paths.get("/home/sw206/git/springcrawler/allscrapers");
+    private static final Path CACHE_DIR = Paths.get("/home/sw206/git/springcrawler/scraper_cache");
 
     private final Source source;
 
@@ -38,34 +39,41 @@ public class Crawl {
         this.from = from;
         this.to = to;
 
-        ZoneId zoneId = ZoneId.of(source.get(Source.TIMEZONE));
-
-        List<String> query = resolveQuery(sourceList, source);
-
         String id = id();
-
         Path cachePath = Paths.get(id);
 
         config = new NorconexConfiguration(CACHE_DIR.resolve(cachePath));
 
-        List<String> dateFormatSpecs = source.get(Source.DATE_FORMAT);
+        List<String> query = resolveQuery(sourceList, source);
 
-        DateParser dateParser = CompositeDateParser.of(dateFormatSpecs);
+        if(from != null && to != null) {
 
-        config.setFilters(
-                ZonedDateTime.of(from.atTime(0,0,0), zoneId),
-                ZonedDateTime.of(to.atTime(0,0,0), zoneId),
-                dateParser,
-                query
-        );
+            ZoneId zoneId = ZoneId.of(source.get(Source.TIMEZONE));
+
+            List<String> dateFormatSpecs = source.get(Source.DATE_FORMAT);
+
+            DateParser dateParser = CompositeDateParser.of(dateFormatSpecs);
+
+            config.setFilters(
+                    ZonedDateTime.of(from.atTime(0,0,0), zoneId),
+                    ZonedDateTime.of(to.atTime(0,0,0), zoneId),
+                    dateParser,
+                    query
+            );
+        } else {
+            config.setFilters(
+                    query
+            );
+        }
 
         String startURL = source.get(Source.LINK);
 
         String scraperName = Util.getID(startURL);
 
         ACLEDScraper scraper = ACLEDScraper.load(ALL_SCRAPERS.resolve(scraperName));
+        ACLEDMetadataPreProcessor metadata = new ACLEDMetadataPreProcessor(startURL);
 
-        config.setScraper(scraper);
+        config.setScraper(scraper, metadata);
         config.crawler().setStartURLs(startURL);
         config.setId(id);
         config.crawler().setPostImportProcessors(importer);
@@ -73,11 +81,11 @@ public class Crawl {
 
     public String id() {
         StringBuilder sb = new StringBuilder();
-        sb.append((String)source.get(Source.NAME))
+        sb.append((String)source.get(Source.STANDARD_NAME))
                 .append("-")
-                .append(from.toString())
+                .append(from == null ? "" : from.toString())
                 .append("-")
-                .append(to.toString());
+                .append(to == null ? "" : to.toString());
         return sb.toString();
     }
 

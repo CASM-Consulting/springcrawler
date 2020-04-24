@@ -45,8 +45,8 @@ public class ACLEDScraper implements IHttpDocumentProcessor {
 
     public ACLEDScraper(Path scraperPath) {
         this.scraperPath = scraperPath.resolve(JOB_JSON);
-        if(Files.notExists(scraperPath)) {
-            throw new ScraperNotFoundException(scraperPath + " doesn't exist");
+        if(Files.notExists(this.scraperPath)) {
+            throw new ScraperNotFoundException(this.scraperPath + " doesn't exist");
         }
     }
 
