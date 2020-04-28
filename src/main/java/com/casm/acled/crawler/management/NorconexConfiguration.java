@@ -91,6 +91,7 @@ public class NorconexConfiguration {
         collector.setCrawlerConfigs(crawler);
         collector.setProgressDir(crawlStore.resolve(PROGRESS).toString());
         collector.setLogsDir(crawlStore.resolve(LOGS).toString());
+        //collector.setLogsUnmanaged(true);
     }
 
     private void configureCrawler() {

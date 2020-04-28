@@ -40,10 +40,13 @@ public class CrawlRunner implements CommandLineRunner {
 
         int sourceListId = Integer.parseInt(args[0]);
         int sourceId = Integer.parseInt(args[1]);
-        LocalDate from = LocalDate.parse(args[2]);
-        LocalDate to = LocalDate.parse(args[3]);
-
-        crawlService.run(sourceListId, sourceId, from, to);
+        if(args.length > 2) {
+            LocalDate from = LocalDate.parse(args[2]);
+            LocalDate to = LocalDate.parse(args[3]);
+            crawlService.run(sourceListId, sourceId, from, to);
+        } else {
+            crawlService.run(sourceListId, sourceId);
+        }
     }
 
     public static void main(String[] args) {
