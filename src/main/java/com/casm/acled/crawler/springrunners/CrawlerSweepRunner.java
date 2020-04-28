@@ -3,6 +3,8 @@ package com.casm.acled.crawler.springrunners;
 import com.casm.acled.configuration.ObjectMapperConfiguration;
 import com.casm.acled.crawler.management.CrawlerSweep;
 import com.casm.acled.crawler.reporting.Reporter;
+import com.casm.acled.dao.entities.SourceListDAO;
+import com.casm.acled.entities.sourcelist.SourceList;
 import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
 import org.camunda.bpm.spring.boot.starter.rest.CamundaBpmRestJerseyAutoConfiguration;
 import org.slf4j.Logger;
@@ -37,11 +39,21 @@ public class CrawlerSweepRunner implements CommandLineRunner {
     @Autowired
     private Reporter reporter;
 
+    @Autowired
+    private SourceListDAO sourceListDAO;
+
+
+    public void sweepSourceList(String name) {
+        SourceList sourceList = sourceListDAO.getByUnique(SourceList.LIST_NAME, name).get();
+        crawlerSweep.sweepSourceList(sourceList, Paths.get("/home/sw206/git/acled-scrapers"));
+    }
 
     @Override
     public void run(String... args) throws Exception {
 
-        crawlerSweep.sweepAvailableScrapers(Paths.get("allscrapers"));
+//        crawlerSweep.sweepAvailableScrapers(Paths.get("allscrapers"));
+
+        sweepSourceList("balkans");
     }
 
     public static void main(String[] args) {

@@ -39,6 +39,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -51,7 +52,7 @@ import java.util.stream.Collectors;
 // We need the special object mapper, though.
 @Import(ObjectMapperConfiguration.class)
 // And we also need the DAOs.
-@ComponentScan(basePackages={"com.casm.acled.dao"})
+@ComponentScan(basePackages={"com.casm.acled.dao", "com.casm.acled.crawler.spring"})
 public class Util implements CommandLineRunner {
     protected static final Logger logger = LoggerFactory.getLogger(Util.class);
     // keyword query specific to potential articles of interest to ACLED
@@ -272,35 +273,59 @@ public class Util implements CommandLineRunner {
     }
 
 
-    private void createSources(Path seedsPath) throws IOException {
-        try (Reader reader = java.nio.file.Files.newBufferedReader(seedsPath)) {
+    private List<Source> createSources(Path seedsPath) throws IOException {
+        try (
+            Reader reader = java.nio.file.Files.newBufferedReader(seedsPath);
             CSVReader csvReader = new CSVReader(reader);
+        ) {
+            List<Source> sources = new ArrayList<>();
             Iterator<String[]> itr = csvReader.iterator();
             itr.next();
             while(itr.hasNext()) {
                 String[] row = itr.next();
 
-                Source source = EntityVersions.get(Source.class).current()
-                        .put(Source.LINK, row[1])
-                        .put(Source.STANDARD_NAME, row[0])
-                        .put(Source.COUNTRY, row[2])
-                        ;
+                String frequency = row[4];
 
-                try {
-                    sourceDAO.create(source);
+                if(frequency.equals("Weekly")) {
+                    Source source = EntityVersions.get(Source.class).current()
+                            .put(Source.STANDARD_NAME, row[0])
+                            .put(Source.LINK, row[1])
+//                            .put(Source.COUNTRY, row[2])
+                            .put(Source.LANGUAGE, row[3])
+                            ;
+                    try {
+                        sources.add(sourceDAO.create(source));
 //                    System.out.println(source);
-                } catch (RuntimeException e) {
-                    System.out.println(e.getMessage());
-                    //already exists?
+                    } catch (RuntimeException e) {
+                        System.out.println(e.getMessage());
+                        //already exists?
+                    }
                 }
             }
+            return sources;
+        }
+    }
+
+    public SourceList createSourceList(String name) {
+        SourceList sourceList = EntityVersions.get(SourceList.class).current()
+                .put(SourceList.LIST_NAME, name);
+        return sourceListDAO.create(sourceList);
+    }
+
+    public void link(List<Source> sources, SourceList sourceList) {
+        for(Source source : sources) {
+            sourceSourceListDAO.link(source, sourceList);
         }
     }
 
     public void run(String... args) throws Exception {
-        deleteNonMatchingArticles();
-        recoverArticleDates();
-        linkExisting();
+//        deleteNonMatchingArticles();
+//        recoverArticleDates();
+//        linkExisting();
+
+        List<Source> sources = createSources(Paths.get("/home/sw206/git/acledcamundaspringboot/data/europe/balkans-source-list.csv"));
+        SourceList sourceList = createSourceList("balkans");
+        link(sources, sourceList);
     }
 
     public static void main(String[] args) {

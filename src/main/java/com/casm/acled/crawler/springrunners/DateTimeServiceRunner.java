@@ -5,6 +5,10 @@ import com.casm.acled.crawler.reporting.Event;
 import com.casm.acled.crawler.reporting.Reporter;
 import com.casm.acled.crawler.scraper.dates.DateParsers;
 import com.casm.acled.crawler.scraper.dates.DateTimeService;
+import com.casm.acled.dao.entities.ArticleDAO;
+import com.casm.acled.dao.entities.SourceListDAO;
+import com.casm.acled.entities.article.Article;
+import com.casm.acled.entities.sourcelist.SourceList;
 import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
 import org.camunda.bpm.spring.boot.starter.rest.CamundaBpmRestJerseyAutoConfiguration;
 import org.slf4j.Logger;
@@ -22,6 +26,8 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
 
 import java.nio.file.Paths;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @EnableAutoConfiguration(exclude={HibernateJpaAutoConfiguration.class, CamundaBpmAutoConfiguration.class, CamundaBpmRestJerseyAutoConfiguration.class, ValidationAutoConfiguration.class})
 // We need the special object mapper, though.
@@ -39,16 +45,39 @@ public class DateTimeServiceRunner implements CommandLineRunner {
     @Autowired
     private Reporter reporter;
 
+    @Autowired
+    private SourceListDAO sourceListDAO;
+
+    @Autowired
+    private ArticleDAO articleDAO;
+
+    private void attemptAllScrapers() {
+        dateTimeService.setScrapersPath(Paths.get("allscrapers"));
+
+        dateTimeService.attemptAllDateTimeParsers(DateParsers.ALL, DateTimeService.lastScrapeExampleGetter(Paths.get("/home/sw206/git/acled-scrapers")));
+
+        System.out.println(reporter.reports(r->r.event().equals(Event.DATE_PARSE_SUCCESS.name())));
+        System.out.println(reporter.reports(r->r.event().equals(Event.DATE_PARSE_FAILED.name())));
+    }
+
+    private void attemptSourceListExistingArticles(String name) {
+        SourceList sourceList = sourceListDAO.getByUnique(SourceList.LIST_NAME, name).get();
+        dateTimeService.attemptSourceListDateTimeParsers(sourceList, DateParsers.ALL, s -> {
+            List<Article> articles = articleDAO.bySource(s);
+            return articles.stream()
+                    .filter(a -> a.hasValue(Article.SCRAPE_DATE))
+                    .map(a -> (String)a.get(Article.SCRAPE_DATE))
+                    .collect(Collectors.toList());
+        } );
+
+        System.out.println(reporter.reports(r->r.event().equals(Event.DATE_PARSE_SUCCESS.name())));
+        System.out.println(reporter.reports(r->r.event().equals(Event.DATE_PARSE_FAILED.name())));
+    }
 
     @Override
     public void run(String... args) throws Exception {
 
-        dateTimeService.setScrapersPath(Paths.get("allscrapers"));
-
-        dateTimeService.attemptAllDateTimeParsers(DateParsers.ALL);
-
-        System.out.println(reporter.reports(r->r.event().equals(Event.DATE_PARSE_SUCCESS.name())));
-        System.out.println(reporter.reports(r->r.event().equals(Event.DATE_PARSE_FAILED.name())));
+        attemptSourceListExistingArticles("balkans");
     }
 
     public static void main(String[] args) {

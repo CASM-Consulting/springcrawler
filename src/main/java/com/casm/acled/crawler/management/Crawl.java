@@ -19,7 +19,7 @@ import java.util.List;
 
 public class Crawl {
 
-    private static final Path ALL_SCRAPERS = Paths.get("/home/sw206/git/springcrawler/allscrapers");
+    private static final Path ALL_SCRAPERS = Paths.get("/home/sw206/git/acled-scrapers");
     private static final Path CACHE_DIR = Paths.get("/home/sw206/git/springcrawler/scraper_cache");
 
     private final Source source;

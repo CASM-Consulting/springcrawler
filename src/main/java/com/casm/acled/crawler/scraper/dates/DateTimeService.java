@@ -24,6 +24,7 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -58,46 +59,49 @@ public class DateTimeService {
         this.scrapersPath = scrapersPath;
     }
 
-    public void attemptAllDateTimeParsers(List<DateParser> dateParsers) {
+    public void attemptAllDateTimeParsers(List<DateParser> dateParsers, Function<Source, List<String>> exampleGetter) {
         for(Desk desk : deskDAO.getAll()) {
-            attemptDeskDateTimeParsers(desk, dateParsers);
+            attemptDeskDateTimeParsers(desk, dateParsers, exampleGetter);
         }
     }
 
-    public void attemptDeskDateTimeParsers(Desk desk, List<DateParser> dateParsers) {
+    public void attemptDeskDateTimeParsers(Desk desk, List<DateParser> dateParsers, Function<Source, List<String>> exampleGetter) {
         List<SourceList> lists = sourceListDAO.byDesk(desk.id());
 
         for(SourceList list : lists) {
-            attemptSourceListDateTimeParsers(list, dateParsers);
+            attemptSourceListDateTimeParsers(list, dateParsers, exampleGetter);
         }
     }
 
-    public void attemptSourceListDateTimeParsers(SourceList list, List<DateParser> dateParsers) {
+    public void attemptSourceListDateTimeParsers(SourceList list, List<DateParser> dateParsers, Function<Source, List<String>> exampleGetter) {
         List<Source> sources = sourceDAO.byList(list);
 
         for(Source source : sources) {
             try {
-                attemptDateTimeParse(source, dateParsers, lastScrapeExampleGetter);
+                attemptDateTimeParse(source, dateParsers, exampleGetter);
             } catch (IOException e) {
                 reporter.report(Report.of(Event.SCRAPER_NOT_FOUND).message(e.getMessage()));
             }
         }
     }
 
-    private final  Function<Source, List<String>> lastScrapeExampleGetter = source -> {
-        String url = source.get(Source.LINK);
+    public static Function<Source, List<String>> lastScrapeExampleGetter(Path scrapersDir) {
+        return source -> {
+            String url = source.get(Source.LINK);
 
-        String id = Util.getID(url);
+            String id = Util.getID(url);
 
-        Path path = scrapersPath.resolve(id);
-        Optional<String> maybeDate = DateUtil.extractDateFromLastScrapeJson(path);
+            Path path = scrapersDir.resolve(id);
+            Optional<String> maybeDate = DateUtil.extractDateFromLastScrapeJson(path);
 
-        if(maybeDate.isPresent()) {
-            return ImmutableList.of(maybeDate.get());
-        } else {
-            return ImmutableList.of();
-        }
-    };
+            if(maybeDate.isPresent()) {
+                return ImmutableList.of(maybeDate.get());
+            } else {
+                return ImmutableList.of();
+            }
+        };
+    }
+
 
     public void attemptDateTimeParse(Source source, List<DateParser> dateParsers, Function<Source, List<String>> exampleGetter) throws IOException {
 
@@ -110,52 +114,46 @@ public class DateTimeService {
 
         String id = Util.getID(url);
 
-        Path path = scrapersPath.resolve(id);
+        List<String> exampleDates = exampleGetter.apply(source);
 
-        if(ACLEDScraper.validPath(path)) {
+        boolean allPassed = true;
 
-            List<String> exampleDates = exampleGetter.apply(source);
+        if(exampleDates.isEmpty()) {
+            reporter.report(Report.of(Event.DATE_NOT_FOUND, id));
+            allPassed = false;
+        }
 
-            if(exampleDates.isEmpty()) {
-                reporter.report(Report.of(Event.DATE_NOT_FOUND, id));
-            }
+        List<DateParser> passingParsers = new ArrayList<>();
 
-            Optional<DateParser> passingParser = Optional.empty();
+        for(String date : exampleDates) {
 
             for(DateParser dateParser : dateParsers) {
 
-                boolean passed = true;
+                List<String> formatSpecs = source.get(Source.DATE_FORMAT);
 
-                for(String date : exampleDates) {
-                    List<String> formatSpecs = source.get(Source.DATE_FORMAT);
+                if(formatSpecs == null ) {
+                    Optional<LocalDateTime> maybeParsed = dateParser.parse(date);
+                    if(maybeParsed.isPresent()){
 
-                    if(formatSpecs == null ) {
-                        Optional<LocalDateTime> maybeParsed = dateParser.parse(date);
-                        if(maybeParsed.isPresent()){
-
-                            reporter.report(Report.of(Event.DATE_PARSE_SUCCESS, id).message(date));
-                        } else {
-                            reporter.report(Report.of(Event.DATE_PARSE_FAILED, id).message(date));
-                            passed = false;
-                            break;
-                        }
+                        reporter.report(Report.of(Event.DATE_PARSE_SUCCESS, id).message(date));
+                        passingParsers.add(dateParser);
+                        break;
                     } else {
-                        DateParser existing = CompositeDateParser.of(formatSpecs);
-                        Optional<LocalDateTime> maybeParsed = existing.parse(date);
-                        //check parser
+                        reporter.report(Report.of(Event.DATE_PARSE_FAILED, id).message(date));
+                        allPassed = false;
                     }
-                }
-
-                if(passed) {
-                    passingParser = Optional.of(dateParser);
-
-                    //TODO: assign parser to source
+                } else {
+                    DateParser existing = CompositeDateParser.of(formatSpecs);
+                    Optional<LocalDateTime> maybeParsed = existing.parse(date);
+                    //check parser
                 }
             }
-
-        } else {
-            reporter.report(Report.of(Event.SCRAPER_NOT_FOUND,  id));
         }
+
+        if(allPassed) {
+            reporter.report(Report.of(Event.DATE_ALL_PARSE_SUCCESS, id).message(source.get(Source.NAME)));
+        }
+
     }
 
 }

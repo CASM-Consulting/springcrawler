@@ -6,6 +6,7 @@ import com.casm.acled.crawler.scraper.ACLEDScraper;
 import com.casm.acled.crawler.utils.Util;
 import com.casm.acled.dao.entities.SourceDAO;
 import com.casm.acled.entities.source.Source;
+import com.casm.acled.entities.sourcelist.SourceList;
 import com.enioka.jqm.api.JobRequest;
 import com.enioka.jqm.api.JqmClient;
 import com.enioka.jqm.api.JqmClientFactory;
@@ -28,6 +29,8 @@ import java.util.stream.Collectors;
 
 @Service
 public class CrawlerSweep {
+
+    private static final Path ALL_SCRAPERS = Paths.get("/home/sw206/git/acled-scrapers");
 
     protected static final Logger logger = LoggerFactory.getLogger(CrawlerSweep.class);
 
@@ -54,21 +57,35 @@ public class CrawlerSweep {
         }
     }
 
+    private boolean hasScraper(Source source, Path scraperDir) {
+        try {
+            String id = Util.getID(source.get(Source.LINK));
+            if(ACLEDScraper.validPath(scraperDir.resolve(id))) {
+                return true;
+            } else {
+                return false;
+            }
+        } catch (IllegalArgumentException e){
+            logger.warn(e.getMessage());
+            return false;
+        }
+    }
+
+    public void sweepSourceList(SourceList sourceList, Path scraperDir) {
+
+        List<Source> sources = sourceDAO.byList(sourceList);
+
+        List<Source> sourcesWithScrapers = sources.stream()
+                .filter(s-> hasScraper(s, scraperDir))
+                .collect(Collectors.toList());
+
+        System.out.println(sourcesWithScrapers);
+    }
+
     public void sweepAvailableScrapers(Path scraperDir) throws IOException {
 
         Map<String, Source> sources = sourceDAO.getAll().stream()
-                .filter(s-> {
-                    if(s.get(Source.LINK)!=null) {
-                        try {
-                            Util.getID(s.get(Source.LINK));
-                            return true;
-                        } catch (IllegalArgumentException e){
-                            logger.warn(e.getMessage());
-                            return false;
-                        }
-                    }
-                    return false;
-                })
+                .filter(s-> hasScraper(s, scraperDir))
                 .collect(Collectors.toMap(
                     s->Util.getID(s.get(Source.LINK)),
                     Function.identity(),
