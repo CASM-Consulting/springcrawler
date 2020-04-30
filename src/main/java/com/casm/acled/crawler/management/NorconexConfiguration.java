@@ -46,8 +46,8 @@ public class NorconexConfiguration {
     private String userAgent = "CASM Consulting LLP";
     private int numThreads = 3;
     private boolean ignoreRobots = false;
-    private boolean ignoreSiteMap = false;
-    private int depth = 5;
+    private boolean ignoreSiteMap = true;
+    private int depth = 3;
     private String urlRegex ;
     private long politeness = 100;
     private List<String> regexFilterPatterns;
@@ -103,6 +103,10 @@ public class NorconexConfiguration {
 //        crawler.setDocumentChecksummer(new ArticleExtractorChecksum());
 
 
+
+
+//        crawler.setMaxDocuments(10);
+        crawler.setLinkExtractorQuitAtDepth(true);
         crawler.setImporterConfig(importer);
         // Basic crawler config
         crawler.setUserAgent(userAgent);
@@ -170,6 +174,22 @@ public class NorconexConfiguration {
 
         handlers.add(emptyArticle);
         handlers.add(regexFilter);
+
+        importer.setPostParseHandlers(handlers.toArray(new IImporterHandler[handlers.size()]));
+    }
+
+    public void setFilters(ZonedDateTime from, ZonedDateTime to, DateParser dateParser)  {
+        DateMetadataFilter dateMetadataFilter = new CustomDateMetadataFilter(ScraperFields.SCRAPED_DATE, dateParser);
+
+        dateMetadataFilter.addCondition(DateMetadataFilter.Operator.GREATER_THAN, Date.from(from.toInstant()));
+        dateMetadataFilter.addCondition(DateMetadataFilter.Operator.LOWER_EQUAL, Date.from(to.toInstant()));
+
+        List<IImporterHandler> handlers = new ArrayList<>();
+
+        EmptyMetadataFilter emptyArticle = new EmptyMetadataFilter(OnMatch.EXCLUDE, ScraperFields.SCRAPED_ARTICLE);
+
+        handlers.add(emptyArticle);
+        handlers.add(dateMetadataFilter);
 
         importer.setPostParseHandlers(handlers.toArray(new IImporterHandler[handlers.size()]));
     }

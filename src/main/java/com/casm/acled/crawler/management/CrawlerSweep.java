@@ -79,7 +79,7 @@ public class CrawlerSweep {
                 .filter(s-> hasScraper(s, scraperDir))
                 .collect(Collectors.toList());
 
-        System.out.println(sourcesWithScrapers);
+        submitJobs(sourcesWithScrapers, sourceList.id());
     }
 
     public void sweepAvailableScrapers(Path scraperDir) throws IOException {
@@ -110,15 +110,16 @@ public class CrawlerSweep {
             .map(p->sources.get(p.getFileName().toString()))
             .collect(Collectors.toList());
 
-        submitJobs(sourcesWithScrapers);
+        submitJobs(sourcesWithScrapers, 1);
     }
 
 
-    public void submitJobs(List<Source> sources) {
+    public void submitJobs(List<Source> sources, Integer sourceListId) {
         for(Source source : sources) {
             JobRequest jobRequest = JobRequest.create(JQM_APP_NAME, JQM_USER);
             jobRequest.addParameter( Crawl.SOURCE_ID, Integer.toString( source.id() ) );
-            jobRequest.addParameter( Crawl.SOURCE_LIST_ID, Integer.toString( 1 ) );
+            jobRequest.addParameter( Crawl.SOURCE_LIST_ID, sourceListId.toString() );
+            jobRequest.addParameter( Crawl.SKIP_KEYWORD_FILTER, Boolean.TRUE.toString() );
 
 //            jobRequest.addParameter( Crawl.FROM, LocalDate.now().minusDays(7).toString() );
 //            jobRequest.addParameter( Crawl.TO, LocalDate.now().toString() );

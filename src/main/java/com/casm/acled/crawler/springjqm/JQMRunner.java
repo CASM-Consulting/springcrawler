@@ -37,16 +37,17 @@ public class JQMRunner implements Runnable {
 
         int sourceListId = Integer.parseInt( runtimeParameters.get( Crawl.SOURCE_LIST_ID ) );
         int sourceId = Integer.parseInt( runtimeParameters.get( Crawl.SOURCE_ID ) );
+        boolean skipKeywords = Boolean.getBoolean( runtimeParameters.get( Crawl.SKIP_KEYWORD_FILTER ) );
 
         if( runtimeParameters.containsKey(Crawl.FROM) && runtimeParameters.containsKey(Crawl.TO) ) {
 
             LocalDate from = LocalDate.parse( runtimeParameters.get( Crawl.FROM ) );
             LocalDate to = LocalDate.parse( runtimeParameters.get( Crawl.TO ) );
 
-            crawlService.run(sourceListId, sourceId, from, to);
+            crawlService.run(sourceListId, sourceId, from, to, skipKeywords);
         } else {
 
-            crawlService.run(sourceListId, sourceId);
+            crawlService.run(sourceListId, sourceId, skipKeywords);
         }
 
         System.out.println("Job " + jmp.getObject().jobInstanceID() + " is done!");

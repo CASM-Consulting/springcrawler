@@ -3,8 +3,11 @@ package com.casm.acled.crawler.springrunners;
 import com.casm.acled.configuration.ObjectMapperConfiguration;
 import com.casm.acled.crawler.management.CrawlerSweep;
 import com.casm.acled.crawler.reporting.Reporter;
+import com.casm.acled.dao.entities.SourceDAO;
 import com.casm.acled.dao.entities.SourceListDAO;
+import com.casm.acled.entities.source.Source;
 import com.casm.acled.entities.sourcelist.SourceList;
+import com.google.common.collect.ImmutableList;
 import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
 import org.camunda.bpm.spring.boot.starter.rest.CamundaBpmRestJerseyAutoConfiguration;
 import org.slf4j.Logger;
@@ -42,10 +45,19 @@ public class CrawlerSweepRunner implements CommandLineRunner {
     @Autowired
     private SourceListDAO sourceListDAO;
 
+    @Autowired
+    private SourceDAO sourceDAO;
 
     public void sweepSourceList(String name) {
         SourceList sourceList = sourceListDAO.getByUnique(SourceList.LIST_NAME, name).get();
         crawlerSweep.sweepSourceList(sourceList, Paths.get("/home/sw206/git/acled-scrapers"));
+    }
+
+    public void singleSource(String listName, String sourceName) {
+
+        Source source = sourceDAO.getByUnique(Source.STANDARD_NAME, sourceName).get();
+        SourceList sourceList = sourceListDAO.getByUnique(SourceList.LIST_NAME, listName).get();
+        crawlerSweep.submitJobs(ImmutableList.of(source), sourceList.id());
     }
 
     @Override
@@ -54,6 +66,7 @@ public class CrawlerSweepRunner implements CommandLineRunner {
 //        crawlerSweep.sweepAvailableScrapers(Paths.get("allscrapers"));
 
         sweepSourceList("balkans");
+//        singleSource(args[0], args[1]);
     }
 
     public static void main(String[] args) {

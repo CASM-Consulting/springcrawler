@@ -19,6 +19,7 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 
 @EnableAutoConfiguration(exclude={HibernateJpaAutoConfiguration.class, CamundaBpmAutoConfiguration.class, CamundaBpmRestJerseyAutoConfiguration.class, ValidationAutoConfiguration.class})
 // We need the special object mapper, though.
@@ -40,12 +41,26 @@ public class CrawlRunner implements CommandLineRunner {
 
         int sourceListId = Integer.parseInt(args[0]);
         int sourceId = Integer.parseInt(args[1]);
-        if(args.length > 2) {
-            LocalDate from = LocalDate.parse(args[2]);
-            LocalDate to = LocalDate.parse(args[3]);
-            crawlService.run(sourceListId, sourceId, from, to);
+
+        LocalDate from;
+        try {
+            from = LocalDate.parse(args[2]);
+        } catch (DateTimeParseException e) {
+            from = null;
+        }
+        LocalDate to;
+        try {
+            to = LocalDate.parse(args[3]);
+        } catch (DateTimeParseException e) {
+            to = null;
+        }
+
+        boolean skipKeywords = Boolean.getBoolean(args[4]);
+
+        if(from != null && to != null) {
+            crawlService.run(sourceListId, sourceId, from, to, skipKeywords);
         } else {
-            crawlService.run(sourceListId, sourceId);
+            crawlService.run(sourceListId, sourceId, skipKeywords);
         }
     }
 

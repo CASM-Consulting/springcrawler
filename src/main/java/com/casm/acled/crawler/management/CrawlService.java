@@ -34,11 +34,11 @@ public class CrawlService {
 
     }
 
-    public void run(int sourceListId, int sourceId) {
-        run(sourceListId, sourceId, null, null);
+    public void run(int sourceListId, int sourceId, boolean skipKeywords) {
+        run(sourceListId, sourceId, null, null, skipKeywords);
     }
 
-    public void run(int sourceListId, int sourceId, LocalDate from, LocalDate to) {
+    public void run(int sourceListId, int sourceId, LocalDate from, LocalDate to, boolean skipKeywords) {
 
         Optional<SourceList> maybesSourceList = sourceListDAO.getById(sourceListId);
         Optional<Source> maybeSource = sourceDAO.getById(sourceId);
@@ -50,7 +50,8 @@ public class CrawlService {
 
             ACLEDImporter importer = new ACLEDImporter(articleDAO, sourceDAO, sourceListDAO, true);
 
-            Crawl crawl = new Crawl(maybesSourceList.get(), maybeSource.get(), from, to, importer);
+            Crawl crawl = new Crawl(maybesSourceList.get(), maybeSource.get(), from, to, skipKeywords, importer);
+
             crawl.run();
         } else {
 

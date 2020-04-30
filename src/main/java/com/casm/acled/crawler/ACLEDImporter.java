@@ -1,25 +1,24 @@
 package com.casm.acled.crawler;
 
 // casm
-import com.casm.acled.camunda.BusinessKeys;
 import com.casm.acled.crawler.scraper.ScraperFields;
 import com.casm.acled.crawler.scraper.dates.CustomDateMetadataFilter;
-import com.casm.acled.crawler.scraper.dates.DateUtil;
 import com.casm.acled.dao.entities.SourceDAO;
 import com.casm.acled.dao.entities.SourceListDAO;
 import com.casm.acled.entities.EntityVersions;
 import com.casm.acled.entities.article.Article;
 import com.casm.acled.entities.source.Source;
-import com.casm.acled.entities.sourcelist.SourceList;
 
 // json
 
 // norconex
+import com.norconex.collector.http.HttpCollector;
 import com.norconex.collector.http.doc.HttpDocument;
 import com.norconex.collector.http.doc.HttpMetadata;
 import com.norconex.collector.http.processor.IHttpDocumentProcessor;
 
 // http
+import com.norconex.jef4.status.JobState;
 import org.apache.http.client.HttpClient;
 
 // casm
@@ -33,8 +32,8 @@ import uk.ac.susx.tag.norconex.jobqueuemanager.CrawlerArguments;
 // java
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import static com.casm.acled.crawler.utils.Util.metadataGet;
 
@@ -50,6 +49,9 @@ public class ACLEDImporter implements IHttpDocumentProcessor {
     private final SourceListDAO sourceListDAO;
     private final boolean sourceRequired;
 
+    private Supplier<HttpCollector> collectorSupplier;
+    private Integer maxArticles;
+
     public ACLEDImporter(ArticleDAO articleDAO, SourceDAO sourceDAO,
                          SourceListDAO sourceListDAO, boolean sourceRequired) {
 
@@ -57,7 +59,14 @@ public class ACLEDImporter implements IHttpDocumentProcessor {
         this.sourceDAO = sourceDAO;
         this.sourceListDAO = sourceListDAO;
         this.sourceRequired = sourceRequired;
+    }
 
+    public void setCollectorSupplier(Supplier<HttpCollector> collectorSupplier) {
+        this.collectorSupplier = collectorSupplier;
+    }
+
+    public void setMaxArticles(Integer maxArticles) {
+        this.maxArticles = maxArticles;
     }
 
     private boolean previouslyScraped(HttpDocument doc) {
@@ -67,6 +76,20 @@ public class ACLEDImporter implements IHttpDocumentProcessor {
         } else {
             return Boolean.valueOf(val);
         }
+    }
+
+    private synchronized void stop(HttpCollector collector) {
+        if(collectorSupplier.get().getState().isOneOf(JobState.RUNNING)) {
+            collectorSupplier.get().stop();
+        }
+    }
+
+    private boolean stopAfterNArticlesFromSource(Source source) {
+        if(maxArticles != null && articleDAO.bySource(source).size() >= maxArticles) {
+            stop(collectorSupplier.get());
+            return true;
+        }
+        return false;
     }
 
     @Override
@@ -112,15 +135,19 @@ public class ACLEDImporter implements IHttpDocumentProcessor {
 
             String seed = metadataGet(metadata, ACLEDMetadataPreProcessor.LINK);
 
-            Optional<Source> source = sourceDAO.getByUnique(Source.LINK, seed);
+            Optional<Source> maybeSource = sourceDAO.getByUnique(Source.LINK, seed);
 
-            if(source.isPresent()) {
-                article = article.put(Article.SOURCE_ID, source.get().id());
+            if(maybeSource.isPresent()) {
+                if(!stopAfterNArticlesFromSource(maybeSource.get()) ) {
+
+                    article = article.put(Article.SOURCE_ID, maybeSource.get().id());
 //                List<SourceList> lists = sourceListDAO.bySource(source.get());
 //                for (SourceList list : lists) {
 //                    String bk = BusinessKeys.generate(list.get(SourceList.LIST_NAME));
                     articleDAO.create(article);
 //                }
+
+                }
             } else  if(!sourceRequired) {
 //                logger.info("Source not present - adding without source.");
                 articleDAO.create(article);
