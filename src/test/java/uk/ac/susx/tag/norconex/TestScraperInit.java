@@ -1,5 +1,6 @@
 package uk.ac.susx.tag.norconex;
 
+import com.casm.acled.crawler.reporting.InMemoryReporter;
 import com.casm.acled.crawler.scraper.ACLEDScraper;
 import org.junit.Test;
 
@@ -12,7 +13,8 @@ public class TestScraperInit {
     public void TestScraperInit() {
         String path = "/Users/jp242/Documents/Projects/ACLED/ManualScrapers/demo-scrapers";
         Path loc = Paths.get(path);
-        ACLEDScraper acp = new ACLEDScraper(loc);
+
+        ACLEDScraper acp = new ACLEDScraper(loc, null, new InMemoryReporter());
 //        for(Map.Entry scraper : ACLEDScraperPreProcessor.scraperJson.entrySet()){
 //
 //            System.out.println((GeneralSplitterFactory) scraper.getValue().create());

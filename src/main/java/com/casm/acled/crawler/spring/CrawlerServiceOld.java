@@ -1,6 +1,7 @@
 package com.casm.acled.crawler.spring;
 
 import com.casm.acled.crawler.*;
+import com.casm.acled.crawler.reporting.Reporter;
 import com.casm.acled.crawler.scraper.ACLEDScraper;
 import com.casm.acled.crawler.utils.Util;
 import com.casm.acled.dao.entities.ArticleDAO;
@@ -45,7 +46,8 @@ public class CrawlerServiceOld {
     private SourceDAO sourceDAO;
     @Autowired
     private SourceListDAO sourceListDAO;
-
+    @Autowired
+    private Reporter reporter;
 
     private String ensureURL(String url) {
         HttpURLConnection con = null;
@@ -143,7 +145,7 @@ public class CrawlerServiceOld {
             throw new ScraperNotFoundException(id);
         }
 
-        scraper = ACLEDScraper.load(path);
+        scraper = ACLEDScraper.load(path,null, reporter);
         return scraper;
     }
 

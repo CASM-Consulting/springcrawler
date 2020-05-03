@@ -7,7 +7,7 @@ import com.casm.acled.crawler.reporting.ReportingException;
 import com.casm.acled.dao.entities.DeskDAO;
 import com.casm.acled.dao.entities.SourceDAO;
 import com.casm.acled.dao.entities.SourceListDAO;
-import com.casm.acled.entities.region.Desk;
+import com.casm.acled.entities.desk.Desk;
 import com.casm.acled.entities.source.Source;
 import com.casm.acled.entities.sourcelist.SourceList;
 import com.google.common.collect.ImmutableList;
@@ -27,8 +27,6 @@ public class LocaleService {
 
     protected static final Logger logger = LoggerFactory.getLogger(LocaleService.class);
 
-    private final Reporter reporting;
-
     private final Map<String, Set<TimeZone>> timeZonesByCountry;
     private final Map<String, Set<ULocale>> localesByCountry;
 
@@ -38,6 +36,8 @@ public class LocaleService {
     private SourceListDAO sourceListDAO;
     @Autowired
     private SourceDAO sourceDAO;
+    @Autowired
+    private Reporter reporting;
 
     private static final Map<String,String> countryMap = ImmutableMap.of(
             "Palestine", "Palestinian Territories"
@@ -46,8 +46,6 @@ public class LocaleService {
     public LocaleService() {
         timeZonesByCountry = timeZonesByCountry();
         localesByCountry = localesByCountry();
-        reporting = Reporter.get();
-
     }
 
     private static class ComparableTimeZone {
@@ -141,8 +139,6 @@ public class LocaleService {
 
     public Optional<TimeZone> determineTimeZone(Source source) {
 
-        Reporter reporting = Reporter.get();
-
         Optional<TimeZone> maybeTimezone = Optional.empty();
 
         String country = getCountry(source);
@@ -216,8 +212,7 @@ public class LocaleService {
 
             // Find all timezones for that country (code) using ICU4J
 
-            for (String id :
-                    com.ibm.icu.util.TimeZone.getAvailableIDs(countryCode))
+            for (String id : com.ibm.icu.util.TimeZone.getAvailableIDs(countryCode))
             {
                 // Add timezone to result map
 
@@ -227,7 +222,7 @@ public class LocaleService {
         return availableTimezones;
     }
 
-    public void determineLocalesAndTimeZones(List<Source> sources) {
+    public void allSourcesDetermineLocalesAndTimeZones(List<Source> sources) {
 
         LocaleService dph = new LocaleService();
         for(Source source : sources) {
@@ -250,10 +245,10 @@ public class LocaleService {
         List<Source> sources = sourceDAO.byList(sourceList);
         LocaleService dph = new LocaleService();
 
-        dph.determineLocalesAndTimeZones(sources);
+        dph.allSourcesDetermineLocalesAndTimeZones(sources);
     }
 
-    public void determineLocalesAndTimeZones() {
+    public void allSourcesDetermineLocalesAndTimeZones() {
         for(Desk desk : deskDAO.getAll()) {
 
             List<SourceList> lists = sourceListDAO.byDesk(desk.id());
@@ -263,7 +258,5 @@ public class LocaleService {
                 determineSourceLocalesAndListTimeZones(list.get(SourceList.LIST_NAME));
             }
         }
-
-        Reporter reporting = Reporter.get();
     }
 }

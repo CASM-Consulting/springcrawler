@@ -50,7 +50,7 @@ public class CrawlService {
 
             ACLEDImporter importer = new ACLEDImporter(articleDAO, sourceDAO, sourceListDAO, true);
 
-            Crawl crawl = new Crawl(maybesSourceList.get(), maybeSource.get(), from, to, skipKeywords, importer);
+            Crawl crawl = new Crawl(maybesSourceList.get(), maybeSource.get(), from, to, skipKeywords, importer, reporter);
 
             crawl.run();
         } else {

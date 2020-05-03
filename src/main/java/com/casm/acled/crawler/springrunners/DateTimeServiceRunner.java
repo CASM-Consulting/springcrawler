@@ -1,14 +1,19 @@
 package com.casm.acled.crawler.springrunners;
 
 import com.casm.acled.configuration.ObjectMapperConfiguration;
-import com.casm.acled.crawler.reporting.Event;
+import com.casm.acled.crawler.reporting.Report;
 import com.casm.acled.crawler.reporting.Reporter;
+import com.casm.acled.crawler.scraper.dates.DateParser;
 import com.casm.acled.crawler.scraper.dates.DateParsers;
 import com.casm.acled.crawler.scraper.dates.DateTimeService;
+import com.casm.acled.crawler.scraper.locale.LocaleService;
 import com.casm.acled.dao.entities.ArticleDAO;
+import com.casm.acled.dao.entities.SourceDAO;
 import com.casm.acled.dao.entities.SourceListDAO;
 import com.casm.acled.entities.article.Article;
+import com.casm.acled.entities.source.Source;
 import com.casm.acled.entities.sourcelist.SourceList;
+import com.google.common.collect.ImmutableList;
 import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
 import org.camunda.bpm.spring.boot.starter.rest.CamundaBpmRestJerseyAutoConfiguration;
 import org.slf4j.Logger;
@@ -27,6 +32,7 @@ import org.springframework.context.annotation.Import;
 
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @EnableAutoConfiguration(exclude={HibernateJpaAutoConfiguration.class, CamundaBpmAutoConfiguration.class, CamundaBpmRestJerseyAutoConfiguration.class, ValidationAutoConfiguration.class})
@@ -46,6 +52,9 @@ public class DateTimeServiceRunner implements CommandLineRunner {
     private Reporter reporter;
 
     @Autowired
+    private SourceDAO sourceDAO;
+
+    @Autowired
     private SourceListDAO sourceListDAO;
 
     @Autowired
@@ -56,28 +65,44 @@ public class DateTimeServiceRunner implements CommandLineRunner {
 
         dateTimeService.attemptAllDateTimeParsers(DateParsers.ALL, DateTimeService.lastScrapeExampleGetter(Paths.get("/home/sw206/git/acled-scrapers")));
 
-        System.out.println(reporter.reports(r->r.event().equals(Event.DATE_PARSE_SUCCESS.name())));
-        System.out.println(reporter.reports(r->r.event().equals(Event.DATE_PARSE_FAILED.name())));
+//        System.out.println(reporter.reports(r->r.event().equals(Event.DATE_PARSE_SUCCESS.name())));
+//        System.out.println(reporter.reports(r->r.event().equals(Event.DATE_PARSE_FAILED.name())));
     }
+
+    private Function<Source, List<String>> getFromArticles = s -> {
+        List<Article> articles = articleDAO.bySource(s);
+        return articles.stream()
+                .filter(a -> a.hasValue(Article.SCRAPE_DATE))
+                .map(a -> (String)a.get(Article.SCRAPE_DATE))
+                .collect(Collectors.toList());
+    };
+
 
     private void attemptSourceListExistingArticles(String name) {
         SourceList sourceList = sourceListDAO.getByUnique(SourceList.LIST_NAME, name).get();
-        dateTimeService.attemptSourceListDateTimeParsers(sourceList, DateParsers.ALL, s -> {
-            List<Article> articles = articleDAO.bySource(s);
-            return articles.stream()
-                    .filter(a -> a.hasValue(Article.SCRAPE_DATE))
-                    .map(a -> (String)a.get(Article.SCRAPE_DATE))
-                    .collect(Collectors.toList());
-        } );
+        dateTimeService.attemptSourceListDateTimeParsers(sourceList, DateParsers.ALL, getFromArticles);
 
-        System.out.println(reporter.reports(r->r.event().equals(Event.DATE_PARSE_SUCCESS.name())));
-        System.out.println(reporter.reports(r->r.event().equals(Event.DATE_PARSE_FAILED.name())));
+        for(Report report : reporter.reports()) {
+            logger.info(report.toString());
+        }
+
+//        System.out.println(reporter.reports(r->r.event().equals(Event.DATE_PARSE_SUCCESS.name())));
+//        System.out.println(reporter.reports(r->r.event().equals(Event.DATE_PARSE_FAILED.name())));
+    }
+
+
+    public void attemptSource(int id, DateParser dateParser) {
+
+        Source source = sourceDAO.getById(id).get();
+        dateTimeService.attemptDateTimeParse(source, ImmutableList.of(dateParser), getFromArticles);
     }
 
     @Override
     public void run(String... args) throws Exception {
 
-        attemptSourceListExistingArticles("balkans");
+//        attemptSourceListExistingArticles("balkans");
+
+//        attemptSource(1263, );
     }
 
     public static void main(String[] args) {

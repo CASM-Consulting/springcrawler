@@ -47,6 +47,6 @@ public class LocaleServiceRunner implements CommandLineRunner {
     @Override
     public void run(String[] args) throws Exception {
 
-        localeHelper.determineLocalesAndTimeZones();
+        localeHelper.allSourcesDetermineLocalesAndTimeZones();
     }
 }

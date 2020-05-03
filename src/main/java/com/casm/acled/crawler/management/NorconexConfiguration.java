@@ -18,6 +18,7 @@ import com.norconex.collector.http.delay.impl.GenericDelayResolver;
 import com.norconex.collector.http.url.impl.GenericLinkExtractor;
 import com.norconex.importer.ImporterConfig;
 import com.norconex.importer.handler.IImporterHandler;
+import com.norconex.importer.handler.filter.AbstractDocumentFilter;
 import com.norconex.importer.handler.filter.OnMatch;
 import com.norconex.importer.handler.filter.impl.DateMetadataFilter;
 import com.norconex.importer.handler.filter.impl.EmptyMetadataFilter;
@@ -57,9 +58,13 @@ public class NorconexConfiguration {
     private static String PROGRESS = "progress";
     private static String LOGS = "logs";
 
+    private final List<AbstractDocumentFilter> filters;
+
     public NorconexConfiguration(Path workDir) {
 //        this.from = from;
 //        this.to = to;
+
+        filters = new ArrayList<>();
         importer = new ImporterConfig();
         collector = new HttpCollectorConfig();
         crawler = new HttpCrawlerConfig();
@@ -164,54 +169,17 @@ public class NorconexConfiguration {
 //        }
     }
 
-    public void setFilters(List<String> query)  {
-
-        List<IImporterHandler> handlers = new ArrayList<>();
-
-        KeywordFilter regexFilter = new KeywordFilter(ScraperFields.SCRAPED_ARTICLE, query);
-
-        EmptyMetadataFilter emptyArticle = new EmptyMetadataFilter(OnMatch.EXCLUDE, ScraperFields.SCRAPED_ARTICLE);
-
-        handlers.add(emptyArticle);
-        handlers.add(regexFilter);
-
-        importer.setPostParseHandlers(handlers.toArray(new IImporterHandler[handlers.size()]));
+    public NorconexConfiguration addFilter(AbstractDocumentFilter filter) {
+        filters.add(filter);
+        return this;
     }
 
-    public void setFilters(ZonedDateTime from, ZonedDateTime to, DateParser dateParser)  {
-        DateMetadataFilter dateMetadataFilter = new CustomDateMetadataFilter(ScraperFields.SCRAPED_DATE, dateParser);
+    public NorconexConfiguration finalise() {
 
-        dateMetadataFilter.addCondition(DateMetadataFilter.Operator.GREATER_THAN, Date.from(from.toInstant()));
-        dateMetadataFilter.addCondition(DateMetadataFilter.Operator.LOWER_EQUAL, Date.from(to.toInstant()));
-
-        List<IImporterHandler> handlers = new ArrayList<>();
-
-        EmptyMetadataFilter emptyArticle = new EmptyMetadataFilter(OnMatch.EXCLUDE, ScraperFields.SCRAPED_ARTICLE);
-
-        handlers.add(emptyArticle);
-        handlers.add(dateMetadataFilter);
-
-        importer.setPostParseHandlers(handlers.toArray(new IImporterHandler[handlers.size()]));
+        importer.setPostParseHandlers(filters.toArray(new IImporterHandler[filters.size()]));
+        return this;
     }
 
-    public void setFilters(ZonedDateTime from, ZonedDateTime to, DateParser dateParser, List<String> query)  {
-        DateMetadataFilter dateMetadataFilter = new CustomDateMetadataFilter(ScraperFields.SCRAPED_DATE, dateParser);
-
-        dateMetadataFilter.addCondition(DateMetadataFilter.Operator.GREATER_THAN, Date.from(from.toInstant()));
-        dateMetadataFilter.addCondition(DateMetadataFilter.Operator.LOWER_EQUAL, Date.from(to.toInstant()));
-
-        List<IImporterHandler> handlers = new ArrayList<>();
-
-        KeywordFilter regexFilter = new KeywordFilter(ScraperFields.SCRAPED_ARTICLE, query);
-
-        EmptyMetadataFilter emptyArticle = new EmptyMetadataFilter(OnMatch.EXCLUDE, ScraperFields.SCRAPED_ARTICLE);
-
-        handlers.add(emptyArticle);
-        handlers.add(regexFilter);
-        handlers.add(dateMetadataFilter);
-
-        importer.setPostParseHandlers(handlers.toArray(new IImporterHandler[handlers.size()]));
-    }
 
     public void setScraper(ACLEDScraper scraper, ACLEDMetadataPreProcessor metadata) {
 

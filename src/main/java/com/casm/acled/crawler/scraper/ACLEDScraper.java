@@ -4,7 +4,12 @@ package com.casm.acled.crawler.scraper;
 
 // crawling imports
 import com.casm.acled.crawler.ScraperNotFoundException;
+import com.casm.acled.crawler.reporting.Event;
+import com.casm.acled.crawler.reporting.Report;
+import com.casm.acled.crawler.reporting.Reporter;
 import com.casm.acled.crawler.utils.Util;
+import com.casm.acled.entities.article.Article;
+import com.casm.acled.entities.source.Source;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.client.HttpClient;
 import com.norconex.collector.http.doc.HttpDocument;
@@ -43,8 +48,14 @@ public class ACLEDScraper implements IHttpDocumentProcessor {
     private final Path scraperPath;
     private GeneralSplitterFactory scraper;
 
-    public ACLEDScraper(Path scraperPath) {
+    private final Reporter reporter;
+
+    private final Source source;
+
+    public ACLEDScraper(Path scraperPath, Source source, Reporter reporter) {
         this.scraperPath = scraperPath.resolve(JOB_JSON);
+        this.reporter = reporter;
+        this.source = source;
         if(Files.notExists(this.scraperPath)) {
             throw new ScraperNotFoundException(this.scraperPath + " doesn't exist");
         }
@@ -54,8 +65,8 @@ public class ACLEDScraper implements IHttpDocumentProcessor {
         return Files.exists(path.resolve(ACLEDScraper.JOB_JSON));
     }
 
-    public static ACLEDScraper load(Path path) {
-        ACLEDScraper scraper = new ACLEDScraper(path);
+    public static ACLEDScraper load(Path path, Source source, Reporter reporter) {
+        ACLEDScraper scraper = new ACLEDScraper(path, source, reporter);
         try {
             scraper.load();
             return scraper;
@@ -116,6 +127,7 @@ public class ACLEDScraper implements IHttpDocumentProcessor {
             String html = getRawHTML(doc);
             IForumSplitter splitter = scraper.create();
             LinkedList<Post> posts = splitter.split(Jsoup.parse(html));
+
             if(posts.size() > 0) {
                 Post post = posts.get(0);
 
@@ -125,15 +137,40 @@ public class ACLEDScraper implements IHttpDocumentProcessor {
 
                 if(article.isPresent()) {
                     doc.getMetadata().put(ScraperFields.SCRAPED_ARTICLE, Arrays.asList(article.get()));
+                } else {
+                    Report report = Report.of(Event.SCRAPE_NO_ARTICLE)
+                            .type(Article.class)
+                            .message(doc.getMetadata().getDocumentUrl())
+                            .id(source.id());
+                    reporter.report(report);
                 }
 
                 if(title.isPresent()) {
                     doc.getMetadata().put(ScraperFields.SCRAPED_TITLE, Arrays.asList(title.get()));
+                } else {
+                    Report report = Report.of(Event.SCRAPE_NO_TITLE)
+                            .type(Article.class)
+                            .message(doc.getMetadata().getDocumentUrl())
+                            .id(source.id());
+                    reporter.report(report);
                 }
 
                 if(date.isPresent()) {
                     doc.getMetadata().put(ScraperFields.SCRAPED_DATE, Arrays.asList(date.get()));
+                } else {
+                    Report report = Report.of(Event.SCRAPE_NO_DATE)
+                            .type(Article.class)
+                            .message(doc.getMetadata().getDocumentUrl())
+                            .id(source.id());
+                    reporter.report(report);
                 }
+
+            } else {
+                Report report = Report.of(Event.SCRAPE_NO_RESULT)
+                        .type(Article.class)
+                        .message(doc.getMetadata().getDocumentUrl())
+                        .id(source.id());
+                reporter.report(report);
             }
         }
     }

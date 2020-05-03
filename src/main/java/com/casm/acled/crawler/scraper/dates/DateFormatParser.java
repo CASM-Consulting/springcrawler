@@ -3,6 +3,8 @@ package com.casm.acled.crawler.scraper.dates;
 import com.google.common.collect.ImmutableList;
 import com.ibm.icu.text.*;
 import com.ibm.icu.util.ULocale;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,9 +20,9 @@ import java.util.regex.Pattern;
 
 class DateFormatParser implements DateParser {
 
-    protected static final Logger logger = LoggerFactory.getLogger(DateFormatParser.class);
+    public static final String PROTOCOL = "ISO";
 
-    private final SimpleDateFormat formatter;
+    protected static final Logger logger = LoggerFactory.getLogger(DateFormatParser.class);
 
     private final String formatSpec;
 
@@ -31,28 +33,48 @@ class DateFormatParser implements DateParser {
     private final Pattern ordinalPattern = Pattern.compile("(\\d+)(?:st|nd|rd|th)");
     private final Pattern bstPattern = Pattern.compile("(?i)bdst");
     private final Pattern whitespacePattern = Pattern.compile("(\\h+|\\s+)");
+    private final ULocale locale;
 
     private Pattern extractPattern;
     private Pattern stripPattern;
 
     public DateFormatParser(String formatSpec) {
+        this(formatSpec, ULocale.getDefault());
+    }
+
+    public DateFormatParser(String formatSpec, String locale) {
+        this(formatSpec, new ULocale(locale));
+    }
+
+    public DateFormatParser(String formatSpec, ULocale locale) {
         this.formatSpec = formatSpec;
+        this.locale = locale;
         removeOrdinals = false;
         fixBST = false;
         normaliseWhitespace = true;
         extractPattern = null;
         stripPattern = null;
-        formatter = buildSimpleDateFormat(formatSpec);
+
+    }
+
+    public DateFormatParser locale(ULocale locale) {
+        return new DateFormatParser(formatSpec, locale);
     }
 
     @Override
     public Optional<LocalDateTime> parse(String date) {
+        SimpleDateFormat formatter = buildSimpleDateFormat(formatSpec, locale);
+
         Optional<LocalDateTime> attempt = Optional.empty();
         date = preProcessDate(date);
         ParsePosition pos = new ParsePosition(0);
         Date d = formatter.parse(date, pos);
         if (d == null) {
-            logger.debug("Parse failed at {}", pos.getErrorIndex());
+            int idx = pos.getErrorIndex();
+            String parsed = date.substring(0, idx);
+            String errored = date.substring(idx);
+
+            logger.debug("Parse failed at {}, [{}] [{}]", pos.getErrorIndex(), parsed, errored);
         } else if (pos.getIndex() != date.length()) {
             logger.debug("Parse incomplete at {}", pos.getIndex());
         }else {
@@ -64,7 +86,7 @@ class DateFormatParser implements DateParser {
     }
 
     public SimpleDateFormat formatter() {
-        return formatter;
+        return buildSimpleDateFormat(formatSpec, locale);
     }
 
     private String preProcessDate(String date) {
@@ -140,20 +162,23 @@ class DateFormatParser implements DateParser {
 
     @Override
     public List<String> getFormatSpec() {
-        return ImmutableList.of(formatSpec);
+        return ImmutableList.of(PROTOCOL+":"+formatSpec);
     }
 
     @Override
     public String toString() {
-        return String.join(" ||| ", getFormatSpec());
+        return formatSpec;
     }
 
-    public SimpleDateFormat buildSimpleDateFormat(String formatSpec) {
+    public SimpleDateFormat buildSimpleDateFormat(String formatSpec, ULocale locale) {
         String delim = Pattern.quote(formatSpec.substring(0,1));
 
         String[] parts = formatSpec.split(delim);
         String pattern = parts[1];
-        ULocale locale = new ULocale(parts[2]);
+        if(!parts[2].isEmpty()) {
+            locale = new ULocale(parts[2]);
+        }
+
 
         // set up the generator
         DateTimePatternGenerator generator
@@ -167,5 +192,25 @@ class DateFormatParser implements DateParser {
         }
 
         return formatter;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+
+        if (o == null || getClass() != o.getClass()) return false;
+
+        DateFormatParser that = (DateFormatParser) o;
+
+        return new EqualsBuilder()
+                .append(formatSpec, that.formatSpec)
+                .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+                .append(formatSpec)
+                .toHashCode();
     }
 }
