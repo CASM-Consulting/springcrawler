@@ -29,6 +29,7 @@ public class LocaleService {
 
     private final Map<String, Set<TimeZone>> timeZonesByCountry;
     private final Map<String, Set<ULocale>> localesByCountry;
+    private final Map<String, Set<ULocale>> localesByLanguage;
 
     @Autowired
     private DeskDAO deskDAO;
@@ -46,6 +47,7 @@ public class LocaleService {
     public LocaleService() {
         timeZonesByCountry = timeZonesByCountry();
         localesByCountry = localesByCountry();
+        localesByLanguage = localesByLanguage();
     }
 
     private static class ComparableTimeZone {
@@ -93,7 +95,7 @@ public class LocaleService {
         return maybeTimeZone;
     }
 
-    public String getCountry(Source  source){
+    public String getCountry(Source source){
         String country = source.get(Source.COUNTRY);
         if(countryMap.containsKey(country)) {
             country = countryMap.get(country);
@@ -102,7 +104,7 @@ public class LocaleService {
     }
 
 
-    public Optional<ULocale> determineLocale(String country) {
+    public Optional<ULocale> determineLocaleByCountry(String country) {
         Optional<ULocale> maybeLocale = Optional.empty();
 
         if(localesByCountry.containsKey(country)) {
@@ -125,16 +127,51 @@ public class LocaleService {
         return maybeLocale;
     }
 
+    public Optional<ULocale> determineLocaleByLanguage(String language) {
+        Optional<ULocale> maybeLocale = Optional.empty();
+
+        if(localesByLanguage.containsKey(language)) {
+
+            Set<ULocale> possibleLocales = localesByLanguage.get(language);
+
+            if(possibleLocales.size()==1) {
+                ULocale locale = ImmutableList.copyOf(possibleLocales).get(0);
+                maybeLocale = Optional.of(locale);
+            } else {
+//                System.out.println(language);
+//                System.out.println(possibleLocales);
+
+                throw new ReportingException(Report.of(Event.LOCALE_NOT_FOUND).message("language %s - possible %s", language, possibleLocales.size()));
+            }
+        } else {
+            reporting.report(Report.of(Event.LANGUAGE_NOT_FOUND).message("language %s", language));
+        }
+
+        return maybeLocale;
+    }
+
     public Optional<ULocale> determineLocale(Source source) {
-
+        Optional<ULocale> maybeLocale;
         String country = getCountry(source);
-        try {
+        String language = source.get(Source.LANGUAGE);
 
-            return determineLocale(country);
+        try {
+            maybeLocale = determineLocaleByLanguage(language);
         } catch (ReportingException e) {
             reporting.report(e.get().id(source.id()).type(Source.class.getName()));
             return Optional.empty();
         }
+
+        if(!maybeLocale.isPresent()) {
+            try {
+                maybeLocale = determineLocaleByCountry(country);
+            } catch (ReportingException e) {
+                reporting.report(e.get().id(source.id()).type(Source.class.getName()));
+                return Optional.empty();
+            }
+        }
+
+        return maybeLocale;
     }
 
     public Optional<TimeZone> determineTimeZone(Source source) {
@@ -142,8 +179,9 @@ public class LocaleService {
         Optional<TimeZone> maybeTimezone = Optional.empty();
 
         String country = getCountry(source);
-
-        if(timeZonesByCountry.containsKey(country)) {
+        if(country == null) {
+            reporting.report(Report.of(Event.COUNTRY_NOT_FOUND,  source.id(), "Source","%s - %s", source.get(Source.NAME), source.get(Source.COUNTRY)));
+        } else if(timeZonesByCountry.containsKey(country)) {
 
             Set<TimeZone> possibleZones = timeZonesByCountry.get(country);
 
@@ -165,6 +203,24 @@ public class LocaleService {
         }
 
         return maybeTimezone;
+    }
+
+    public static Map<String, Set<ULocale>> localesByLanguage() {
+        Map<String, Set<ULocale>> availableLocales = new HashMap<>();
+
+        for (ULocale locale : ULocale.getAvailableLocales()) {
+            final String language = locale.getDisplayLanguage();
+
+            Set<ULocale> locales = availableLocales.get(language);
+
+            if(locales == null) {
+                locales = new HashSet<>();
+                availableLocales.put(language, locales);
+            }
+
+            locales.add(locale);
+        }
+        return availableLocales;
     }
 
     public static Map<String, Set<ULocale>> localesByCountry() {
@@ -222,33 +278,39 @@ public class LocaleService {
         return availableTimezones;
     }
 
-    public void allSourcesDetermineLocalesAndTimeZones(List<Source> sources) {
+    public void determineLocalesAndTimeZones(List<Source> sources) {
 
-        LocaleService dph = new LocaleService();
         for(Source source : sources) {
-            Optional<TimeZone> maybeTimeZone = dph.determineTimeZone(source);
-            Optional<ULocale> maybeLocale = dph.determineLocale(source);
+            Optional<TimeZone> maybeTimeZone = determineTimeZone(source);
+            Optional<ULocale> maybeLocale = determineLocale(source);
 
-            if(!maybeTimeZone.isPresent()) {
-//                System.out.println(source);
+            if(maybeTimeZone.isPresent()) {
+                source = source.put(Source.TIMEZONE, maybeTimeZone.get().getID());
+                sourceDAO.update(source);
+            } else {
+                reporting.report(Report.of(Event.TIMEZONE_NOT_FOUND, source.id(), Source.class.getName()).message(getCountry(source)));
             }
 
-            if(!maybeLocale.isPresent()) {
+            if(maybeLocale.isPresent()) {
+                source = source.put(Source.LOCALE, maybeLocale.get().getName());
+                sourceDAO.update(source);
 //                System.out.println(source);
+            } else {
+                reporting.report(Report.of(Event.LOCALE_NOT_FOUND, source.id(), Source.class.getName()).message(getCountry(source)));
             }
+
         }
     }
 
-    private void determineSourceLocalesAndListTimeZones(String listName) {
+    public void determineSourceLocalesAndListTimeZones(String listName) {
 
         SourceList sourceList = sourceListDAO.getBy(SourceList.LIST_NAME, listName).get(0);
         List<Source> sources = sourceDAO.byList(sourceList);
-        LocaleService dph = new LocaleService();
 
-        dph.allSourcesDetermineLocalesAndTimeZones(sources);
+        determineLocalesAndTimeZones(sources);
     }
 
-    public void allSourcesDetermineLocalesAndTimeZones() {
+    public void determineLocalesAndTimeZones() {
         for(Desk desk : deskDAO.getAll()) {
 
             List<SourceList> lists = sourceListDAO.byDesk(desk.id());
