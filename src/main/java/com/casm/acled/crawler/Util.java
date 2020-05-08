@@ -15,6 +15,7 @@ import com.casm.acled.entities.sourcelist.SourceList;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.Files;
+import com.google.gson.Gson;
 import com.opencsv.CSVReader;
 import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
 import org.camunda.bpm.spring.boot.starter.rest.CamundaBpmRestJerseyAutoConfiguration;
@@ -50,7 +51,7 @@ import java.util.stream.Collectors;
 // We need the special object mapper, though.
 @Import(ObjectMapperConfiguration.class)
 // And we also need the DAOs.
-@ComponentScan(basePackages={"com.casm.acled.dao", "com.casm.acled.crawler.spring"})
+@ComponentScan(basePackages={"com.casm.acled.dao", "com.casm.acled.crawler"})
 public class Util implements CommandLineRunner {
     protected static final Logger logger = LoggerFactory.getLogger(Util.class);
     // keyword query specific to potential articles of interest to ACLED
@@ -279,7 +280,7 @@ public class Util implements CommandLineRunner {
     }
 
 
-    private List<Source> createSources(Path seedsPath) throws IOException {
+    private List<Source> importSourcesFromCSV(Path seedsPath) throws IOException {
         try (
             Reader reader = java.nio.file.Files.newBufferedReader(seedsPath);
             CSVReader csvReader = new CSVReader(reader);
@@ -287,6 +288,9 @@ public class Util implements CommandLineRunner {
             List<Source> sources = new ArrayList<>();
             Iterator<String[]> itr = csvReader.iterator();
             itr.next();
+
+            Gson gson = new Gson();
+
             while(itr.hasNext()) {
                 String[] row = itr.next();
 
@@ -298,7 +302,12 @@ public class Util implements CommandLineRunner {
                             .put(Source.LINK, row[1])
 //                            .put(Source.COUNTRY, row[2])
                             .put(Source.LANGUAGE, row[3])
+                            .put(Source.CRAWL_ACTIVE, Boolean.valueOf(row[5]))
                             ;
+                    if(row[6].length() > 4) {
+                            source = source.put(Source.EXAMPLE_URLS, gson.fromJson(row[6], List.class));
+                    }
+
                     try {
                         sources.add(sourceDAO.create(source));
 //                    System.out.println(source);
@@ -329,7 +338,7 @@ public class Util implements CommandLineRunner {
 //        recoverArticleDates();
 //        linkExisting();
 
-        List<Source> sources = createSources(Paths.get("/home/sw206/git/acledcamundaspringboot/data/europe/balkans-source-list.csv"));
+        List<Source> sources = importSourcesFromCSV(Paths.get("/home/sw206/git/acledcamundaspringboot/data/europe/balkans-source-list.csv"));
         SourceList sourceList = createSourceList("balkans");
         link(sources, sourceList);
     }

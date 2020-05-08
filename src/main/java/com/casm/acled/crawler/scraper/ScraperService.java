@@ -26,6 +26,7 @@ import org.springframework.stereotype.Service;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 @Service
@@ -43,15 +44,40 @@ public class ScraperService {
         List<Source> sources = sourceDAO.byList(sourceList);
 
         for(Source source: sources) {
-
-            if(scraperExists(scraperDir, source)) {
-                reporter.report(Report.of(Event.SCRAPER_FOUND).id(source.id()));
-            } else {
-                reporter.report(Report.of(Event.SCRAPER_NOT_FOUND).id(source.id()));
+            if(source.get(Source.CRAWL_ACTIVE)) {
+                if(scraperExists(scraperDir, source)) {
+                    reporter.report(Report.of(Event.SCRAPER_FOUND)
+                            .id(source.id())
+                            .message(source.get(Source.NAME))
+                    );
+                } else {
+                    reporter.report(Report.of(Event.SCRAPER_NOT_FOUND)
+                            .message(source.get(Source.NAME))
+                            .id(source.id())
+                    );
+                }
             }
         }
     }
 
+    public boolean isScrapable(Path scraperDir, Source source) {
+        return (Boolean)source.get(Source.CRAWL_ACTIVE) && scraperExists(scraperDir, source);
+    }
+
+    public void testScrapers(Path scraperDir, SourceList sourceList) {
+
+        List<Source> sources = sourceDAO.byList(sourceList);
+        for(Source source : sources) {
+            if(isScrapable(scraperDir, source)) {
+
+                String id = Util.getID(source);
+
+                ACLEDScraper scraper = ACLEDScraper.load(scraperDir.resolve(id), source, reporter);
+
+                testScraper(scraper, source);
+            }
+        }
+    }
 
     public void testScraper(ACLEDScraper scraper, Source source) {
 

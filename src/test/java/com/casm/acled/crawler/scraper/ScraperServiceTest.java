@@ -34,6 +34,5 @@ public class ScraperServiceTest {
         ACLEDScraper scraper = ACLEDScraper.load(Paths.get("testscrapers/generic"), source, reporter);
 
         scraperService.testScraper(scraper, source);
-
     }
 }
