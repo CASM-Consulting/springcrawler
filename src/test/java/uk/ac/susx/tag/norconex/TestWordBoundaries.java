@@ -1,6 +1,6 @@
 package uk.ac.susx.tag.norconex;
 
-import com.casm.acled.crawler.utils.Util;
+import com.casm.acled.crawler.Util;
 import org.junit.Assert;
 import org.junit.Test;
 

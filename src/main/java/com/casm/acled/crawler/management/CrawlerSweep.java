@@ -1,9 +1,10 @@
 package com.casm.acled.crawler.management;
 
 
+import com.casm.acled.crawler.Crawl;
 import com.casm.acled.crawler.reporting.Reporter;
 import com.casm.acled.crawler.scraper.ACLEDScraper;
-import com.casm.acled.crawler.utils.Util;
+import com.casm.acled.crawler.Util;
 import com.casm.acled.dao.entities.SourceDAO;
 import com.casm.acled.entities.source.Source;
 import com.casm.acled.entities.sourcelist.SourceList;
@@ -20,7 +21,6 @@ import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -59,7 +59,7 @@ public class CrawlerSweep {
 
     private boolean hasScraper(Source source, Path scraperDir) {
         try {
-            String id = Util.getID(source.get(Source.LINK));
+            String id = Util.getID(source);
             if(ACLEDScraper.validPath(scraperDir.resolve(id))) {
                 return true;
             } else {
@@ -87,10 +87,10 @@ public class CrawlerSweep {
         Map<String, Source> sources = sourceDAO.getAll().stream()
                 .filter(s-> hasScraper(s, scraperDir))
                 .collect(Collectors.toMap(
-                    s->Util.getID(s.get(Source.LINK)),
+                    s->Util.getID(s),
                     Function.identity(),
                     (s1, s2) -> {
-                        logger.warn("id clash {} {}, {}", s1.id(), s2.id(), Util.getID(s1.get(Source.LINK)));
+                        logger.warn("id clash {} {}, {}", s1.id(), s2.id(), Util.getID(s1));
                         return s1;
                     }
                 ));

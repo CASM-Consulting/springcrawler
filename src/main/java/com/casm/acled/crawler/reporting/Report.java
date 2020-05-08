@@ -1,6 +1,5 @@
 package com.casm.acled.crawler.reporting;
 
-import com.casm.acled.crawler.management.Crawl;
 import com.casm.acled.entities.EntityVersions;
 import com.casm.acled.entities.crawlreport.CrawlReport;
 

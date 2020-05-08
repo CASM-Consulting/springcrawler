@@ -1,17 +1,12 @@
 package com.casm.acled.crawler.springjqm;
 
-import com.casm.acled.crawler.management.Crawl;
-import com.casm.acled.crawler.management.CrawlService;
-import com.casm.acled.crawler.spring.CrawlerServiceOld;
+import com.casm.acled.crawler.Crawl;
+import com.casm.acled.crawler.CrawlService;
 import com.enioka.jqm.handler.JobManagerProvider;
-import org.docx4j.wml.R;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import uk.ac.susx.tag.norconex.jobqueuemanager.CrawlerArguments;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 @Component

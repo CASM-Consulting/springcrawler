@@ -1,7 +1,8 @@
-package com.casm.acled.crawler.management;
+package com.casm.acled.crawler;
 
-import com.casm.acled.crawler.ACLEDImporter;
-import com.casm.acled.crawler.ACLEDMetadataPreProcessor;
+import com.casm.acled.crawler.management.NorconexConfiguration;
+import com.casm.acled.crawler.scraper.ACLEDImporter;
+import com.casm.acled.crawler.scraper.ACLEDMetadataPreProcessor;
 import com.casm.acled.crawler.reporting.Reporter;
 import com.casm.acled.crawler.scraper.ACLEDScraper;
 import com.casm.acled.crawler.scraper.ScraperFields;
@@ -9,7 +10,6 @@ import com.casm.acled.crawler.scraper.dates.CompositeDateParser;
 import com.casm.acled.crawler.scraper.dates.CustomDateMetadataFilter;
 import com.casm.acled.crawler.scraper.dates.DateParser;
 import com.casm.acled.crawler.scraper.keywords.KeywordFilter;
-import com.casm.acled.crawler.utils.Util;
 import com.casm.acled.entities.source.Source;
 import com.casm.acled.entities.sourcelist.SourceList;
 import com.ibm.icu.util.ULocale;

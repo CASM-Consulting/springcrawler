@@ -7,7 +7,7 @@ import com.casm.acled.crawler.ScraperNotFoundException;
 import com.casm.acled.crawler.reporting.Event;
 import com.casm.acled.crawler.reporting.Report;
 import com.casm.acled.crawler.reporting.Reporter;
-import com.casm.acled.crawler.utils.Util;
+import com.casm.acled.crawler.Util;
 import com.casm.acled.entities.article.Article;
 import com.casm.acled.entities.source.Source;
 import org.apache.commons.io.IOUtils;

@@ -1,7 +1,6 @@
-package com.casm.acled.crawler;
+package com.casm.acled.crawler.scraper;
 
 // casm
-import com.casm.acled.crawler.scraper.ScraperFields;
 import com.casm.acled.crawler.scraper.dates.CustomDateMetadataFilter;
 import com.casm.acled.dao.entities.SourceDAO;
 import com.casm.acled.dao.entities.SourceListDAO;
@@ -35,7 +34,7 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-import static com.casm.acled.crawler.utils.Util.metadataGet;
+import static com.casm.acled.crawler.Util.metadataGet;
 
 /**
  * Commits the scraped data produced by @ACLEDScraperPreProcessor to the relevant fields in acled_article

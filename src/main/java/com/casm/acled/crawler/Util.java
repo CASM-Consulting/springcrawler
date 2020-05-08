@@ -1,9 +1,8 @@
-package com.casm.acled.crawler.utils;
+package com.casm.acled.crawler;
 
 
 import com.casm.acled.camunda.BusinessKeys;
 import com.casm.acled.configuration.ObjectMapperConfiguration;
-import com.casm.acled.crawler.IncorrectScraperJSONException;
 import com.casm.acled.crawler.scraper.dates.*;
 import com.casm.acled.dao.entities.ArticleDAO;
 import com.casm.acled.dao.entities.SourceDAO;
@@ -35,7 +34,6 @@ import org.springframework.context.annotation.Import;
 import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
@@ -86,6 +84,14 @@ public class Util implements CommandLineRunner {
         url =  (https) ? "https://" + url : "http://" + url;
 
         return url;
+    }
+
+    public static String getID(Source source) {
+        String[] startURL =((String) source.get(Source.LINK)).split(",");
+
+        String id = Util.getID(startURL[0]);
+
+        return id;
     }
 
     public static String getID(String url)  {

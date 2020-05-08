@@ -1,6 +1,7 @@
-package com.casm.acled.crawler.management;
+package com.casm.acled.crawler;
 
-import com.casm.acled.crawler.ACLEDImporter;
+import com.casm.acled.crawler.Crawl;
+import com.casm.acled.crawler.scraper.ACLEDImporter;
 import com.casm.acled.crawler.reporting.Reporter;
 import com.casm.acled.dao.entities.ArticleDAO;
 import com.casm.acled.dao.entities.SourceDAO;
@@ -9,7 +10,6 @@ import com.casm.acled.entities.source.Source;
 import com.casm.acled.entities.sourcelist.SourceList;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.Optional;
