@@ -613,13 +613,13 @@ public class DateParsers {
             dp117
     );
 
-    public static void main(String... args) {
-        String date = "28 Jul 2019, 07:00 PM IST";
-
-        DateParser dp = CompositeDateParser.of(ImmutableList.of(
-                "ISO:/d MMM yyyy, hh:mm a zzz/" //8 min read . Updated: 28 Jul 2019, 07:00 PM IST
-        ));
-
-        dp.parse(date);
-    }
+//    public static void main(String... args) {
+//        String date = "28 Jul 2019, 07:00 PM IST";
+//
+//        DateParser dp = CompositeDateParser.of(ImmutableList.of(
+//                "ISO:/d MMM yyyy, hh:mm a zzz/" //8 min read . Updated: 28 Jul 2019, 07:00 PM IST
+//        ));
+//
+//        dp.parse(date);
+//    }
 }

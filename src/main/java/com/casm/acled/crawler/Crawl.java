@@ -69,7 +69,9 @@ public class Crawl {
 
         config = new NorconexConfiguration(CACHE_DIR.resolve(cachePath));
 
-        EmptyMetadataFilter emptyArticle = new EmptyMetadataFilter(OnMatch.EXCLUDE, ScraperFields.SCRAPED_ARTICLE);
+        EmptyMetadataFilter emptyArticle = new EmptyMetadataFilter(OnMatch.EXCLUDE,
+                ScraperFields.SCRAPED_ARTICLE,
+                ScraperFields.SCRAPED_DATE);
 
         config.addFilter(emptyArticle);
 
