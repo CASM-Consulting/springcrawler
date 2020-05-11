@@ -1,6 +1,6 @@
 package com.casm.acled.crawler.management;
 
-import com.casm.acled.crawler.springrunners.CrawlRunner;
+import com.casm.acled.crawler.springrunners.CrawlerServicelRunner;
 import org.junit.Test;
 import org.springframework.boot.Banner;
 import org.springframework.boot.SpringApplication;
@@ -26,7 +26,7 @@ public class CrawlRunnerTest {
 
         String[] args  = new String[]{sourceListId, sourceId, "", "", "true" };
 
-        SpringApplication app = new SpringApplication(CrawlRunner.class);
+        SpringApplication app = new SpringApplication(CrawlerServicelRunner.class);
         app.setBannerMode(Banner.Mode.OFF);
         app.setWebApplicationType(WebApplicationType.NONE);
         app.run(args);

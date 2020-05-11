@@ -48,7 +48,7 @@ public class CrawlService {
 
         if(maybesSourceList.isPresent() && maybeSource.isPresent()) {
 
-            ACLEDImporter importer = new ACLEDImporter(articleDAO, sourceDAO, sourceListDAO, true);
+            ACLEDImporter importer = new ACLEDImporter(articleDAO, maybeSource.get(), sourceListDAO, true);
 
             Crawl crawl = new Crawl(maybesSourceList.get(), maybeSource.get(), from, to, skipKeywords, importer, reporter);
 

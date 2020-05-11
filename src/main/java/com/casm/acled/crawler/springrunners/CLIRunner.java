@@ -8,7 +8,6 @@ import com.casm.acled.configuration.ObjectMapperConfiguration;
 // norconex
 
 //camunda
-import com.casm.acled.crawler.spring.CrawlerServiceOld;
 import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
 import org.camunda.bpm.spring.boot.starter.rest.CamundaBpmRestJerseyAutoConfiguration;
 
@@ -45,8 +44,8 @@ public class CLIRunner implements CommandLineRunner {
 
     protected static final Logger logger = LoggerFactory.getLogger(CLIRunner.class);
 
-    @Autowired
-    private CrawlerServiceOld crawlerService;
+//    @Autowired
+//    private CrawlerServiceOld crawlerService;
 
     private ConcurrentContentHashStore contentHashStore;
 
@@ -97,6 +96,6 @@ public class CLIRunner implements CommandLineRunner {
                 .addObject(crawlerArguments)
                 .build()
                 .parse(corrArgs);
-        crawlerService.run(crawlerArguments);
+//        crawlerService.run(crawlerArguments);
     }
 }

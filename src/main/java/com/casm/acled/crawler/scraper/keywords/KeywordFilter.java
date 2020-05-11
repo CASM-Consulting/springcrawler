@@ -1,6 +1,6 @@
 package com.casm.acled.crawler.scraper.keywords;
 
-import com.casm.acled.crawler.Util;
+import com.casm.acled.crawler.util.Util;
 import com.norconex.commons.lang.xml.EnhancedXMLStreamWriter;
 import com.norconex.importer.doc.ImporterMetadata;
 import com.norconex.importer.handler.ImporterHandlerException;

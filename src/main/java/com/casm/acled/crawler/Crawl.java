@@ -1,19 +1,19 @@
 package com.casm.acled.crawler;
 
 import com.casm.acled.crawler.management.NorconexConfiguration;
-import com.casm.acled.crawler.scraper.ACLEDImporter;
-import com.casm.acled.crawler.scraper.ACLEDMetadataPreProcessor;
+import com.casm.acled.crawler.scraper.*;
 import com.casm.acled.crawler.reporting.Reporter;
-import com.casm.acled.crawler.scraper.ACLEDScraper;
-import com.casm.acled.crawler.scraper.ScraperFields;
 import com.casm.acled.crawler.scraper.dates.CompositeDateParser;
 import com.casm.acled.crawler.scraper.dates.CustomDateMetadataFilter;
 import com.casm.acled.crawler.scraper.dates.DateParser;
 import com.casm.acled.crawler.scraper.keywords.KeywordFilter;
+import com.casm.acled.crawler.util.Util;
 import com.casm.acled.entities.source.Source;
 import com.casm.acled.entities.sourcelist.SourceList;
 import com.ibm.icu.util.ULocale;
 import com.norconex.collector.http.HttpCollector;
+import com.norconex.importer.handler.filter.AbstractDocumentFilter;
+import com.norconex.importer.handler.filter.IDocumentFilter;
 import com.norconex.importer.handler.filter.OnMatch;
 import com.norconex.importer.handler.filter.impl.DateMetadataFilter;
 import com.norconex.importer.handler.filter.impl.EmptyMetadataFilter;
@@ -24,6 +24,7 @@ import java.sql.Date;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -62,6 +63,8 @@ public class Crawl {
         Path cachePath = Paths.get(id);
 
         importer.setCollectorSupplier(collectorSupplier);
+
+        //LOOK AT THIS !!!
         importer.setMaxArticles(10);
 
         config = new NorconexConfiguration(CACHE_DIR.resolve(cachePath));
@@ -70,6 +73,7 @@ public class Crawl {
 
         config.addFilter(emptyArticle);
 
+        List<AbstractDocumentFilter> filters = new ArrayList<>();
         if(from != null && to != null ) {
 
             ZoneId zoneId = ZoneId.of(source.get(Source.TIMEZONE));
@@ -79,14 +83,21 @@ public class Crawl {
                     ZonedDateTime.of(to.atTime(0,0,0), zoneId)
             );
 
-            config.addFilter(dateFilter);
+            filters.add(dateFilter);
         }
 
         if(!skipKeywords) {
 
             KeywordFilter keywordFilter = keywordFilter(sourceList, source);
-            config.addFilter(keywordFilter);
+            filters.add(keywordFilter);
         }
+
+        filters.forEach(config::addFilter);
+
+        if(filters.isEmpty()) {
+            config.addFilter(new AcceptFilter());
+        }
+
 
         String[] startURL =((String) source.get(Source.LINK)).split(",");
 

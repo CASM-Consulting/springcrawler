@@ -53,7 +53,7 @@ public class ScraperRunner implements CommandLineRunner {
 
         SourceList sourceList = sourceListDAO.getByUnique(SourceList.LIST_NAME, "balkans").get();
 
-        scraperService.checkScraperCoverage(scraperDir, sourceList);
+        scraperService.checkExampleURLs(scraperDir, sourceList);
 
         reporter.getRunReports(Event.SCRAPER_NOT_FOUND).stream().forEach(r -> logger.info(r.toString()));
     }

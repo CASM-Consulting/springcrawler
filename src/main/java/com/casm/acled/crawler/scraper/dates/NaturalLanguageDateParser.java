@@ -1,14 +1,23 @@
 package com.casm.acled.crawler.scraper.dates;
 
+import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import com.google.common.collect.ImmutableList;
+import com.ibm.icu.util.ULocale;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.apache.cxf.jaxrs.client.WebClient;
 
-import java.time.LocalDate;
+import javax.ws.rs.core.GenericType;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 
 /**
@@ -18,15 +27,22 @@ class NaturalLanguageDateParser implements DateParser {
 
     public static final String PROTOCOL = "NL";
 
-//    private static final String
+    private static final String PARSING_SERVICE = "http://localhost:5555/parse";
+    private static final String PARSING_FORMAT = "yyyy-MM-dd HH:mm:ss";
+
+    private final String languages;
 
     private final String[] triggers;
     private final String spec;
+
     public NaturalLanguageDateParser(String spec) {
+        this(spec, ImmutableList.of(ULocale.getDefault()));
+    }
+    public NaturalLanguageDateParser(String spec, List<ULocale> locales) {
         this.spec = spec;
         this.triggers = spec.split(",");
 
-//        WebClient.builder().baseUrl()
+        languages = "[\""+locales.stream().map(ULocale::getLanguage).collect(Collectors.joining("\",\""))+"\"]";
     }
 
     @Override
@@ -39,9 +55,28 @@ class NaturalLanguageDateParser implements DateParser {
             }
         }
         if(makeAttempt) {
-            if(attempt.isPresent()) {
-                attempt = Optional.of(LocalDateTime.from(DateUtil.getDateWithoutNormalisation(date).get()));
+
+            WebClient webClient = WebClient.create(PARSING_SERVICE,
+                    Collections.singletonList(new JacksonJsonProvider()))
+                    .accept(MediaType.APPLICATION_JSON_TYPE);
+
+            webClient.query("relative_expression", date);
+            webClient.query("languages", languages);
+
+            Response response = webClient.get();
+            int status = response.getStatus();
+            if(status >= 200 && status < 300) {
+                Map<String,String> data = response.readEntity(new GenericType<Map<String,String>>(){});
+
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern(PARSING_FORMAT);
+
+                LocalDateTime parsed = LocalDateTime.parse(data.get("parsed"), formatter);
+
+                attempt = Optional.of(parsed);
+            } else {
             }
+
+
         }
         return attempt;
     }
@@ -69,5 +104,16 @@ class NaturalLanguageDateParser implements DateParser {
         return new HashCodeBuilder(17, 37)
                 .append(spec)
                 .toHashCode();
+    }
+
+    public static void main(String[] args) {
+
+        String relativeExpression = "4 hours ago";
+
+        NaturalLanguageDateParser nldp = new NaturalLanguageDateParser("ago");
+
+        Optional<LocalDateTime> maybeDate = nldp.parse(relativeExpression);
+
+        System.out.println(maybeDate.get());
     }
 }

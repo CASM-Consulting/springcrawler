@@ -1,6 +1,9 @@
 package com.casm.acled.crawler.reporting;
 
+import com.casm.acled.crawler.management.CrawlerSweep;
 import com.casm.acled.dao.entities.CrawlReportDAO;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -12,6 +15,8 @@ import java.util.stream.Collectors;
 
 public interface Reporter {
 
+    Logger logger = LoggerFactory.getLogger(Reporter.class);
+
     Reporter report(Report report);
 
     Reporter report(Collection<Report> reports);
@@ -21,6 +26,7 @@ public interface Reporter {
     default String randomRunId() {
         if(runId() == null){
             runId(UUID.randomUUID().toString());
+            logger.info("reporter run id : " + runId());
         }
         return runId();
     }

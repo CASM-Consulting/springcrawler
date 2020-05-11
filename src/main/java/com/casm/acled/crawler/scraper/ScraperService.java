@@ -1,7 +1,7 @@
 package com.casm.acled.crawler.scraper;
 
 
-import com.casm.acled.crawler.Util;
+import com.casm.acled.crawler.util.Util;
 import com.casm.acled.crawler.reporting.Event;
 import com.casm.acled.crawler.reporting.Report;
 import com.casm.acled.crawler.reporting.Reporter;
@@ -19,8 +19,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 
-
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -40,7 +38,7 @@ public class ScraperService {
 
         for(Source source: sources) {
             if(!Util.isDisabled(source)) {
-                if(scraperExists(scraperDir, source)) {
+                if(Util.scraperExists(scraperDir, source)) {
                     reporter.report(Report.of(Event.SCRAPER_FOUND)
                             .id(source.id())
                             .message(source.get(Source.NAME))
@@ -55,15 +53,11 @@ public class ScraperService {
         }
     }
 
-    public boolean isScrapable(Path scraperDir, Source source) {
-        return !Util.isDisabled(source) && scraperExists(scraperDir, source);
-    }
-
     public void checkExampleURLs(Path scraperDir, SourceList sourceList) {
 
         List<Source> sources = sourceDAO.byList(sourceList);
         for(Source source : sources) {
-            if(isScrapable(scraperDir, source)) {
+            if(Util.isScrapable(scraperDir, source)) {
 
                 String id = Util.getID(source);
 
@@ -91,8 +85,4 @@ public class ScraperService {
         }
     }
 
-    public boolean scraperExists(Path path, Source source) {
-        String id = Util.getID(source);
-        return Files.exists(path.resolve(id).resolve(ACLEDScraper.JOB_JSON));
-    }
 }

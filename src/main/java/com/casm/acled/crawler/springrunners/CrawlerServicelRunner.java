@@ -27,9 +27,9 @@ import java.time.format.DateTimeParseException;
 @Import({ObjectMapperConfiguration.class})
 // And we also need the DAOs.
 @ComponentScan(basePackages={"com.casm.acled.dao", "com.casm.acled.crawler"})
-public class CrawlRunner implements CommandLineRunner {
+public class CrawlerServicelRunner implements CommandLineRunner {
 
-    protected static final Logger logger = LoggerFactory.getLogger(CrawlRunner.class);
+    protected static final Logger logger = LoggerFactory.getLogger(CrawlerServicelRunner.class);
 
 
     @Autowired
@@ -55,7 +55,7 @@ public class CrawlRunner implements CommandLineRunner {
             to = null;
         }
 
-        boolean skipKeywords = Boolean.getBoolean(args[4]);
+        boolean skipKeywords = Boolean.parseBoolean(args[4]);
 
         if(from != null && to != null) {
             crawlService.run(sourceListId, sourceId, from, to, skipKeywords);
@@ -66,7 +66,7 @@ public class CrawlRunner implements CommandLineRunner {
 
     public static void main(String[] args) {
 
-        SpringApplication app = new SpringApplication(CrawlRunner.class);
+        SpringApplication app = new SpringApplication(CrawlerServicelRunner.class);
         app.setBannerMode(Banner.Mode.OFF);
         app.setWebApplicationType(WebApplicationType.NONE);
         ConfigurableApplicationContext ctx = app.run(args);

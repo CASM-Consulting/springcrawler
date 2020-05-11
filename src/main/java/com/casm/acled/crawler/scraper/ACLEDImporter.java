@@ -34,7 +34,7 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-import static com.casm.acled.crawler.Util.metadataGet;
+import static com.casm.acled.crawler.util.Util.metadataGet;
 
 /**
  * Commits the scraped data produced by @ACLEDScraperPreProcessor to the relevant fields in acled_article
@@ -44,18 +44,18 @@ public class ACLEDImporter implements IHttpDocumentProcessor {
     protected static final Logger logger = LoggerFactory.getLogger(ACLEDImporter.class);
 
     private final ArticleDAO articleDAO;
-    private final SourceDAO sourceDAO;
+    private final Source source;
     private final SourceListDAO sourceListDAO;
     private final boolean sourceRequired;
 
     private Supplier<HttpCollector> collectorSupplier;
     private Integer maxArticles;
 
-    public ACLEDImporter(ArticleDAO articleDAO, SourceDAO sourceDAO,
+    public ACLEDImporter(ArticleDAO articleDAO, Source source,
                          SourceListDAO sourceListDAO, boolean sourceRequired) {
 
         this.articleDAO = articleDAO;
-        this.sourceDAO = sourceDAO;
+        this.source = source;
         this.sourceListDAO = sourceListDAO;
         this.sourceRequired = sourceRequired;
     }
@@ -132,28 +132,10 @@ public class ACLEDImporter implements IHttpDocumentProcessor {
 
             article = article.put(Article.CRAWL_DATE, crawlDate);
 
-            String seed = metadataGet(metadata, ACLEDMetadataPreProcessor.LINK);
-
-            Optional<Source> maybeSource = sourceDAO.getByUnique(Source.LINK, seed);
-
-            if(maybeSource.isPresent()) {
-                if(!stopAfterNArticlesFromSource(maybeSource.get()) ) {
-
-                    article = article.put(Article.SOURCE_ID, maybeSource.get().id());
-//                List<SourceList> lists = sourceListDAO.bySource(source.get());
-//                for (SourceList list : lists) {
-//                    String bk = BusinessKeys.generate(list.get(SourceList.LIST_NAME));
-                    articleDAO.create(article);
-//                }
-
-                }
-            } else  if(!sourceRequired) {
-//                logger.info("Source not present - adding without source.");
+            if(!stopAfterNArticlesFromSource(source) ) {
+                article = article.put(Article.SOURCE_ID, source.id());
                 articleDAO.create(article);
-            } else{
-                logger.warn("Skipping import: source required and not present.");
             }
-
         }
     }
 }

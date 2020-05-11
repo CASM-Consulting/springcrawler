@@ -1,6 +1,6 @@
 package com.casm.acled.crawler.scraper;
 
-import com.casm.acled.crawler.Util;
+import com.casm.acled.crawler.util.Util;
 import com.norconex.collector.http.doc.HttpDocument;
 import com.norconex.collector.http.processor.IHttpDocumentProcessor;
 import org.apache.http.client.HttpClient;

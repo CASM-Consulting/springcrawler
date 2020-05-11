@@ -5,7 +5,7 @@ import com.casm.acled.crawler.reporting.Report;
 import com.casm.acled.crawler.reporting.Reporter;
 import com.casm.acled.crawler.scraper.keywords.KeywordsService;
 import com.casm.acled.crawler.scraper.locale.LocaleService;
-import com.casm.acled.crawler.Util;
+import com.casm.acled.crawler.util.Util;
 import com.casm.acled.dao.entities.DeskDAO;
 import com.casm.acled.dao.entities.SourceDAO;
 import com.casm.acled.dao.entities.SourceListDAO;
