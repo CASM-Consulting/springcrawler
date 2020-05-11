@@ -24,6 +24,7 @@ public class KeywordFilterTest {
         Assert.assertFalse(kwf.isMatched("no id doesn't"));
         Assert.assertTrue(kwf.isMatched("hello it does! world"));
 
+
     }
 
 }

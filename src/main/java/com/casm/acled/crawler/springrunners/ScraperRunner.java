@@ -1,7 +1,7 @@
 package com.casm.acled.crawler.springrunners;
 
 import com.casm.acled.configuration.ObjectMapperConfiguration;
-import com.casm.acled.crawler.CrawlService;
+import com.casm.acled.crawler.reporting.Reporter;
 import com.casm.acled.crawler.scraper.ScraperService;
 import com.casm.acled.dao.entities.SourceListDAO;
 import com.casm.acled.entities.sourcelist.SourceList;
@@ -23,8 +23,6 @@ import org.springframework.context.annotation.Import;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.LocalDate;
-import java.time.format.DateTimeParseException;
 
 @EnableAutoConfiguration(exclude={HibernateJpaAutoConfiguration.class, CamundaBpmAutoConfiguration.class, CamundaBpmRestJerseyAutoConfiguration.class, ValidationAutoConfiguration.class})
 // We need the special object mapper, though.
@@ -44,13 +42,19 @@ public class ScraperRunner implements CommandLineRunner {
     @Autowired
     private ScraperService scraperService;
 
+    @Autowired
+    private Reporter reporter;
 
     @Override
     public void run(String... args) {
 
+        reporter.randomRunId();
+
         SourceList sourceList = sourceListDAO.getByUnique(SourceList.LIST_NAME, "balkans").get();
 
-        scraperService.testScrapers(scraperDir, sourceList);
+        scraperService.reportScraperCoverage(scraperDir, sourceList);
+
+        reporter.getRunReports().stream().forEach(r -> logger.info(r.toString()));
     }
 
     public static void main(String[] args) {

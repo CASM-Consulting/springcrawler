@@ -1,5 +1,6 @@
 package com.casm.acled.crawler.reporting;
 
+import com.casm.acled.camunda.variables.Process;
 import com.casm.acled.entities.EntityVersions;
 import com.casm.acled.entities.crawlreport.CrawlReport;
 
@@ -12,45 +13,50 @@ public class Report {
     private final String type;
     private final String message;
     private final String businessKey;
+    private final String runId;
 
-    public Report(String event, Integer id, String type, String message, String businessKey) {
-        this(event, id, type, message, businessKey, Instant.now());
+    public Report(String event, Integer id, String type, String message, String businessKey, String runId) {
+        this(event, id, type, message, businessKey, runId, Instant.now());
     }
-    public Report(String event, Integer id, String type, String message, String businessKey, Instant timestamp) {
+    public Report(String event, Integer id, String type, String message, String businessKey, String runId, Instant timestamp) {
         this.businessKey = businessKey;
         this.event = event;
         this.id = id;
         this.type = type;
         this.message = message;
+        this.runId = runId;
         this.timestamp = timestamp;
     }
 
     public Report message(String format, Object... args) {
         if(args.length == 0) {
-            return new Report(event, id, type, format, businessKey);
+            return new Report(event, id, type, format, businessKey, runId);
         } else {
-            return new Report(event, id, type,  String.format(format, args), businessKey);
+            return new Report(event, id, type,  String.format(format, args), businessKey, runId);
         }
     }
 
     public Report append(String format, Object... args) {
-        return new Report(event, id, type, this.message + " " + String.format(format, args), businessKey);
+        return new Report(event, id, type, this.message + " " + String.format(format, args), businessKey, runId);
     }
 
     public Report id(Integer id) {
-        return new Report(event, id, type, message, businessKey);
+        return new Report(event, id, type, message, businessKey, runId);
     }
 
     public Report type(Object type) {
-        return new Report(event, id, type.toString(), message, businessKey);
+        return new Report(event, id, type.toString(), message, businessKey, runId);
     }
 
     private Report timestamp(Instant timestamp) {
-        return new Report(event, id, type, message, businessKey);
+        return new Report(event, id, type, message, businessKey, runId);
+    }
+    public Report runId(String runId) {
+        return new Report(event, id, type, message, businessKey, runId);
     }
 
     public static Report of(Object event, Integer id, String type, String format, Object... args) {
-        return new Report(event.toString(), id, type, format == null ? null : String.format(format, args), null );
+        return new Report(event.toString(), id, type, format == null ? null : String.format(format, args), null, null);
     }
 
     public static Report of(Object event, Integer id, String type) {
@@ -68,6 +74,9 @@ public class Report {
     public Instant timestamp() {
         return timestamp;
     };
+    public String runId() {
+        return runId;
+    };
     public String event() {
         return event;
     };
@@ -81,14 +90,16 @@ public class Report {
         return message;
     };
 
+
     @Override
     public String toString() {
         return "Report{" +
                 "timestamp=" + timestamp +
                 ", event='" + event + '\'' +
                 ", id='" + id + '\'' +
-                ", type='" + type + '\'' +
                 ", message='" + message + '\'' +
+                ", runId='" + runId + '\'' +
+                ", type='" + type + '\'' +
                 '}';
     }
 
@@ -109,6 +120,12 @@ public class Report {
         if(event != null) {
             cr = cr.put(CrawlReport.EVENT, event);
         }
+        if(businessKey != null) {
+            cr = cr.businessKey(businessKey);
+        }
+        if(runId != null) {
+            cr = cr.put(CrawlReport.RUN_ID, runId);
+        }
 
         return cr;
     }
@@ -119,6 +136,7 @@ public class Report {
                 cr.get(CrawlReport.TYPE),
                 cr.get(CrawlReport.MESSAGE),
                 cr.hasBusinessKey() ? cr.businessKey() : "",
+                cr.get(CrawlReport.RUN_ID),
                 cr.get(CrawlReport.TIMESTAMP));
         return r;
     }

@@ -10,14 +10,10 @@ import com.casm.acled.entities.source.Source;
 import com.casm.acled.entities.sourcelist.SourceList;
 import com.norconex.collector.http.client.impl.GenericHttpClientFactory;
 import com.norconex.collector.http.doc.HttpDocument;
-import com.norconex.collector.http.doc.HttpMetadata;
-import com.norconex.collector.http.fetch.HttpFetchResponse;
 import com.norconex.collector.http.fetch.impl.GenericDocumentFetcher;
 import com.norconex.collector.http.pipeline.importer.HttpImporterPipelineUtilProxy;
-import com.norconex.commons.lang.file.ContentType;
 import com.norconex.commons.lang.io.CachedInputStream;
 import com.norconex.commons.lang.io.CachedStreamFactory;
-import com.norconex.importer.doc.ImporterDocument;
 import org.apache.http.client.HttpClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -26,7 +22,6 @@ import org.springframework.stereotype.Service;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 
 @Service
@@ -64,7 +59,7 @@ public class ScraperService {
         return (Boolean)source.get(Source.CRAWL_ACTIVE) && scraperExists(scraperDir, source);
     }
 
-    public void testScrapers(Path scraperDir, SourceList sourceList) {
+    public void checkExampleURLs(Path scraperDir, SourceList sourceList) {
 
         List<Source> sources = sourceDAO.byList(sourceList);
         for(Source source : sources) {
@@ -74,12 +69,12 @@ public class ScraperService {
 
                 ACLEDScraper scraper = ACLEDScraper.load(scraperDir.resolve(id), source, reporter);
 
-                testScraper(scraper, source);
+                checkExampleURLs(scraper, source);
             }
         }
     }
 
-    public void testScraper(ACLEDScraper scraper, Source source) {
+    public void checkExampleURLs(ACLEDScraper scraper, Source source) {
 
         GenericDocumentFetcher fetcher = new GenericDocumentFetcher();
 

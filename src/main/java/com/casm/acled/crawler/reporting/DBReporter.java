@@ -1,6 +1,7 @@
 package com.casm.acled.crawler.reporting;
 
 import com.casm.acled.dao.entities.CrawlReportDAO;
+import com.casm.acled.entities.crawlreport.CrawlReport;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
@@ -8,6 +9,7 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Component
@@ -19,18 +21,48 @@ public class DBReporter implements Reporter {
     @Autowired
     private CrawlReportDAO crawlReportDAO;
 
+    private String runId;
+
     public DBReporter() {
         reports = new ArrayList<>();
     }
 
+    @Override
+    public String runId() {
+        return runId;
+    }
+
+    @Override
+    public Reporter runId(String runId) {
+        this.runId = runId;
+        return this;
+    }
+
+    private Report assignRunId(Report report) {
+        if(runId != null) {
+            report = report.runId(runId);
+        }
+        return report;
+    }
+
     public DBReporter report(Report report) {
+        report = assignRunId(report);
         crawlReportDAO.create(report.toCrawlReport());
         return this;
     }
 
     public DBReporter report(Collection<Report> reports) {
-        crawlReportDAO.create(reports.stream().map(Report::toCrawlReport).collect(Collectors.toList()));
+        crawlReportDAO.create(reports.stream().map(this::assignRunId).map(Report::toCrawlReport).collect(Collectors.toList()));
         return this;
+    }
+
+    @Override
+    public List<Report> getRunReports() {
+        if(runId == null) {
+            throw new RuntimeException("null runId");
+        } else {
+            return crawlReportDAO.getBy(CrawlReport.RUN_ID, runId).stream().map(Report::of).collect(Collectors.toList());
+        }
     }
 
     private static DBReporter reporter;

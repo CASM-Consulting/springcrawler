@@ -1,6 +1,5 @@
 package com.casm.acled.crawler.scraper;
 
-import com.casm.acled.AppSpringOnly;
 import com.casm.acled.crawler.reporting.Reporter;
 import com.casm.acled.crawler.springrunners.SpringOnlyRunner;
 import com.casm.acled.entities.EntityVersions;
@@ -14,7 +13,6 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import java.nio.file.Paths;
 
-import static org.junit.Assert.*;
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = { SpringOnlyRunner.class })
 public class ScraperServiceTest {
@@ -33,6 +31,6 @@ public class ScraperServiceTest {
 
         ACLEDScraper scraper = ACLEDScraper.load(Paths.get("testscrapers/generic"), source, reporter);
 
-        scraperService.testScraper(scraper, source);
+        scraperService.checkExampleURLs(scraper, source);
     }
 }
