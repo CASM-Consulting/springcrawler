@@ -39,7 +39,7 @@ public class ScraperService {
         List<Source> sources = sourceDAO.byList(sourceList);
 
         for(Source source: sources) {
-            if(source.get(Source.CRAWL_ACTIVE)) {
+            if(!Util.isDisabled(source)) {
                 if(scraperExists(scraperDir, source)) {
                     reporter.report(Report.of(Event.SCRAPER_FOUND)
                             .id(source.id())
@@ -56,7 +56,7 @@ public class ScraperService {
     }
 
     public boolean isScrapable(Path scraperDir, Source source) {
-        return (Boolean)source.get(Source.CRAWL_ACTIVE) && scraperExists(scraperDir, source);
+        return !Util.isDisabled(source) && scraperExists(scraperDir, source);
     }
 
     public void checkExampleURLs(Path scraperDir, SourceList sourceList) {

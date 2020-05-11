@@ -157,7 +157,10 @@ public class Util implements CommandLineRunner {
         }
     }
 
-
+    public static boolean isDisabled(Source source) {
+        Boolean crawlDisable = source.get(Source.CRAWL_DISABLED);
+        return crawlDisable != null && crawlDisable;
+    }
 
     public void recoverArticleDates() {
 
@@ -298,14 +301,14 @@ public class Util implements CommandLineRunner {
                 String LINK  = row[headerMap.get(Source.LINK)];
                 String STANDARD_NAME  = row[headerMap.get(Source.STANDARD_NAME)];
                 String LANGUAGE  = row[headerMap.get(Source.LANGUAGE)];
-                String CRAWL_ACTIVE  = row[headerMap.get(Source.CRAWL_ACTIVE)];
+                String CRAWL_DISABLED  = row[headerMap.get(Source.CRAWL_DISABLED)];
                 List<String> EXAMPLE_URLS  =  gson.fromJson(row[headerMap.get(Source.EXAMPLE_URLS)], List.class);
 
                 Source source = EntityVersions.get(Source.class).current()
                     .put(Source.STANDARD_NAME, STANDARD_NAME)
                     .put(Source.LINK, LINK)
                     .put(Source.LANGUAGE, LANGUAGE)
-                    .put(Source.CRAWL_ACTIVE, CRAWL_ACTIVE)
+                    .put(Source.CRAWL_DISABLED, CRAWL_DISABLED)
                     .put(Source.EXAMPLE_URLS, EXAMPLE_URLS == null ? ImmutableList.of() : EXAMPLE_URLS);
 
                 try {
@@ -339,9 +342,12 @@ public class Util implements CommandLineRunner {
 //        recoverArticleDates();
 //        linkExisting();
 
-        List<Source> sources = importSourcesFromCSV(Paths.get("/home/sw206/git/acledcamundaspringboot/data/europe/balkans-source-list.csv"));
+//        List<Source> sources = importSourcesFromCSV(Paths.get("/home/sw206/git/acledcamundaspringboot/data/europe/balkans-source-list.csv"));
 //        SourceList sourceList = createSourceList("balkans", "( activist activists ambush ambushed ambushes ambushing arson assault assaulted attack attacked attacker attackers attacking attacks battle battled battles battling beaten beating blast bomb bombed bomber bombers bombing bombs casualties casualty clash clashed clashes clashing demonstrate demonstrated demonstraters demonstrates demonstrating demonstration demonstrations demonstrator demonstrator demonstrators detonated explode exploded explodes exploding explosion explosions \"gun fire\" gunfire kidnapping kill killed killer killers killing knifed lynched lynching march marched marches marching \"mob justice\" Molotov picket picketers picketing protest protested protester protesters protesting protestor protestors protests raid raided raiding raids rallied rallies rallying rape raped rapes raping rapist revolt revolted revolts riot rioted rioter rioters rioting riots \"set on fire\" shooter shooters shooting shoots shot stab stabbed stabbing strike striked strikes \"threw stones\" \"throwing stones\" \"to shoot\" turmoil unrest vigilante vigilantism violence wounded wounding wounds aktivista aktivisti bitka bitke bodenje bomba bombardovanje bombardovano bombaš bombaši bombe \"boreći se\" \"boriti se\" demonstracija demonstracije demonstrant demonstranti demonstrira demonstrirajući demonstrirali demonstrirati detonirana ekplodirala eksplozija eksplodira eksplodirati eksplozija eksplozije eksplozivna granatirano \"iz zasede\" \"iz zasjede\" izboden izbosti \"izveli raciju\" \"izvevši raciju\" kamenovali kamenovanje kidnapovanje linčovan linčovanje marš marširali marširanje maršovi Molotovljev napad napadač napadači napadajući napadi napadnut \"napasti iz zasede\" nasilje nemir okršaj \"okupili se\" \"okupivši se\" okupljeni osvetnik osvetništvo otmica pobuna pobune \"pobunili se\" pobunjeni prebijanje prebijen pretučen prosvjed prosvjedi prosvjednici prosvjednik prosvjedovali prosvjedovanje protest protestant protesti protestirali protestovali protestovanje pucanje pucao pucati pucnjava racija racije rane ranjavanje ranjen revolt revolti revoltirani rulja shod silovana silovanja silovanje silovatelj silujući strelac strelci sukob sukobi \"sukobili se\" \"sukobivši se\" ubica ubice ubijen ubistvo ubiti ubojica ubojice ubojstvo udarac udaren udari upucan zapaljen zaseda zasede zasjeda zasjede žrtva žrtve bastisje betejë bomba bombardim bombë demonstratë demonstrim demonstrues dhunë dhunë eksplodim forcë konflikt kryengritës kryengritje marshim ndeshje përdhunim përdhunime përdhunuar përplasje plagosur pritë protestat protestë protestuan protestuar protestues protestuesit protestuesit qitje revoltë rrahje rrebelim shkatërrues shpërthim shqetësim sulm sulmuar sulmues sulmuesit \"të xhiruar\" therrja trazim trazire trazirë vetëgjyqësisë viktima vrarë vras vrasje zjarr )");
 //        link(sources, sourceList);
+        List<Source> sources = importSourcesFromCSV(Paths.get("/home/sw206/Dropbox/acled/spec/mexico-backcode-2018.csv"));
+        SourceList sourceList = createSourceList("mexico-back-code-2018", "");
+        link(sources, sourceList);
     }
 
     public static void main(String[] args) {
