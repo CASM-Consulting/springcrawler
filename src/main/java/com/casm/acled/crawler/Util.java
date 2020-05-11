@@ -282,34 +282,38 @@ public class Util implements CommandLineRunner {
         ) {
             List<Source> sources = new ArrayList<>();
             Iterator<String[]> itr = csvReader.iterator();
-            itr.next();
+            String[] headers = itr.next();
+
+            Map<String,Integer> headerMap = new HashMap<>();
+
+            for(int i = 0; i < headers.length; ++i) {
+                headerMap.put(headers[i], i);
+            }
 
             Gson gson = new Gson();
 
             while(itr.hasNext()) {
                 String[] row = itr.next();
 
-                String frequency = row[4];
+                String LINK  = row[headerMap.get(Source.LINK)];
+                String STANDARD_NAME  = row[headerMap.get(Source.STANDARD_NAME)];
+                String LANGUAGE  = row[headerMap.get(Source.LANGUAGE)];
+                String CRAWL_ACTIVE  = row[headerMap.get(Source.CRAWL_ACTIVE)];
+                List<String> EXAMPLE_URLS  =  gson.fromJson(row[headerMap.get(Source.EXAMPLE_URLS)], List.class);
 
-                if(frequency.equals("Weekly")) {
-                    Source source = EntityVersions.get(Source.class).current()
-                            .put(Source.STANDARD_NAME, row[0])
-                            .put(Source.LINK, row[1])
-//                            .put(Source.COUNTRY, row[2])
-                            .put(Source.LANGUAGE, row[3])
-                            .put(Source.CRAWL_ACTIVE, Boolean.valueOf(row[5]))
-                            ;
-                    if(row[6].length() > 4) {
-                            source = source.put(Source.EXAMPLE_URLS, gson.fromJson(row[6], List.class));
-                    }
+                Source source = EntityVersions.get(Source.class).current()
+                    .put(Source.STANDARD_NAME, STANDARD_NAME)
+                    .put(Source.LINK, LINK)
+                    .put(Source.LANGUAGE, LANGUAGE)
+                    .put(Source.CRAWL_ACTIVE, CRAWL_ACTIVE)
+                    .put(Source.EXAMPLE_URLS, EXAMPLE_URLS == null ? ImmutableList.of() : EXAMPLE_URLS);
 
-                    try {
-                        sources.add(sourceDAO.create(source));
+                try {
+                    sources.add(sourceDAO.create(source));
 //                    System.out.println(source);
-                    } catch (RuntimeException e) {
-                        System.out.println(e.getMessage());
-                        //already exists?
-                    }
+                } catch (RuntimeException e) {
+                    System.out.println(e.getMessage());
+                    //already exists?
                 }
             }
             return sources;
