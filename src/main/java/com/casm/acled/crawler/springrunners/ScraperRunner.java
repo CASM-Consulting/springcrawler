@@ -1,6 +1,7 @@
 package com.casm.acled.crawler.springrunners;
 
 import com.casm.acled.configuration.ObjectMapperConfiguration;
+import com.casm.acled.crawler.reporting.Event;
 import com.casm.acled.crawler.reporting.Reporter;
 import com.casm.acled.crawler.scraper.ScraperService;
 import com.casm.acled.dao.entities.SourceListDAO;
@@ -52,9 +53,9 @@ public class ScraperRunner implements CommandLineRunner {
 
         SourceList sourceList = sourceListDAO.getByUnique(SourceList.LIST_NAME, "balkans").get();
 
-        scraperService.checkExampleURLs(scraperDir, sourceList);
+        scraperService.checkScraperCoverage(scraperDir, sourceList);
 
-        reporter.getRunReports().stream().forEach(r -> logger.info(r.toString()));
+        reporter.getRunReports(Event.SCRAPER_NOT_FOUND).stream().forEach(r -> logger.info(r.toString()));
     }
 
     public static void main(String[] args) {

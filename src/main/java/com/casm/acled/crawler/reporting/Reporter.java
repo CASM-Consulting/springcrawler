@@ -12,7 +12,6 @@ import java.util.stream.Collectors;
 
 public interface Reporter {
 
-
     Reporter report(Report report);
 
     Reporter report(Collection<Report> reports);
@@ -29,6 +28,25 @@ public interface Reporter {
     String runId();
 
     List<Report> getRunReports();
+
+    default List<Report> getRunReports(Integer id, Event event) {
+        return getRunReports().stream()
+                .filter(r -> r.id().equals(id) && r.event().equals(event.toString()))
+                .collect(Collectors.toList());
+    }
+
+    default List<Report> getRunReports(Integer id) {
+        return getRunReports().stream()
+                .filter(r -> r.id().equals(id))
+                .collect(Collectors.toList());
+    }
+
+    default List<Report> getRunReports(Event event) {
+        return getRunReports().stream()
+                .filter(r -> r.event().equals(event.toString()))
+                .collect(Collectors.toList());
+    }
+
 
 //    public Reporter reports(Predicate<Report> filter) {
 //        return new Reporter().report(reports.stream().filter(filter).collect(Collectors.toList()));

@@ -34,7 +34,7 @@ public class ScraperService {
     @Autowired
     private Reporter reporter;
 
-    public void reportScraperCoverage(Path scraperDir, SourceList sourceList) {
+    public void checkScraperCoverage(Path scraperDir, SourceList sourceList) {
 
         List<Source> sources = sourceDAO.byList(sourceList);
 
@@ -47,7 +47,7 @@ public class ScraperService {
                     );
                 } else {
                     reporter.report(Report.of(Event.SCRAPER_NOT_FOUND)
-                            .message(source.get(Source.NAME))
+                            .message(source.get(Source.LINK))
                             .id(source.id())
                     );
                 }
