@@ -23,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class LocaleService {
@@ -289,7 +290,7 @@ public class LocaleService {
         }
 
         if(!locales.isEmpty()) {
-            source = source.put(Source.LOCALES, Lists.newArrayList(locales.stream().map(ULocale::getName)));
+            source = source.put(Source.LOCALES, locales.stream().map(ULocale::getName).collect(Collectors.toList()));
             sourceDAO.update(source);
 //                System.out.println(source);
         } else {

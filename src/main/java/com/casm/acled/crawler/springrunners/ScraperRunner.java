@@ -4,7 +4,9 @@ import com.casm.acled.configuration.ObjectMapperConfiguration;
 import com.casm.acled.crawler.reporting.Event;
 import com.casm.acled.crawler.reporting.Reporter;
 import com.casm.acled.crawler.scraper.ScraperService;
+import com.casm.acled.dao.entities.SourceDAO;
 import com.casm.acled.dao.entities.SourceListDAO;
+import com.casm.acled.entities.source.Source;
 import com.casm.acled.entities.sourcelist.SourceList;
 import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
 import org.camunda.bpm.spring.boot.starter.rest.CamundaBpmRestJerseyAutoConfiguration;
@@ -41,6 +43,9 @@ public class ScraperRunner implements CommandLineRunner {
     private SourceListDAO sourceListDAO;
 
     @Autowired
+    private SourceDAO sourceDAO;
+
+    @Autowired
     private ScraperService scraperService;
 
     @Autowired
@@ -51,11 +56,12 @@ public class ScraperRunner implements CommandLineRunner {
 
         reporter.randomRunId();
 
-        SourceList sourceList = sourceListDAO.getByUnique(SourceList.LIST_NAME, "balkans").get();
+//        SourceList sourceList = sourceListDAO.getByUnique(SourceList.LIST_NAME, "balkans").get();
+        Source source = sourceDAO.getById(3281).get();
 
-        scraperService.checkExampleURLs(scraperDir, sourceList);
+        scraperService.checkExampleURLs(scraperDir, source);
 
-        reporter.getRunReports(Event.SCRAPER_NOT_FOUND).stream().forEach(r -> logger.info(r.toString()));
+        reporter.getRunReports().stream().forEach(r -> logger.info(r.toString()));
     }
 
     public static void main(String[] args) {

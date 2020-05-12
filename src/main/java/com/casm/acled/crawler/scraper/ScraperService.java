@@ -59,13 +59,16 @@ public class ScraperService {
         for(Source source : sources) {
             if(Util.isScrapable(scraperDir, source)) {
 
-                String id = Util.getID(source);
-
-                ACLEDScraper scraper = ACLEDScraper.load(scraperDir.resolve(id), source, reporter);
-
-                checkExampleURLs(scraper, source);
+               checkExampleURLs(scraperDir, source);
             }
         }
+    }
+
+    public void checkExampleURLs(Path scraperDir, Source source) {
+        String id = Util.getID(source);
+
+        ACLEDScraper scraper = ACLEDScraper.load(scraperDir.resolve(id), source, reporter);
+        checkExampleURLs(scraper, source);
     }
 
     public void checkExampleURLs(ACLEDScraper scraper, Source source) {

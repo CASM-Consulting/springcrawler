@@ -1,6 +1,7 @@
 package com.casm.acled.crawler.springrunners;
 
 import com.casm.acled.configuration.ObjectMapperConfiguration;
+import com.casm.acled.crawler.reporting.Event;
 import com.casm.acled.crawler.reporting.Reporter;
 import com.casm.acled.crawler.spring.CrawlService;
 import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
@@ -79,6 +80,9 @@ public class CrawlerServiceRunner implements CommandLineRunner {
         reporter.randomRunId();
 
         collectExamples(args);
+
+        reporter.getRunReports().stream().forEach(r -> logger.info(r.toString()));
+
     }
 
     public static void main(String[] args) {
