@@ -5,6 +5,7 @@ import com.norconex.commons.lang.xml.EnhancedXMLStreamWriter;
 import com.norconex.importer.doc.ImporterMetadata;
 import com.norconex.importer.handler.ImporterHandlerException;
 import com.norconex.importer.handler.filter.AbstractDocumentFilter;
+import com.norconex.importer.handler.filter.OnMatch;
 import org.apache.commons.configuration.XMLConfiguration;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.analysis.Analyzer;
@@ -21,7 +22,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 
-public class KeywordFilter extends AbstractDocumentFilter {
+public class ExcludingKeywordFilter extends AbstractDocumentFilter {
 
     private String queryConfig;
     private String field;
@@ -30,11 +31,10 @@ public class KeywordFilter extends AbstractDocumentFilter {
     private final Query query;
 
 
-    public KeywordFilter(String field, List<String> queryConfig) {
-        if(queryConfig == null) {
-            queryConfig = Util.KEYWORDS_LUCENE;
-        }
-        this.queryConfig = StringUtils.join(queryConfig," ");
+    public ExcludingKeywordFilter(String field, String queryConfig) {
+        setOnMatch(OnMatch.EXCLUDE);
+
+        this.queryConfig = queryConfig;
         this.field = field;
 
         analyzer = new SimpleAnalyzer();
@@ -69,10 +69,10 @@ public class KeywordFilter extends AbstractDocumentFilter {
             String strVal = Objects.toString(value, StringUtils.EMPTY);
 
             if(isMatched(strVal)) {
-                return true;
+                return false;
             }
         }
-        return false;
+        return true;
     }
 
     private void setField(String field) {

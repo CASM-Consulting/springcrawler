@@ -4,16 +4,15 @@ import com.casm.acled.crawler.management.NorconexConfiguration;
 import com.casm.acled.crawler.scraper.*;
 import com.casm.acled.crawler.reporting.Reporter;
 import com.casm.acled.crawler.scraper.dates.CompositeDateParser;
-import com.casm.acled.crawler.scraper.dates.CustomDateMetadataFilter;
+import com.casm.acled.crawler.scraper.dates.ExcludingCustomDateMetadataFilter;
 import com.casm.acled.crawler.scraper.dates.DateParser;
-import com.casm.acled.crawler.scraper.keywords.KeywordFilter;
+import com.casm.acled.crawler.scraper.keywords.ExcludingKeywordFilter;
 import com.casm.acled.crawler.util.Util;
 import com.casm.acled.entities.source.Source;
 import com.casm.acled.entities.sourcelist.SourceList;
 import com.ibm.icu.util.ULocale;
 import com.norconex.collector.http.HttpCollector;
 import com.norconex.importer.handler.filter.AbstractDocumentFilter;
-import com.norconex.importer.handler.filter.IDocumentFilter;
 import com.norconex.importer.handler.filter.OnMatch;
 import com.norconex.importer.handler.filter.impl.DateMetadataFilter;
 import com.norconex.importer.handler.filter.impl.EmptyMetadataFilter;
@@ -65,17 +64,19 @@ public class Crawl {
         importer.setCollectorSupplier(collectorSupplier);
 
         //LOOK AT THIS !!!
-        importer.setMaxArticles(10);
+//        importer.setMaxArticles(10);
 
         config = new NorconexConfiguration(CACHE_DIR.resolve(cachePath));
+
+        List<AbstractDocumentFilter> filters = new ArrayList<>();
+        filters.add(new AcceptFilter());
 
         EmptyMetadataFilter emptyArticle = new EmptyMetadataFilter(OnMatch.EXCLUDE,
                 ScraperFields.SCRAPED_ARTICLE,
                 ScraperFields.SCRAPED_DATE);
 
-        config.addFilter(emptyArticle);
+        filters.add(emptyArticle);
 
-        List<AbstractDocumentFilter> filters = new ArrayList<>();
         if(from != null && to != null ) {
 
             ZoneId zoneId = ZoneId.of(source.get(Source.TIMEZONE));
@@ -90,16 +91,11 @@ public class Crawl {
 
         if(!skipKeywords) {
 
-            KeywordFilter keywordFilter = keywordFilter(sourceList, source);
+            ExcludingKeywordFilter keywordFilter = keywordFilter(sourceList, source);
             filters.add(keywordFilter);
         }
 
         filters.forEach(config::addFilter);
-
-        if(filters.isEmpty()) {
-            config.addFilter(new AcceptFilter());
-        }
-
 
         String[] startURL =((String) source.get(Source.LINK)).split(",");
 
@@ -117,11 +113,11 @@ public class Crawl {
         config.crawler().setPostImportProcessors(importer);
     }
 
-    private KeywordFilter keywordFilter(SourceList sourceList, Source source) {
+    private ExcludingKeywordFilter keywordFilter(SourceList sourceList, Source source) {
 
-        List<String> query = resolveQuery(sourceList, source);
+        String query = resolveQuery(sourceList, source);
 
-        KeywordFilter keywordFilter = new KeywordFilter(ScraperFields.SCRAPED_ARTICLE, query);
+        ExcludingKeywordFilter keywordFilter = new ExcludingKeywordFilter(ScraperFields.SCRAPED_ARTICLE, query);
 
         return keywordFilter;
     }
@@ -132,7 +128,7 @@ public class Crawl {
 
         DateParser dateParser = CompositeDateParser.of(dateFormatSpecs);
 
-        DateMetadataFilter dateMetadataFilter = new CustomDateMetadataFilter(source, ScraperFields.SCRAPED_DATE, dateParser, reporter);
+        DateMetadataFilter dateMetadataFilter = new ExcludingCustomDateMetadataFilter(source, ScraperFields.SCRAPED_DATE, dateParser, reporter);
 
         dateMetadataFilter.addCondition(DateMetadataFilter.Operator.GREATER_THAN, Date.from(from.toInstant()));
         dateMetadataFilter.addCondition(DateMetadataFilter.Operator.LOWER_EQUAL, Date.from(to.toInstant()));
@@ -161,8 +157,11 @@ public class Crawl {
         return sb.toString();
     }
 
-    private List<String> resolveQuery(SourceList sourceList, Source list) {
-        return Util.KEYWORDS_LUCENE;
+    private String resolveQuery(SourceList sourceList, Source list) {
+        
+        String query = sourceList.get(SourceList.KEYWORDS);
+
+        return query;
     }
 
     public void run() {

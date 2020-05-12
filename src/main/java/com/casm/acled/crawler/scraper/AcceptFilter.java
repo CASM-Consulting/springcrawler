@@ -29,8 +29,7 @@ public class AcceptFilter extends AbstractDocumentFilter {
         setOnMatch(OnMatch.INCLUDE);
     }
     @Override
-    protected boolean isDocumentMatched(String reference, InputStream input, ImporterMetadata metadata, boolean parsed) throws ImporterHandlerException {
-
+    protected boolean isDocumentMatched(String reference, InputStream input, ImporterMetadata metadata, boolean parsed) {
         return true;
     }
 

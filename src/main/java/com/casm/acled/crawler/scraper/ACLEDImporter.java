@@ -1,8 +1,7 @@
 package com.casm.acled.crawler.scraper;
 
 // casm
-import com.casm.acled.crawler.scraper.dates.CustomDateMetadataFilter;
-import com.casm.acled.dao.entities.SourceDAO;
+import com.casm.acled.crawler.scraper.dates.ExcludingCustomDateMetadataFilter;
 import com.casm.acled.dao.entities.SourceListDAO;
 import com.casm.acled.entities.EntityVersions;
 import com.casm.acled.entities.article.Article;
@@ -31,7 +30,6 @@ import uk.ac.susx.tag.norconex.jobqueuemanager.CrawlerArguments;
 // java
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Optional;
 import java.util.function.Supplier;
 
 import static com.casm.acled.crawler.util.Util.metadataGet;
@@ -58,6 +56,7 @@ public class ACLEDImporter implements IHttpDocumentProcessor {
         this.source = source;
         this.sourceListDAO = sourceListDAO;
         this.sourceRequired = sourceRequired;
+        maxArticles = null;
     }
 
     public void setCollectorSupplier(Supplier<HttpCollector> collectorSupplier) {
@@ -124,7 +123,7 @@ public class ACLEDImporter implements IHttpDocumentProcessor {
                     .put(Article.URL, url);
 
             if(standardDate != null) {
-                LocalDateTime parsedDate = CustomDateMetadataFilter.toDate(standardDate);
+                LocalDateTime parsedDate = ExcludingCustomDateMetadataFilter.toDate(standardDate);
                 article = article.put(Article.DATE, parsedDate.toLocalDate());
             }
 
