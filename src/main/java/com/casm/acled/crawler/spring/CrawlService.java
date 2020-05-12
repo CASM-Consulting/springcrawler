@@ -38,6 +38,29 @@ public class CrawlService {
         run(sourceListId, sourceId, null, null, skipKeywords);
     }
 
+
+    public void collectExamples(int sourceListId, int sourceId) {
+
+        Optional<SourceList> maybesSourceList = sourceListDAO.getById(sourceListId);
+        Optional<Source> maybeSource = sourceDAO.getById(sourceId);
+
+        System.out.println(sourceListId);
+        System.out.println(sourceId);
+
+        if(maybesSourceList.isPresent() && maybeSource.isPresent()) {
+
+            ACLEDImporter importer = new ACLEDImporter(articleDAO, maybeSource.get(), sourceListDAO, true);
+            importer.setMaxArticles(10);
+
+            Crawl crawl = new Crawl(maybesSourceList.get(), maybeSource.get(), null, null, true, importer, reporter);
+            crawl.getConfig().crawler().setMaxDepth(3);
+            crawl.run();
+        } else {
+
+            throw new RuntimeException("source or source list not found!");
+        }
+    }
+
     public void run(int sourceListId, int sourceId, LocalDate from, LocalDate to, boolean skipKeywords) {
 
         Optional<SourceList> maybesSourceList = sourceListDAO.getById(sourceListId);

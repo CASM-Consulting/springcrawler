@@ -289,7 +289,7 @@ public class LocaleService {
         }
 
         if(!locales.isEmpty()) {
-            source = source.put(Source.LOCALES, Lists.newArrayList(locales));
+            source = source.put(Source.LOCALES, Lists.newArrayList(locales.stream().map(ULocale::getName)));
             sourceDAO.update(source);
 //                System.out.println(source);
         } else {

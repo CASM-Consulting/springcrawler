@@ -39,11 +39,7 @@ public class CrawlerServiceRunner implements CommandLineRunner {
     @Autowired
     private Reporter reporter;
 
-    @Override
-    public void run(String... args) throws Exception {
-
-        reporter.randomRunId();
-
+    private void crawl(String[] args) {
         int sourceListId = Integer.parseInt(args[0]);
         int sourceId = Integer.parseInt(args[1]);
 
@@ -67,6 +63,22 @@ public class CrawlerServiceRunner implements CommandLineRunner {
         } else {
             crawlService.run(sourceListId, sourceId, skipKeywords);
         }
+    }
+
+
+    private void collectExamples(String[] args) {
+        int sourceListId = Integer.parseInt(args[0]);
+        int sourceId = Integer.parseInt(args[1]);
+
+        crawlService.collectExamples(sourceListId, sourceId);
+    }
+
+    @Override
+    public void run(String... args) throws Exception {
+
+        reporter.randomRunId();
+
+        collectExamples(args);
     }
 
     public static void main(String[] args) {

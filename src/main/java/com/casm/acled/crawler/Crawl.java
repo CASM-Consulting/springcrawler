@@ -113,6 +113,10 @@ public class Crawl {
         config.crawler().setPostImportProcessors(importer);
     }
 
+    public NorconexConfiguration getConfig() {
+        return config;
+    }
+
     private ExcludingKeywordFilter keywordFilter(SourceList sourceList, Source source) {
 
         String query = resolveQuery(sourceList, source);
@@ -136,10 +140,10 @@ public class Crawl {
         return dateMetadataFilter;
     }
 
-    private ULocale getLocale(Source source) {
-        ULocale locale = new ULocale(source.get(Source.LOCALE));
-        return locale;
-    }
+//    private ULocale getLocale(Source source) {
+//        ULocale locale = new ULocale(source.get(Source.LOCALE));
+//        return locale;
+//    }
 
     private void applySourceIdiosyncrasies(Source source, NorconexConfiguration config){
 //        if(source.get(Source.))

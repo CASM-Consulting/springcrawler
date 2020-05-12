@@ -1,6 +1,7 @@
 package com.casm.acled.crawler.springrunners;
 
 import com.casm.acled.configuration.ObjectMapperConfiguration;
+import com.casm.acled.crawler.reporting.Event;
 import com.casm.acled.crawler.reporting.Report;
 import com.casm.acled.crawler.reporting.Reporter;
 import com.casm.acled.crawler.scraper.dates.DateParser;
@@ -102,7 +103,11 @@ public class DateTimeServiceRunner implements CommandLineRunner {
 
 //        attemptSourceListExistingArticles("balkans");
 
-        dateTimeService.attemptDateTimeParse(sourceDAO.getById(2254).get(), DateParsers.ALL, getFromArticles);
+        reporter.randomRunId();
+
+        dateTimeService.attemptDateTimeParse(sourceDAO.getById(1626).get(), DateParsers.ALL, getFromArticles);
+
+        reporter.getRunReports().stream().forEach(r -> logger.info(r.toString()));
 
 //        attemptSource(1263, );
     }
