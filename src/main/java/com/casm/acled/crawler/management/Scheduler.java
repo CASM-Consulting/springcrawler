@@ -6,9 +6,6 @@ import com.casm.acled.dao.entities.SourceListDAO;
 import com.casm.acled.entities.source.Source;
 import com.casm.acled.entities.sourcelist.SourceList;
 import com.enioka.jqm.api.*;
-import com.norconex.jef4.suite.JobSuite;
-import org.checkerframework.checker.units.qual.A;
-import org.docx4j.wml.R;
 import org.quartz.CronExpression;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,8 +47,6 @@ public class Scheduler implements Runnable {
             throw new RuntimeException(e);
         }
     }
-
-
 
     private void ensureSchedules() {
 
@@ -191,7 +186,7 @@ public class Scheduler implements Runnable {
 
         JobRequest jobRequest = JobRequest.create("","");
 
-        jobRequest.addParameter( CrawlRun.SOURCE_ID, Integer.toString( source.id() ) );
+        jobRequest.addParameter( Crawl.SOURCE_ID, Integer.toString( source.id() ) );
 
         int id = client.enqueue(jobRequest);
 

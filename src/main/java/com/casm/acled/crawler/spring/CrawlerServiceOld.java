@@ -1,6 +1,7 @@
 package com.casm.acled.crawler.spring;
 
 import com.casm.acled.crawler.*;
+import com.casm.acled.crawler.reporting.Reporter;
 import com.casm.acled.crawler.scraper.ACLEDScraper;
 import com.casm.acled.crawler.utils.Util;
 import com.casm.acled.dao.entities.ArticleDAO;
@@ -16,7 +17,6 @@ import com.norconex.importer.handler.filter.OnMatch;
 import com.norconex.importer.handler.filter.impl.EmptyMetadataFilter;
 import com.norconex.importer.handler.filter.impl.RegexMetadataFilter;
 import com.norconex.importer.handler.tagger.impl.KeepOnlyTagger;
-import org.apache.sis.internal.jaxb.metadata.EX_Extent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,7 +29,6 @@ import uk.ac.susx.tag.norconex.utils.WebsiteReport;
 import java.io.File;
 import java.io.IOException;
 import java.net.HttpURLConnection;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
@@ -37,9 +36,9 @@ import java.util.*;
 
 
 @Component
-public class CrawlerService {
+public class CrawlerServiceOld {
 
-    protected static final Logger logger = LoggerFactory.getLogger(CrawlerService.class);
+    protected static final Logger logger = LoggerFactory.getLogger(CrawlerServiceOld.class);
 
     @Autowired
     private ArticleDAO articleDAO;
@@ -47,7 +46,8 @@ public class CrawlerService {
     private SourceDAO sourceDAO;
     @Autowired
     private SourceListDAO sourceListDAO;
-
+    @Autowired
+    private Reporter reporter;
 
     private String ensureURL(String url) {
         HttpURLConnection con = null;
@@ -117,7 +117,7 @@ public class CrawlerService {
 
             ACLEDScraper scraper = resolveScraper(scrapersPath, explicitScraper, seed);
 
-            config.setPreImportProcessors(scraper,new ACLEDMetadataPreProcessor(metadata));
+//            config.setPreImportProcessors(scraper,new ACLEDMetadataPreProcessor(metadata));
 
             // Add the crawler-to-spring-magic post-processor
             config.setPostImportProcessors(new ACLEDImporter(articleDAO, sourceDAO, sourceListDAO,false));
@@ -145,7 +145,7 @@ public class CrawlerService {
             throw new ScraperNotFoundException(id);
         }
 
-        scraper = ACLEDScraper.load(path);
+        scraper = ACLEDScraper.load(path,null, reporter);
         return scraper;
     }
 

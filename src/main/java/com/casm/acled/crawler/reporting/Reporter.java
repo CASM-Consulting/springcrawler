@@ -1,5 +1,6 @@
 package com.casm.acled.crawler.reporting;
 
+import com.casm.acled.dao.entities.CrawlReportDAO;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -8,49 +9,16 @@ import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-@Component
-public class Reporter {
+public interface Reporter {
 
-    private final List<Report> reports;
 
-    public Reporter() {
-        reports = new ArrayList<>();
-    }
+    Reporter report(Report report);
 
-    public Reporter report(Report report) {
-        reports.add(report);
-        return this;
-    }
+    Reporter report(Collection<Report> reports);
 
-    public Reporter report(Collection<Report> reports) {
-        this.reports.addAll(reports);
-        return this;
-    }
+    List<Report> reports();
 
-    private static Reporter reporter;
-
-    public static synchronized Reporter get() {
-        if(reporter == null) {
-            reporter = new Reporter();
-        }
-        return reporter;
-    }
-
-    public List<Report> reports() {
-        return reports;
-    }
-
-    public Reporter reports(Predicate<Report> filter) {
-        return new Reporter().report(reports.stream().filter(filter).collect(Collectors.toList()));
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        for(Report report : reports){
-            sb.append(report.toString());
-            sb.append(String.format("%n"));
-        }
-        return sb.toString();
-    }
+//    public Reporter reports(Predicate<Report> filter) {
+//        return new Reporter().report(reports.stream().filter(filter).collect(Collectors.toList()));
+//    }
 }

@@ -2,6 +2,7 @@ package com.casm.acled.crawler.scraper.dates;
 
 import com.google.common.collect.ImmutableList;
 import com.ibm.icu.text.SimpleDateFormat;
+import com.ibm.icu.util.ULocale;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -10,7 +11,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-class CompositeDateParser implements DateParser {
+public class CompositeDateParser implements DateParser {
 
     private final List<DateParser> parsers;
 
@@ -42,12 +43,12 @@ class CompositeDateParser implements DateParser {
             String protocol = formatSpec.substring(0, n);
             String spec = formatSpec.substring(n+1);
             switch (protocol) {
-                case "ISO": {
+                case DateFormatParser.PROTOCOL: {
                     DateFormatParser dfp = new DateFormatParser(spec);
                     parsers.add(dfp);
                     break;
                 }
-                case "NL":
+                case NaturalLanguageDateParser.PROTOCOL:
                     NaturalLanguageDateParser nldp = new NaturalLanguageDateParser(spec);
                     parsers.add(nldp);
                     break;
@@ -61,7 +62,6 @@ class CompositeDateParser implements DateParser {
 
         return dateParser;
     }
-
 
     @Override
     public List<String> getFormatSpec() {

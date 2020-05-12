@@ -7,7 +7,7 @@ import com.casm.acled.crawler.reporting.ReportingException;
 import com.casm.acled.dao.entities.DeskDAO;
 import com.casm.acled.dao.entities.SourceDAO;
 import com.casm.acled.dao.entities.SourceListDAO;
-import com.casm.acled.entities.region.Desk;
+import com.casm.acled.entities.desk.Desk;
 import com.casm.acled.entities.source.Source;
 import com.casm.acled.entities.sourcelist.SourceList;
 import com.google.common.collect.ImmutableList;
@@ -27,10 +27,9 @@ public class LocaleService {
 
     protected static final Logger logger = LoggerFactory.getLogger(LocaleService.class);
 
-    private final Reporter reporting;
-
     private final Map<String, Set<TimeZone>> timeZonesByCountry;
     private final Map<String, Set<ULocale>> localesByCountry;
+    private final Map<String, Set<ULocale>> localesByLanguage;
 
     @Autowired
     private DeskDAO deskDAO;
@@ -38,6 +37,8 @@ public class LocaleService {
     private SourceListDAO sourceListDAO;
     @Autowired
     private SourceDAO sourceDAO;
+    @Autowired
+    private Reporter reporting;
 
     private static final Map<String,String> countryMap = ImmutableMap.of(
             "Palestine", "Palestinian Territories"
@@ -46,8 +47,7 @@ public class LocaleService {
     public LocaleService() {
         timeZonesByCountry = timeZonesByCountry();
         localesByCountry = localesByCountry();
-        reporting = Reporter.get();
-
+        localesByLanguage = localesByLanguage();
     }
 
     private static class ComparableTimeZone {
@@ -95,7 +95,7 @@ public class LocaleService {
         return maybeTimeZone;
     }
 
-    public String getCountry(Source  source){
+    public String getCountry(Source source){
         String country = source.get(Source.COUNTRY);
         if(countryMap.containsKey(country)) {
             country = countryMap.get(country);
@@ -104,7 +104,7 @@ public class LocaleService {
     }
 
 
-    public Optional<ULocale> determineLocale(String country) {
+    public Optional<ULocale> determineLocaleByCountry(String country) {
         Optional<ULocale> maybeLocale = Optional.empty();
 
         if(localesByCountry.containsKey(country)) {
@@ -127,27 +127,61 @@ public class LocaleService {
         return maybeLocale;
     }
 
+    public Optional<ULocale> determineLocaleByLanguage(String language) {
+        Optional<ULocale> maybeLocale = Optional.empty();
+
+        if(localesByLanguage.containsKey(language)) {
+
+            Set<ULocale> possibleLocales = localesByLanguage.get(language);
+
+            if(possibleLocales.size()==1) {
+                ULocale locale = ImmutableList.copyOf(possibleLocales).get(0);
+                maybeLocale = Optional.of(locale);
+            } else {
+//                System.out.println(language);
+//                System.out.println(possibleLocales);
+
+                throw new ReportingException(Report.of(Event.LOCALE_NOT_FOUND).message("language %s - possible %s", language, possibleLocales.size()));
+            }
+        } else {
+            reporting.report(Report.of(Event.LANGUAGE_NOT_FOUND).message("language %s", language));
+        }
+
+        return maybeLocale;
+    }
+
     public Optional<ULocale> determineLocale(Source source) {
-
+        Optional<ULocale> maybeLocale;
         String country = getCountry(source);
-        try {
+        String language = source.get(Source.LANGUAGE);
 
-            return determineLocale(country);
+        try {
+            maybeLocale = determineLocaleByLanguage(language);
         } catch (ReportingException e) {
             reporting.report(e.get().id(source.id()).type(Source.class.getName()));
             return Optional.empty();
         }
+
+        if(!maybeLocale.isPresent()) {
+            try {
+                maybeLocale = determineLocaleByCountry(country);
+            } catch (ReportingException e) {
+                reporting.report(e.get().id(source.id()).type(Source.class.getName()));
+                return Optional.empty();
+            }
+        }
+
+        return maybeLocale;
     }
 
     public Optional<TimeZone> determineTimeZone(Source source) {
 
-        Reporter reporting = Reporter.get();
-
         Optional<TimeZone> maybeTimezone = Optional.empty();
 
         String country = getCountry(source);
-
-        if(timeZonesByCountry.containsKey(country)) {
+        if(country == null) {
+            reporting.report(Report.of(Event.COUNTRY_NOT_FOUND,  source.id(), "Source","%s - %s", source.get(Source.NAME), source.get(Source.COUNTRY)));
+        } else if(timeZonesByCountry.containsKey(country)) {
 
             Set<TimeZone> possibleZones = timeZonesByCountry.get(country);
 
@@ -169,6 +203,24 @@ public class LocaleService {
         }
 
         return maybeTimezone;
+    }
+
+    public static Map<String, Set<ULocale>> localesByLanguage() {
+        Map<String, Set<ULocale>> availableLocales = new HashMap<>();
+
+        for (ULocale locale : ULocale.getAvailableLocales()) {
+            final String language = locale.getDisplayLanguage();
+
+            Set<ULocale> locales = availableLocales.get(language);
+
+            if(locales == null) {
+                locales = new HashSet<>();
+                availableLocales.put(language, locales);
+            }
+
+            locales.add(locale);
+        }
+        return availableLocales;
     }
 
     public static Map<String, Set<ULocale>> localesByCountry() {
@@ -216,8 +268,7 @@ public class LocaleService {
 
             // Find all timezones for that country (code) using ICU4J
 
-            for (String id :
-                    com.ibm.icu.util.TimeZone.getAvailableIDs(countryCode))
+            for (String id : com.ibm.icu.util.TimeZone.getAvailableIDs(countryCode))
             {
                 // Add timezone to result map
 
@@ -229,28 +280,34 @@ public class LocaleService {
 
     public void determineLocalesAndTimeZones(List<Source> sources) {
 
-        LocaleService dph = new LocaleService();
         for(Source source : sources) {
-            Optional<TimeZone> maybeTimeZone = dph.determineTimeZone(source);
-            Optional<ULocale> maybeLocale = dph.determineLocale(source);
+            Optional<TimeZone> maybeTimeZone = determineTimeZone(source);
+            Optional<ULocale> maybeLocale = determineLocale(source);
 
-            if(!maybeTimeZone.isPresent()) {
-//                System.out.println(source);
+            if(maybeTimeZone.isPresent()) {
+                source = source.put(Source.TIMEZONE, maybeTimeZone.get().getID());
+                sourceDAO.update(source);
+            } else {
+                reporting.report(Report.of(Event.TIMEZONE_NOT_FOUND, source.id(), Source.class.getName()).message(getCountry(source)));
             }
 
-            if(!maybeLocale.isPresent()) {
+            if(maybeLocale.isPresent()) {
+                source = source.put(Source.LOCALE, maybeLocale.get().getName());
+                sourceDAO.update(source);
 //                System.out.println(source);
+            } else {
+                reporting.report(Report.of(Event.LOCALE_NOT_FOUND, source.id(), Source.class.getName()).message(getCountry(source)));
             }
+
         }
     }
 
-    private void determineSourceLocalesAndListTimeZones(String listName) {
+    public void determineSourceLocalesAndListTimeZones(String listName) {
 
         SourceList sourceList = sourceListDAO.getBy(SourceList.LIST_NAME, listName).get(0);
         List<Source> sources = sourceDAO.byList(sourceList);
-        LocaleService dph = new LocaleService();
 
-        dph.determineLocalesAndTimeZones(sources);
+        determineLocalesAndTimeZones(sources);
     }
 
     public void determineLocalesAndTimeZones() {
@@ -263,7 +320,5 @@ public class LocaleService {
                 determineSourceLocalesAndListTimeZones(list.get(SourceList.LIST_NAME));
             }
         }
-
-        Reporter reporting = Reporter.get();
     }
 }

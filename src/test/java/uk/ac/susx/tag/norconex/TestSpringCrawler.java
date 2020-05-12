@@ -1,6 +1,6 @@
 package uk.ac.susx.tag.norconex;
 
-import com.casm.acled.crawler.springcli.CLIRunner;
+import com.casm.acled.crawler.springrunners.CLIRunner;
 import org.junit.Test;
 import org.springframework.boot.Banner;
 import org.springframework.boot.SpringApplication;

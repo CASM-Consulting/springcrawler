@@ -8,12 +8,15 @@ import com.casm.acled.crawler.scraper.dates.*;
 import com.casm.acled.dao.entities.ArticleDAO;
 import com.casm.acled.dao.entities.SourceDAO;
 import com.casm.acled.dao.entities.SourceListDAO;
+import com.casm.acled.dao.entities.SourceSourceListDAO;
+import com.casm.acled.entities.EntityVersions;
 import com.casm.acled.entities.article.Article;
 import com.casm.acled.entities.source.Source;
 import com.casm.acled.entities.sourcelist.SourceList;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.Files;
+import com.opencsv.CSVReader;
 import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
 import org.camunda.bpm.spring.boot.starter.rest.CamundaBpmRestJerseyAutoConfiguration;
 import org.json.JSONObject;
@@ -31,9 +34,12 @@ import org.springframework.context.annotation.Import;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Reader;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.nio.charset.Charset;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -46,12 +52,13 @@ import java.util.stream.Collectors;
 // We need the special object mapper, though.
 @Import(ObjectMapperConfiguration.class)
 // And we also need the DAOs.
-@ComponentScan(basePackages={"com.casm.acled.dao"})
+@ComponentScan(basePackages={"com.casm.acled.dao", "com.casm.acled.crawler.spring"})
 public class Util implements CommandLineRunner {
     protected static final Logger logger = LoggerFactory.getLogger(Util.class);
     // keyword query specific to potential articles of interest to ACLED
 //    public static String KEYWORDS2 = ".+(?:kill|killed|massacre|death|\\bdied\\b|\\bdead\\b|\\bbomb\\b|\\bbombed\\b|\\bbombing\\b|\\brebel\\b|\\battack\\b|\\battacked\\b|\\briot\\b|\\bbattle\\b|\\bprotest\\b|\\bclash\\b|\\bdemonstration\\b|\\bstrike\\b|\\bwound\\b|\\binjure\\b|\\bcasualty\\b|\\bdisplace\\b|\\bunrest\\b|\\bcasualties\\b|\\bvigilante\\b|\\btorture\\b|\\bmarch\\b|\\brape\\b).+";
     public static String KEYWORDS = ".*\\b(?:kill|massacre|death|died|dead|bomb|bombed|bombing|rebel|attack|attacked|riot|battle|protest|clash|demonstration|strike|wound|injure|casualty|displace|unrest|casualties|vigilante|torture|march|rape)\\b.*";
+    public static List<String> KEYWORDS_LUCENE = ImmutableList.copyOf("kill massacre death died dead bomb bombed bombing rebel attack attacked riot battle protest clash demonstration strike wound injure casualty displace unrest casualties vigilante torture march rape".split(" "));
 //    private static final String matchingKeywords = "\\b(?:kill|massacre|death|died|dead|bomb|bombed|bombing|rebel|attack|attacked|riot|battle|protest|clash|demonstration|strike|wound|injure|casualty|displace|unrest|casualties|vigilante|torture|march|rape)\\b";
 
     @Autowired
@@ -59,6 +66,9 @@ public class Util implements CommandLineRunner {
 
     @Autowired
     private SourceListDAO sourceListDAO;
+
+    @Autowired
+    private SourceSourceListDAO sourceSourceListDAO;
 
     @Autowired
     private SourceDAO sourceDAO;
@@ -232,10 +242,90 @@ public class Util implements CommandLineRunner {
         }
     }
 
+
+
+    private void insertDummySource() {
+        String link = "http://www.0.com:5000";
+        Source source = EntityVersions.get(Source.class).current()
+                .put(Source.LINK, link)
+                .put(Source.NAME, "fake net")
+                .put(Source.STANDARD_NAME, "fake net")
+                .put(Source.COUNTRY, "United Kingdom")
+                ;
+
+        source = sourceDAO.create(source);
+
+        SourceList sourceList = EntityVersions.get(SourceList.class).current()
+                .put(SourceList.LIST_NAME, "fake list");
+
+        sourceList = sourceListDAO.create(sourceList);
+
+        sourceSourceListDAO.link(source, sourceList);
+
+    }
+
+    private void updateDummySource() {
+        Source source = sourceDAO.getByUnique(Source.STANDARD_NAME, "fake net").get();
+
+        source = source.put(Source.DATE_FORMAT, ImmutableList.of("ISO:/yyyy-MM-dd/en_GB"));
+
+        sourceDAO.update(source);
+    }
+
+
+    private List<Source> createSources(Path seedsPath) throws IOException {
+        try (
+            Reader reader = java.nio.file.Files.newBufferedReader(seedsPath);
+            CSVReader csvReader = new CSVReader(reader);
+        ) {
+            List<Source> sources = new ArrayList<>();
+            Iterator<String[]> itr = csvReader.iterator();
+            itr.next();
+            while(itr.hasNext()) {
+                String[] row = itr.next();
+
+                String frequency = row[4];
+
+                if(frequency.equals("Weekly")) {
+                    Source source = EntityVersions.get(Source.class).current()
+                            .put(Source.STANDARD_NAME, row[0])
+                            .put(Source.LINK, row[1])
+//                            .put(Source.COUNTRY, row[2])
+                            .put(Source.LANGUAGE, row[3])
+                            ;
+                    try {
+                        sources.add(sourceDAO.create(source));
+//                    System.out.println(source);
+                    } catch (RuntimeException e) {
+                        System.out.println(e.getMessage());
+                        //already exists?
+                    }
+                }
+            }
+            return sources;
+        }
+    }
+
+    public SourceList createSourceList(String name) {
+        SourceList sourceList = EntityVersions.get(SourceList.class).current()
+                .put(SourceList.LIST_NAME, name);
+        return sourceListDAO.create(sourceList);
+    }
+
+    public void link(List<Source> sources, SourceList sourceList) {
+        for(Source source : sources) {
+            sourceSourceListDAO.link(source, sourceList);
+        }
+    }
+
     public void run(String... args) throws Exception {
-        deleteNonMatchingArticles();
-        recoverArticleDates();
-        linkExisting();
+//        deleteNonMatchingArticles();
+//        recoverArticleDates();
+//        linkExisting();
+
+        List<Source> sources = createSources(Paths.get("/home/sw206/git/acledcamundaspringboot/data/europe/balkans-source-list.csv"));
+        SourceList sourceList = createSourceList("balkans");
+        link(sources, sourceList);
     }
 
     public static void main(String[] args) {

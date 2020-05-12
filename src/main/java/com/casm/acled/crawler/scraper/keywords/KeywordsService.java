@@ -5,7 +5,7 @@ import com.casm.acled.dao.entities.DeskDAO;
 import com.casm.acled.dao.entities.SourceDAO;
 import com.casm.acled.dao.entities.SourceListDAO;
 import com.casm.acled.dao.entities.SourceSourceListDAO;
-import com.casm.acled.entities.region.Desk;
+import com.casm.acled.entities.desk.Desk;
 import com.casm.acled.entities.source.Source;
 import com.casm.acled.entities.sourcelist.SourceList;
 import com.casm.acled.entities.sourcesourcelist.SourceSourceList;
@@ -58,7 +58,6 @@ public class KeywordsService {
             }
         }
 
-        Reporter reporting = Reporter.get();
     }
 
     private Set<String> determineKeywords(SourceList sourceList, SourceSourceList link, Source source) {

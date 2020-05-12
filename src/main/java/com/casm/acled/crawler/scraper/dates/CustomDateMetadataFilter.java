@@ -4,6 +4,7 @@ import com.casm.acled.crawler.reporting.Event;
 import com.casm.acled.crawler.reporting.Report;
 import com.casm.acled.crawler.reporting.Reporter;
 import com.casm.acled.crawler.scraper.ScraperFields;
+import com.casm.acled.entities.source.Source;
 import com.google.common.collect.ImmutableList;
 import com.norconex.importer.doc.ImporterMetadata;
 import com.norconex.importer.handler.ImporterHandlerException;
@@ -20,11 +21,15 @@ public class CustomDateMetadataFilter extends DateMetadataFilter {
     private final String field;
     private final DateParser dateParser;
 
-    private static String STANDARD_FORMAT = "YYYY-MM-DD HH:MM:SS ZZZ";
+    private static String STANDARD_FORMAT = "yyyy-MM-dd HH:mm:ss3";
 
     private final DateTimeFormatter dtf;
 
-    public CustomDateMetadataFilter(String field, DateParser dateParser) {
+    private final Reporter reporter;
+
+    private final Source source;
+
+    public CustomDateMetadataFilter(Source source, String field, DateParser dateParser, Reporter reporter) {
         super();
         setFormat(STANDARD_FORMAT);
         setField(ScraperFields.STANDARD_DATE);
@@ -33,6 +38,9 @@ public class CustomDateMetadataFilter extends DateMetadataFilter {
         this.field = field;
 
         dtf = DateTimeFormatter.ofPattern(STANDARD_FORMAT);
+
+        this.reporter = reporter;
+        this.source = source;
     }
 
     @Override
@@ -49,14 +57,14 @@ public class CustomDateMetadataFilter extends DateMetadataFilter {
 
             return super.isDocumentMatched(reference, input, metadata, parsed);
         } else {
-            Reporter reporting = new Reporter();
-            String id = "";
-            String url = "";
-            reporting.report(Report.of(Event.DATE_PARSE_FAILED, id, url));
+            reporter.report(Report.of(Event.DATE_PARSE_FAILED, source.id(), metadata.getReference()));
             return true;
         }
 
     }
 
+    public static LocalDateTime toDate(String date) {
+        return LocalDateTime.parse(date, DateTimeFormatter.ofPattern(STANDARD_FORMAT));
+    }
 
 }
