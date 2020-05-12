@@ -102,6 +102,8 @@ public class DateTimeServiceRunner implements CommandLineRunner {
 
 //        attemptSourceListExistingArticles("balkans");
 
+        dateTimeService.attemptDateTimeParse(sourceDAO.getById(2254).get(), DateParsers.ALL, getFromArticles);
+
 //        attemptSource(1263, );
     }
 

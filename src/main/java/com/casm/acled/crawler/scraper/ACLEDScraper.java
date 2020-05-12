@@ -140,7 +140,7 @@ public class ACLEDScraper implements IHttpDocumentProcessor {
                 } else {
                     Report report = Report.of(Event.SCRAPE_NO_ARTICLE)
                             .type(Article.class)
-                            .message(doc.getMetadata().getDocumentUrl())
+                            .message(doc.getReference())
                             .id(source.id());
                     reporter.report(report);
                 }
@@ -150,7 +150,7 @@ public class ACLEDScraper implements IHttpDocumentProcessor {
                 } else {
                     Report report = Report.of(Event.SCRAPE_NO_TITLE)
                             .type(Article.class)
-                            .message(doc.getMetadata().getDocumentUrl())
+                            .message(doc.getReference())
                             .id(source.id());
                     reporter.report(report);
                 }
@@ -160,7 +160,7 @@ public class ACLEDScraper implements IHttpDocumentProcessor {
                 } else {
                     Report report = Report.of(Event.SCRAPE_NO_DATE)
                             .type(Article.class)
-                            .message(doc.getMetadata().getDocumentUrl())
+                            .message(doc.getReference())
                             .id(source.id());
                     reporter.report(report);
                 }
@@ -168,7 +168,7 @@ public class ACLEDScraper implements IHttpDocumentProcessor {
             } else {
                 Report report = Report.of(Event.SCRAPE_NO_RESULT)
                         .type(Article.class)
-                        .message(doc.getMetadata().getDocumentUrl())
+                        .message(doc.getReference())
                         .id(source.id());
                 reporter.report(report);
             }

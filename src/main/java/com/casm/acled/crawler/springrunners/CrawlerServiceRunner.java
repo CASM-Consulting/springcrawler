@@ -1,7 +1,7 @@
 package com.casm.acled.crawler.springrunners;
 
 import com.casm.acled.configuration.ObjectMapperConfiguration;
-import com.casm.acled.crawler.CrawlService;
+import com.casm.acled.crawler.spring.CrawlService;
 import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
 import org.camunda.bpm.spring.boot.starter.rest.CamundaBpmRestJerseyAutoConfiguration;
 import org.slf4j.Logger;

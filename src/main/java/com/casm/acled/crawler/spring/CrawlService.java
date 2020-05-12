@@ -1,4 +1,4 @@
-package com.casm.acled.crawler;
+package com.casm.acled.crawler.spring;
 
 import com.casm.acled.crawler.Crawl;
 import com.casm.acled.crawler.scraper.ACLEDImporter;

@@ -14,6 +14,7 @@ import com.casm.acled.entities.desk.Desk;
 import com.casm.acled.entities.source.Source;
 import com.casm.acled.entities.sourcelist.SourceList;
 import com.google.common.collect.ImmutableList;
+import com.ibm.icu.util.ULocale;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -101,16 +102,31 @@ public class DateTimeService {
     }
 
 
-    public void attemptDateTimeParse(Source source, List<DateParser> dateParsers, Function<Source, List<String>> exampleGetter) {
+    public boolean checkExistingPasses(Source source, Function<Source, List<String>> exampleGetter) {
+        List<String> formatSpecs = source.get(Source.DATE_FORMAT);
 
-        String url = source.get(Source.LINK);
+        if(formatSpecs != null && ! formatSpecs.isEmpty()) {
 
-        if(url == null) {
-            reporter.report(Report.of(Event.MISSING_URL, source.id(), Source.class.getName()));
-            return;
+            DateParser existing = CompositeDateParser.of(formatSpecs);
+
+            List<String> exampleDates = exampleGetter.apply(source);
+
+            boolean passed = exampleDates.size() > 0;
+            for(String date : exampleDates) {
+                Optional<LocalDateTime> maybeParsed = existing.parse(date);
+                if(!maybeParsed.isPresent()) {
+                    passed = false;
+                    break;
+                }
+            }
+
+            return passed;
+        } else {
+            return false;
         }
+    }
 
-        String id = Util.getID(url);
+    public void attemptDateTimeParse(Source source, List<DateParser> dateParsers, Function<Source, List<String>> exampleGetter) {
 
         List<String> exampleDates = exampleGetter.apply(source);
 
@@ -123,45 +139,41 @@ public class DateTimeService {
 
         Set<DateParser> passingParsers = new HashSet<>();
 
-        for(String date : exampleDates) {
+        if(!checkExistingPasses(source, exampleGetter)) {
 
-            Optional<DateParser> passingParser = Optional.empty();
+            for(String date : exampleDates) {
 
-            for(DateParser dateParser : dateParsers) {
+                Optional<DateParser> passingParser = Optional.empty();
 
-                List<String> formatSpecs = source.get(Source.DATE_FORMAT);
+                for(DateParser dateParser : dateParsers) {
 
-                if(formatSpecs == null ) {
+                    if(source.hasValue(Source.LOCALE)) {
+                        dateParser = dateParser.locale(new ULocale(source.get(Source.LOCALE)));
+                    }
+
                     Optional<LocalDateTime> maybeParsed = dateParser.parse(date);
                     if(maybeParsed.isPresent()){
-
-                        reporter.report(Report.of(Event.DATE_PARSE_SUCCESS, source.id()).message(date + StringUtils.join(formatSpecs, "<|#|>")));
+                        reporter.report(Report.of(Event.DATE_PARSE_SUCCESS, source.id()).message(date + StringUtils.join(dateParser.getFormatSpec(), "<|#|>")));
                         passingParser = Optional.of(dateParser);
                         continue;
-                    } else {
-//                        reporter.report(Report.of(Event.DATE_PARSE_FAILED, source.id()).message(date));
                     }
+                }
+
+                if(passingParser.isPresent()) {
+                    passingParsers.add(passingParser.get());
                 } else {
-                    DateParser existing = CompositeDateParser.of(formatSpecs);
-                    Optional<LocalDateTime> maybeParsed = existing.parse(date);
-                    //check parser
+                    reporter.report(Report.of(Event.DATE_PARSE_FAILED, source.id()).message(date));
+                    allPassed = false;
                 }
             }
 
-            if(passingParser.isPresent()) {
-                passingParsers.add(passingParser.get());
-            } else {
-                reporter.report(Report.of(Event.DATE_PARSE_FAILED, source.id()).message(date));
-                allPassed = false;
+            if(allPassed) {
+                reporter.report(Report.of(Event.DATE_ALL_PARSE_SUCCESS, source.id()).message(source.get(Source.NAME)));
+                CompositeDateParser passingParser = new CompositeDateParser(new ArrayList<>(passingParsers));
+                List<String> spec = passingParser.getFormatSpec();
+                source = source.put(Source.DATE_FORMAT, spec);
+                sourceDAO.update(source);
             }
-        }
-
-        if(allPassed) {
-            reporter.report(Report.of(Event.DATE_ALL_PARSE_SUCCESS, source.id()).message(source.get(Source.NAME)));
-            CompositeDateParser passingParser = new CompositeDateParser(new ArrayList<>(passingParsers));
-            List<String> spec = passingParser.getFormatSpec();
-            source = source.put(Source.DATE_FORMAT, spec);
-            sourceDAO.update(source);
         }
     }
 }

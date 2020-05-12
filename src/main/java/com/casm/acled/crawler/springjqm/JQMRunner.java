@@ -1,7 +1,7 @@
 package com.casm.acled.crawler.springjqm;
 
 import com.casm.acled.crawler.Crawl;
-import com.casm.acled.crawler.CrawlService;
+import com.casm.acled.crawler.spring.CrawlService;
 import com.enioka.jqm.handler.JobManagerProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;

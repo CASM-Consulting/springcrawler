@@ -2,6 +2,9 @@ package com.casm.acled.crawler.springrunners;
 
 import com.casm.acled.configuration.ObjectMapperConfiguration;
 import com.casm.acled.crawler.scraper.locale.LocaleService;
+import com.casm.acled.dao.entities.SourceDAO;
+import com.casm.acled.dao.entities.SourceListDAO;
+import com.ibm.icu.util.ULocale;
 import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
 import org.camunda.bpm.spring.boot.starter.rest.CamundaBpmRestJerseyAutoConfiguration;
 import org.slf4j.Logger;
@@ -32,6 +35,13 @@ public class LocaleServiceRunner implements CommandLineRunner {
     @Autowired
     private LocaleService localeHelper;
 
+    @Autowired
+    private SourceListDAO sourceListDAO;
+
+    @Autowired
+    private SourceDAO sourceDAO;
+
+
     public static void main(String[] args) {
 
         SpringApplication app = new SpringApplication(LocaleServiceRunner.class);
@@ -47,7 +57,11 @@ public class LocaleServiceRunner implements CommandLineRunner {
     @Override
     public void run(String[] args) throws Exception {
 
-//        localeHelper.allSourcesDetermineLocalesAndTimeZones();
-        localeHelper.determineSourceLocalesAndListTimeZones("balkans");
+//        localeHelper.allS                return Optional.empty();
+//        localeHelper.determineSourceLocalesAndListTimeZones("balkans");
+
+//        localeHelper.determineLocalesAndTimeZones(sourceDAO.getById(2254).get());
+
+//        localeHelper.assignLocale(sourceDAO.getById(2254).get(), new ULocale("sr_Latn_XK"));
     }
 }

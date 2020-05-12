@@ -25,11 +25,11 @@ public class CrawlRunnerTest {
         LocalDate from = null;
 
         String[] args  = new String[]{sourceListId, sourceId, "", "", "true" };
-
-        SpringApplication app = new SpringApplication(CrawlerServiceRunner.class);
-        app.setBannerMode(Banner.Mode.OFF);
-        app.setWebApplicationType(WebApplicationType.NONE);
-        app.run(args);
+//
+//        SpringApplication app = new SpringApplication(CrawlerServiceRunner.class);
+//        app.setBannerMode(Banner.Mode.OFF);
+//        app.setWebApplicationType(WebApplicationType.NONE);
+//        app.run(args);
 
     }
 

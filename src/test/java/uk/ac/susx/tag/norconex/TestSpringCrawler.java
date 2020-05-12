@@ -74,11 +74,11 @@ public class TestSpringCrawler {
 //        params.add(SingleSeedCollector.INDEXONLY);
 
         String[] args = params.toArray(new String[params.size()]);
-
-        SpringApplication app = new SpringApplication(CLIRunner.class);
-        app.setBannerMode(Banner.Mode.OFF);
-        app.setWebApplicationType(WebApplicationType.NONE);
-        app.run(args);
+//
+//        SpringApplication app = new SpringApplication(CLIRunner.class);
+//        app.setBannerMode(Banner.Mode.OFF);
+//        app.setWebApplicationType(WebApplicationType.NONE);
+//        app.run(args);
 
     }
 

@@ -12,6 +12,7 @@ import com.casm.acled.entities.source.Source;
 import com.casm.acled.entities.sourcelist.SourceList;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.ibm.icu.util.ULocale;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -151,7 +152,7 @@ public class LocaleService {
     }
 
     public Optional<ULocale> determineLocale(Source source) {
-        Optional<ULocale> maybeLocale;
+        Optional<ULocale> maybeLocale = Optional.empty();
         String country = getCountry(source);
         String language = source.get(Source.LANGUAGE);
 
@@ -159,7 +160,6 @@ public class LocaleService {
             maybeLocale = determineLocaleByLanguage(language);
         } catch (ReportingException e) {
             reporting.report(e.get().id(source.id()).type(Source.class.getName()));
-            return Optional.empty();
         }
 
         if(!maybeLocale.isPresent()) {
@@ -275,30 +275,44 @@ public class LocaleService {
                 timezones.add(TimeZone.getTimeZone(id));
             }
         }
+
+        availableTimezones.put("Kosovo", ImmutableSet.of(TimeZone.getTimeZone("CET")));
+
         return availableTimezones;
+    }
+
+
+    public void determineLocalesAndTimeZones(Source source) {
+
+        Optional<TimeZone> maybeTimeZone = determineTimeZone(source);
+        Optional<ULocale> maybeLocale = determineLocale(source);
+
+        if(maybeTimeZone.isPresent()) {
+            source = source.put(Source.TIMEZONE, maybeTimeZone.get().getID());
+            sourceDAO.update(source);
+        } else {
+            reporting.report(Report.of(Event.TIMEZONE_NOT_FOUND, source.id(), Source.class.getName()).message(getCountry(source)));
+        }
+
+        if(maybeLocale.isPresent()) {
+            source = source.put(Source.LOCALE, maybeLocale.get().getName());
+            sourceDAO.update(source);
+//                System.out.println(source);
+        } else {
+            reporting.report(Report.of(Event.LOCALE_NOT_FOUND, source.id(), Source.class.getName()).message(getCountry(source)));
+        }
+
+    }
+
+    public void assignLocale(Source source, ULocale locale) {
+        source = source.put(Source.LOCALE, locale.getName());
+        sourceDAO.update(source);
     }
 
     public void determineLocalesAndTimeZones(List<Source> sources) {
 
         for(Source source : sources) {
-            Optional<TimeZone> maybeTimeZone = determineTimeZone(source);
-            Optional<ULocale> maybeLocale = determineLocale(source);
-
-            if(maybeTimeZone.isPresent()) {
-                source = source.put(Source.TIMEZONE, maybeTimeZone.get().getID());
-                sourceDAO.update(source);
-            } else {
-                reporting.report(Report.of(Event.TIMEZONE_NOT_FOUND, source.id(), Source.class.getName()).message(getCountry(source)));
-            }
-
-            if(maybeLocale.isPresent()) {
-                source = source.put(Source.LOCALE, maybeLocale.get().getName());
-                sourceDAO.update(source);
-//                System.out.println(source);
-            } else {
-                reporting.report(Report.of(Event.LOCALE_NOT_FOUND, source.id(), Source.class.getName()).message(getCountry(source)));
-            }
-
+            determineLocalesAndTimeZones(source);
         }
     }
 

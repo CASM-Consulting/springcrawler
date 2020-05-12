@@ -483,6 +483,14 @@ public class DateParsers {
             "ISO:|d/M/yyyy HH:mm||RE^Issued on: (.+)$|STRIP-" //Issued on: 16/02/2018 - 10:30
     ));
 
+    //28. marta 2020. 15:59
+    public static final DateParser dp118 = CompositeDateParser.of(ImmutableList.of(
+            "ISO:/dd. MMM'a' yyyy. HH:mm/"
+    ));
+
+    public static final DateParser generic = CompositeDateParser.of(ImmutableList.of(
+            "NL:/.*/"
+    ));
 
 
     //Tue, 19 Nov 2019 04:13 PM
@@ -610,16 +618,19 @@ public class DateParsers {
             dp114,
             dp115,
             dp116,
-            dp117
+            dp117,
+//            dp118,
+            generic
     );
 
-//    public static void main(String... args) {
-//        String date = "28 Jul 2019, 07:00 PM IST";
-//
-//        DateParser dp = CompositeDateParser.of(ImmutableList.of(
-//                "ISO:/d MMM yyyy, hh:mm a zzz/" //8 min read . Updated: 28 Jul 2019, 07:00 PM IST
-//        ));
-//
-//        dp.parse(date);
-//    }
+    public static void main(String... args) {
+        String date = "23. novembra 2018. 07:44";
+
+        DateParser dp = CompositeDateParser.of(ImmutableList.of(
+//                "ISO:/dd. MMM'a' yyyy. HH:mm/bs_Latn_BA/" //8 min read . Updated: 28 Jul 2019, 07:00 PM IST
+                "NL:/.*/"
+        ));
+
+        System.out.println(dp.parse(date).toString());
+    }
 }

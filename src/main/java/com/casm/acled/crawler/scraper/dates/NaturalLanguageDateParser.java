@@ -2,10 +2,13 @@ package com.casm.acled.crawler.scraper.dates;
 
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import com.ibm.icu.util.ULocale;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.cxf.jaxrs.client.WebClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
@@ -13,10 +16,8 @@ import javax.ws.rs.core.Response;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 
@@ -25,6 +26,8 @@ import java.util.stream.Collectors;
  */
 class NaturalLanguageDateParser implements DateParser {
 
+    protected static final Logger logger = LoggerFactory.getLogger(NaturalLanguageDateParser.class);
+
     public static final String PROTOCOL = "NL";
 
     private static final String PARSING_SERVICE = "http://localhost:5555/parse";
@@ -32,27 +35,40 @@ class NaturalLanguageDateParser implements DateParser {
 
     private final String languages;
 
-    private final String[] triggers;
+    private final Pattern triggers;
     private final String spec;
 
     public NaturalLanguageDateParser(String spec) {
-        this(spec, ImmutableList.of(ULocale.getDefault()));
+        this(spec, Lists.newArrayList(ULocale.getDefault()));
     }
     public NaturalLanguageDateParser(String spec, List<ULocale> locales) {
         this.spec = spec;
-        this.triggers = spec.split(",");
+
+        String delim = Pattern.quote(spec.substring(0,1));
+        String[] parts = spec.split(delim);
+
+        String pattern = parts[1];
+        this.triggers = Pattern.compile(pattern);
+
+        if(parts.length > 2 && !parts[2].isEmpty()) {
+            locales.add(new ULocale(parts[2]));
+        }
 
         languages = "[\""+locales.stream().map(ULocale::getLanguage).collect(Collectors.joining("\",\""))+"\"]";
+    }
+
+
+    @Override
+    public NaturalLanguageDateParser locale(List<ULocale> locales) {
+        return new NaturalLanguageDateParser(spec, locales);
     }
 
     @Override
     public Optional<LocalDateTime> parse(String date) {
         boolean makeAttempt = false;
         Optional<LocalDateTime> attempt = Optional.empty();
-        for(String trigger : triggers) {
-            if(date.toLowerCase().contains(trigger.toLowerCase())) {
-                makeAttempt = true;
-            }
+        if(triggers.matcher(date).matches()) {
+            makeAttempt = true;
         }
         if(makeAttempt) {
 
@@ -74,9 +90,8 @@ class NaturalLanguageDateParser implements DateParser {
 
                 attempt = Optional.of(parsed);
             } else {
+                logger.info("tirgger not found");
             }
-
-
         }
         return attempt;
     }
@@ -84,26 +99,6 @@ class NaturalLanguageDateParser implements DateParser {
     @Override
     public List<String> getFormatSpec() {
         return ImmutableList.of(PROTOCOL+":"+spec);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-
-        if (o == null || getClass() != o.getClass()) return false;
-
-        NaturalLanguageDateParser that = (NaturalLanguageDateParser) o;
-
-        return new EqualsBuilder()
-                .append(spec, that.spec)
-                .isEquals();
-    }
-
-    @Override
-    public int hashCode() {
-        return new HashCodeBuilder(17, 37)
-                .append(spec)
-                .toHashCode();
     }
 
     public static void main(String[] args) {
@@ -115,5 +110,27 @@ class NaturalLanguageDateParser implements DateParser {
         Optional<LocalDateTime> maybeDate = nldp.parse(relativeExpression);
 
         System.out.println(maybeDate.get());
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+
+        if (o == null || getClass() != o.getClass()) return false;
+
+        NaturalLanguageDateParser that = (NaturalLanguageDateParser) o;
+
+        return new EqualsBuilder()
+                .append(languages, that.languages)
+                .append(spec, that.spec)
+                .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+                .append(languages)
+                .append(spec)
+                .toHashCode();
     }
 }

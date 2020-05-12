@@ -1,5 +1,6 @@
 package com.casm.acled.crawler.scraper.dates;
 
+import com.google.common.collect.ImmutableList;
 import com.ibm.icu.text.DateFormatSymbols;
 import com.ibm.icu.text.NumberFormat;
 import com.ibm.icu.text.SimpleDateFormat;
@@ -20,7 +21,7 @@ public class DateFormatParserTest {
 
         DateFormatParser dfp = new DateFormatParser("/dd 'de' MMMM 'de' yyyy 'a las' HH:mm'h'/es_ES");
 
-        System.out.println(dfp.formatter().format(new Date()));
+//        System.out.println(dfp.formatter().format(new Date()));
 
         Optional<LocalDateTime> date = dfp.parse("17 de marzo de 2017 a las 11:03h");
         System.out.println(date.get());
@@ -36,7 +37,7 @@ public class DateFormatParserTest {
 //        String txt = new DateFormatParser("EEEE/MMMM/yyyy:zh").formatter().format(new Date(120, 3, 1, 0, 0,0));
 
 //        Optional<LocalDateTime> date = new DateFormatParser("/dd MMM yyyy HH:mm a z/en_GB/BST/RE.*Updated: (.*)").parse("Published: 26 Nov 2019 01:43 AM BdST Updated: 26 Nov 2019 01:44 AM BdST");
-        Optional<LocalDateTime> date = new DateFormatParser("/dd MMM yyyy/", ULocale.forLanguageTag("en_GB")).parse("26 Nov 2019");
+        Optional<LocalDateTime> date = new DateFormatParser("/dd MMM yyyy/", ImmutableList.of(ULocale.forLanguageTag("en_GB"))).parse("26 Nov 2019");
         System.out.println(date.get());
 
 //        Date d = new SimpleDateFormat("yyyy-MM-DD  HH:mm:ss").parse("1999-05-01 00:00:00");
