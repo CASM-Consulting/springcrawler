@@ -31,7 +31,7 @@ public class NorconexConfiguration {
     private int numThreads = 3;
     private boolean ignoreRobots = false;
     private boolean ignoreSiteMap = true;
-    private int depth = 3;
+    private int depth = 5;
     private String urlRegex ;
     private long politeness = 100;
     private List<String> regexFilterPatterns;
