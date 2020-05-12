@@ -13,6 +13,7 @@ import com.casm.acled.entities.sourcelist.SourceList;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
 import com.ibm.icu.util.ULocale;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -105,73 +106,66 @@ public class LocaleService {
     }
 
 
-    public Optional<ULocale> determineLocaleByCountry(String country) {
-        Optional<ULocale> maybeLocale = Optional.empty();
+    public Set<ULocale> determineLocaleByCountry(String country) {
+        Set<ULocale> locales = new HashSet<>();
 
         if(localesByCountry.containsKey(country)) {
 
-            Set<ULocale> possibleLocales = localesByCountry.get(country);
+            locales = localesByCountry.get(country);
 
-            if(possibleLocales.size()==1) {
-                ULocale locale = ImmutableList.copyOf(possibleLocales).get(0);
-                maybeLocale = Optional.of(locale);
-            } else {
-//                System.out.println(country);
-//                System.out.println(possibleLocales);
-
-                throw new ReportingException(Report.of(Event.LOCALE_NOT_FOUND).message("country %s - possible %s", country, possibleLocales.size()));
+            if(locales.isEmpty()) {
+                throw new ReportingException(Report.of(Event.LOCALE_NOT_FOUND).message("country %s - possible %s", country, locales.size()));
             }
         } else {
             reporting.report(Report.of(Event.COUNTRY_NOT_FOUND).message("country %s", country));
         }
 
-        return maybeLocale;
+        return locales;
     }
 
-    public Optional<ULocale> determineLocaleByLanguage(String language) {
-        Optional<ULocale> maybeLocale = Optional.empty();
+    public Set<ULocale> determineLocaleByLanguage(String language) {
+        Set<ULocale> locales = new HashSet<>();
 
         if(localesByLanguage.containsKey(language)) {
 
-            Set<ULocale> possibleLocales = localesByLanguage.get(language);
+            locales = localesByLanguage.get(language);
 
-            if(possibleLocales.size()==1) {
-                ULocale locale = ImmutableList.copyOf(possibleLocales).get(0);
-                maybeLocale = Optional.of(locale);
-            } else {
-//                System.out.println(language);
-//                System.out.println(possibleLocales);
-
-                throw new ReportingException(Report.of(Event.LOCALE_NOT_FOUND).message("language %s - possible %s", language, possibleLocales.size()));
+            if(locales.isEmpty()) {
+                throw new ReportingException(Report.of(Event.LOCALE_NOT_FOUND).message("language %s - possible %s", language, locales.size()));
             }
         } else {
             reporting.report(Report.of(Event.LANGUAGE_NOT_FOUND).message("language %s", language));
         }
 
-        return maybeLocale;
+        return locales;
     }
 
-    public Optional<ULocale> determineLocale(Source source) {
-        Optional<ULocale> maybeLocale = Optional.empty();
+    public Set<ULocale> determineLocale(Source source) {
+        Set<ULocale> locales = new HashSet<>();
         String country = getCountry(source);
-        String language = source.get(Source.LANGUAGE);
+        List<String> languages = source.get(Source.LANGUAGES);
 
-        try {
-            maybeLocale = determineLocaleByLanguage(language);
-        } catch (ReportingException e) {
-            reporting.report(e.get().id(source.id()).type(Source.class.getName()));
-        }
-
-        if(!maybeLocale.isPresent()) {
-            try {
-                maybeLocale = determineLocaleByCountry(country);
-            } catch (ReportingException e) {
-                reporting.report(e.get().id(source.id()).type(Source.class.getName()));
-                return Optional.empty();
+        for(String language : languages) {
+            if(language.toLowerCase().equals("english")) {
+                locales.add(new ULocale("en"));
+            } else {
+                try {
+                    locales.addAll(determineLocaleByLanguage(language));
+                } catch (ReportingException e) {
+                    reporting.report(e.get().id(source.id()).type(Source.class.getName()));
+                }
             }
         }
 
-        return maybeLocale;
+        if(locales.isEmpty()) {
+            try {
+                locales = determineLocaleByCountry(country);
+            } catch (ReportingException e) {
+                reporting.report(e.get().id(source.id()).type(Source.class.getName()));
+            }
+        }
+
+        return locales;
     }
 
     public Optional<TimeZone> determineTimeZone(Source source) {
@@ -285,7 +279,7 @@ public class LocaleService {
     public void determineLocalesAndTimeZones(Source source) {
 
         Optional<TimeZone> maybeTimeZone = determineTimeZone(source);
-        Optional<ULocale> maybeLocale = determineLocale(source);
+        Set<ULocale> locales = determineLocale(source);
 
         if(maybeTimeZone.isPresent()) {
             source = source.put(Source.TIMEZONE, maybeTimeZone.get().getID());
@@ -294,8 +288,8 @@ public class LocaleService {
             reporting.report(Report.of(Event.TIMEZONE_NOT_FOUND, source.id(), Source.class.getName()).message(getCountry(source)));
         }
 
-        if(maybeLocale.isPresent()) {
-            source = source.put(Source.LOCALE, maybeLocale.get().getName());
+        if(!locales.isEmpty()) {
+            source = source.put(Source.LOCALES, Lists.newArrayList(locales));
             sourceDAO.update(source);
 //                System.out.println(source);
         } else {
@@ -305,7 +299,7 @@ public class LocaleService {
     }
 
     public void assignLocale(Source source, ULocale locale) {
-        source = source.put(Source.LOCALE, locale.getName());
+        source = source.put(Source.LOCALES, Lists.newArrayList(locale.getName()));
         sourceDAO.update(source);
     }
 

@@ -60,7 +60,7 @@ public class LocaleServiceRunner implements CommandLineRunner {
 //        localeHelper.allS                return Optional.empty();
 //        localeHelper.determineSourceLocalesAndListTimeZones("balkans");
 
-//        localeHelper.determineLocalesAndTimeZones(sourceDAO.getById(2254).get());
+        localeHelper.determineLocalesAndTimeZones(sourceDAO.getById(1612).get());
 
 //        localeHelper.assignLocale(sourceDAO.getById(2254).get(), new ULocale("sr_Latn_XK"));
     }

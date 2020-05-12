@@ -310,14 +310,14 @@ public class Util implements CommandLineRunner {
 
                 String LINK  = row[headerMap.get(Source.LINK)].trim();
                 String STANDARD_NAME  = row[headerMap.get(Source.STANDARD_NAME)];
-                String LANGUAGE  = row[headerMap.get(Source.LANGUAGE)];
+                List<String> LANGUAGES  = Arrays.asList(row[headerMap.get(Source.LANGUAGES)].split("[;,]"));
                 Boolean CRAWL_DISABLED  = Boolean.valueOf(row[headerMap.get(Source.CRAWL_DISABLED)]);
                 List<String> EXAMPLE_URLS  =  gson.fromJson(row[headerMap.get(Source.EXAMPLE_URLS)], List.class);
 
                 Source source = EntityVersions.get(Source.class).current()
                     .put(Source.STANDARD_NAME, STANDARD_NAME)
                     .put(Source.LINK, LINK)
-                    .put(Source.LANGUAGE, LANGUAGE)
+                    .put(Source.LANGUAGES, LANGUAGES)
                     .put(Source.CRAWL_DISABLED, CRAWL_DISABLED)
                     .put(Source.EXAMPLE_URLS, EXAMPLE_URLS == null ? ImmutableList.of() : EXAMPLE_URLS);
 

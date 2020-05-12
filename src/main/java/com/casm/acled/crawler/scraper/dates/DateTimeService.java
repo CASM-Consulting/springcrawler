@@ -25,6 +25,7 @@ import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 public class DateTimeService {
@@ -147,8 +148,10 @@ public class DateTimeService {
 
                 for(DateParser dateParser : dateParsers) {
 
-                    if(source.hasValue(Source.LOCALE)) {
-                        dateParser = dateParser.locale(new ULocale(source.get(Source.LOCALE)));
+                    if(source.hasValue(Source.LOCALES)) {
+                        List<String> locales = source.get(Source.LOCALES);
+
+                        dateParser = dateParser.locale(locales.stream().map(ULocale::new).collect(Collectors.toList()));
                     }
 
                     Optional<LocalDateTime> maybeParsed = dateParser.parse(date);

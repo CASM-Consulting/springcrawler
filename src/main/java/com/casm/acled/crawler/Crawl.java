@@ -130,7 +130,7 @@ public class Crawl {
 
         DateMetadataFilter dateMetadataFilter = new ExcludingCustomDateMetadataFilter(source, ScraperFields.SCRAPED_DATE, dateParser, reporter);
 
-        dateMetadataFilter.addCondition(DateMetadataFilter.Operator.GREATER_THAN, Date.from(from.toInstant()));
+        dateMetadataFilter.addCondition(DateMetadataFilter.Operator.GREATER_EQUAL, Date.from(from.toInstant()));
         dateMetadataFilter.addCondition(DateMetadataFilter.Operator.LOWER_EQUAL, Date.from(to.toInstant()));
 
         return dateMetadataFilter;

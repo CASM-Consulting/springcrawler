@@ -13,6 +13,8 @@ import org.apache.lucene.analysis.core.SimpleAnalyzer;
 import org.apache.lucene.index.memory.MemoryIndex;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
+import org.apache.lucene.search.Explanation;
+import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 
 import javax.xml.stream.XMLStreamException;
