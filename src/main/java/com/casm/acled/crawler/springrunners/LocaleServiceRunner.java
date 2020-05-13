@@ -4,7 +4,7 @@ import com.casm.acled.configuration.ObjectMapperConfiguration;
 import com.casm.acled.crawler.scraper.locale.LocaleService;
 import com.casm.acled.dao.entities.SourceDAO;
 import com.casm.acled.dao.entities.SourceListDAO;
-import com.ibm.icu.util.ULocale;
+import com.casm.acled.entities.source.Source;
 import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
 import org.camunda.bpm.spring.boot.starter.rest.CamundaBpmRestJerseyAutoConfiguration;
 import org.slf4j.Logger;
@@ -33,7 +33,7 @@ public class LocaleServiceRunner implements CommandLineRunner {
     protected static final Logger logger = LoggerFactory.getLogger(LocaleServiceRunner.class);
 
     @Autowired
-    private LocaleService localeHelper;
+    private LocaleService localeService;
 
     @Autowired
     private SourceListDAO sourceListDAO;
@@ -60,8 +60,14 @@ public class LocaleServiceRunner implements CommandLineRunner {
 //        localeHelper.allS                return Optional.empty();
 //        localeHelper.determineSourceLocalesAndListTimeZones("balkans");
 
-        localeHelper.determineLocalesAndTimeZones(sourceDAO.getById(3281).get());
+//        Source source = sourceDAO.getById(1262).get();
+        Source source = sourceDAO.getById(1262).get();
 
-        localeHelper.assignLocale(sourceDAO.getById(2254).get(), new ULocale("sr_Latn_XK"));
+//        System.out.println(localeService.determineLocale(source));
+//        System.out.println(localeService.determineTimeZone(source));
+
+        localeService.autoAssignLocalesAndTimeZones(source);
+
+//        localeHelper.assignLocale(sourceDAO.getById(2254).get(), new ULocale("sr_Latn_XK"));
     }
 }

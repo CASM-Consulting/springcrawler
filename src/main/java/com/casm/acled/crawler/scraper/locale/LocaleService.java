@@ -103,6 +103,9 @@ public class LocaleService {
         if(countryMap.containsKey(country)) {
             country = countryMap.get(country);
         }
+
+        country = country.replaceAll("and", "&");
+
         return country;
     }
 
@@ -277,7 +280,7 @@ public class LocaleService {
     }
 
 
-    public void determineLocalesAndTimeZones(Source source) {
+    public void autoAssignLocalesAndTimeZones(Source source) {
 
         Optional<TimeZone> maybeTimeZone = determineTimeZone(source);
         Set<ULocale> locales = determineLocale(source);
@@ -304,10 +307,10 @@ public class LocaleService {
         sourceDAO.update(source);
     }
 
-    public void determineLocalesAndTimeZones(List<Source> sources) {
+    public void autoAssignLocalesAndTimeZones(List<Source> sources) {
 
         for(Source source : sources) {
-            determineLocalesAndTimeZones(source);
+            autoAssignLocalesAndTimeZones(source);
         }
     }
 
@@ -316,10 +319,10 @@ public class LocaleService {
         SourceList sourceList = sourceListDAO.getBy(SourceList.LIST_NAME, listName).get(0);
         List<Source> sources = sourceDAO.byList(sourceList);
 
-        determineLocalesAndTimeZones(sources);
+        autoAssignLocalesAndTimeZones(sources);
     }
 
-    public void determineLocalesAndTimeZones() {
+    public void autoAssignLocalesAndTimeZones() {
         for(Desk desk : deskDAO.getAll()) {
 
             List<SourceList> lists = sourceListDAO.byDesk(desk.id());

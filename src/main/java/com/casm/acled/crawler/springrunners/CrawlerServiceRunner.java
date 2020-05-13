@@ -79,7 +79,7 @@ public class CrawlerServiceRunner implements CommandLineRunner {
 
         reporter.randomRunId();
 
-        collectExamples(args);
+        crawl(args);
 
         reporter.getRunReports().stream().forEach(r -> logger.info(r.toString()));
 

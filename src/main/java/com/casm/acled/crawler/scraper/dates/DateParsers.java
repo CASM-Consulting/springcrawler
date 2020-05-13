@@ -489,6 +489,11 @@ public class DateParsers {
             "ISO:/dd.MM.yyyy HH:mm/en/RE.*(\\d{2}\\.\\d{2}\\.\\d{4})\\.? [уu] (\\d{2}:\\d{2}).*"
     ));
 
+    public static final DateParser nl1 = CompositeDateParser.of(ImmutableList.of(
+            "NL:/sata/"
+    ));
+
+
     public static final DateParser generic = CompositeDateParser.of(ImmutableList.of(
             "NL:/.*/"
     ));
@@ -622,15 +627,17 @@ public class DateParsers {
             dp115,
             dp116,
             dp117,
-            dp118
+            dp118,
+            nl1
     );
 
     public static void main(String... args) {
-        String date = "Politika 29.04.2020 u 11:39 Premijerka objasnila zašto skupština nije ranije zasedala Premijerka Ana Brnabić objasnila je danas da se poslanici nisu ranije sastali, jer je procenat obolelih sa 4,27 odsto porastao na 33,08 odsto, koliko je iznosio 24. marta, navodeći da je vlada zamolila parlament da se sastane istog trenutka kada su se stvorili uslovi za to, preneo je Tanjug. „Nije reč samo o 250 poslanika. To je mnogo veći broj ljudi, više od 500”, rekla je Brnabić u Skupštini Srbije gde je u toku rasprava o potvrđivanju odluke o vanrednom stanju. Ona je objasnila da je 10. marta procenat obolelih bio 4,27 odsto u odnosu na testirane, a onda je već sledećeg dana bio 11,92 odsto, 14. marta 17,6 odsto, a 24. marta čak 33,08 odsto. Vanredno stanje u Srbiji je, inače, uvedeno 15. marta.";
+        String date = "prije 4 sata > prije 4 sata";
 
         DateParser dp = CompositeDateParser.of(ImmutableList.of(
-                "ISO:/dd.MM.yyyy HH:mm//RE.*(\\d{2}\\.\\d{2}\\.\\d{4})\\.? [уu] (\\d{2}:\\d{2}).*" //8 min read . Updated: 28 Jul 2019, 07:00 PM IST
-//                "NL:/.*/"
+//                "ISO:/EEEE, MMM d, yyyy HH:mm a/es_MX/AMPM" //8 min read . Updated: 28 Jul 2019, 07:00 PM IST
+//                "ISO:/dd.MM.yyyy HH:mm//RE.*(\\d{2}\\.\\d{2}\\.\\d{4})\\.? [уu] (\\d{2}:\\d{2}).*" //8 min read . Updated: 28 Jul 2019, 07:00 PM IST
+                "NL:/.*/"
         ));
 
         System.out.println(dp.parse(date).toString());

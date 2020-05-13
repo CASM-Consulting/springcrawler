@@ -6,6 +6,7 @@ import com.casm.acled.crawler.reporting.Reporter;
 import com.casm.acled.crawler.scraper.ScraperFields;
 import com.casm.acled.entities.source.Source;
 import com.google.common.collect.ImmutableList;
+import com.ibm.icu.util.ULocale;
 import com.norconex.importer.doc.ImporterMetadata;
 import com.norconex.importer.handler.ImporterHandlerException;
 import com.norconex.importer.handler.filter.OnMatch;
@@ -14,7 +15,9 @@ import com.norconex.importer.handler.filter.impl.DateMetadataFilter;
 import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class ExcludingCustomDateMetadataFilter extends DateMetadataFilter {
 
@@ -36,13 +39,17 @@ public class ExcludingCustomDateMetadataFilter extends DateMetadataFilter {
         setFormat(STANDARD_FORMAT);
         setField(ScraperFields.STANDARD_DATE);
 
-        this.dateParser = dateParser;
+        this.dateParser = dateParser.locale(getLocales(source));
         this.field = field;
 
         dtf = DateTimeFormatter.ofPattern(STANDARD_FORMAT);
 
         this.reporter = reporter;
         this.source = source;
+    }
+
+    private List<ULocale> getLocales(Source source) {
+        return ((List<String>)source.get(Source.LOCALES)).stream().map(ULocale::new).collect(Collectors.toList());
     }
 
     @Override
