@@ -140,7 +140,7 @@ public class DateTimeService {
 
         Set<DateParser> passingParsers = new HashSet<>();
 
-        if(!checkExistingPasses(source, exampleGetter)) {
+        if(true || !checkExistingPasses(source, exampleGetter)) {
 
             for(String date : exampleDates) {
 

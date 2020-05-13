@@ -136,7 +136,7 @@ public class DateParsers {
     ));
 
     public static final DateParser dp32 = CompositeDateParser.of(ImmutableList.of(
-            "ISO:/d.m.yy, HH:mm/" //25.11.2019, 15:20
+            "ISO:/dd.mm.yyyy HH:mm/" //25.11.2019, 15:20
     ));
 
     public static final DateParser dp33 = CompositeDateParser.of(ImmutableList.of(
@@ -490,7 +490,7 @@ public class DateParsers {
     ));
 
     public static final DateParser nl1 = CompositeDateParser.of(ImmutableList.of(
-            "NL:/sata/"
+            "NL:/prije/"
     ));
 
 
