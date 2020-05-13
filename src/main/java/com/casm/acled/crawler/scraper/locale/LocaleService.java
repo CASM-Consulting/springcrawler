@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -304,6 +305,12 @@ public class LocaleService {
 
     public void assignLocale(Source source, ULocale locale) {
         source = source.put(Source.LOCALES, Lists.newArrayList(locale.getName()));
+        sourceDAO.update(source);
+    }
+
+
+    public void assignTimezone(Source source, ZoneId zoneId) {
+        source = source.put(Source.TIMEZONE, zoneId.getId());
         sourceDAO.update(source);
     }
 
