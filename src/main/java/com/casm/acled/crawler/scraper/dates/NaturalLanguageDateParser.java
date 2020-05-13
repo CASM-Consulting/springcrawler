@@ -67,7 +67,7 @@ class NaturalLanguageDateParser implements DateParser {
     public Optional<LocalDateTime> parse(String date) {
         boolean makeAttempt = false;
         Optional<LocalDateTime> attempt = Optional.empty();
-        if(triggers.matcher(date).matches()) {
+        if(triggers.matcher(date).find()) {
             makeAttempt = true;
         }
         if(makeAttempt) {
@@ -90,7 +90,7 @@ class NaturalLanguageDateParser implements DateParser {
 
                 attempt = Optional.of(parsed);
             } else {
-                logger.info("tirgger not found");
+                logger.info("NL date parsed failed {}", date);
             }
         }
         return attempt;

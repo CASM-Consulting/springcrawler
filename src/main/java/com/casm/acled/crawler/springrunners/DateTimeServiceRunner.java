@@ -100,12 +100,11 @@ public class DateTimeServiceRunner implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-
-//        attemptSourceListExistingArticles("balkans");
-
         reporter.randomRunId();
 
-        dateTimeService.attemptDateTimeParse(sourceDAO.getById(1626).get(), DateParsers.ALL, getFromArticles);
+        attemptSourceListExistingArticles("balkans");
+
+//        dateTimeService.attemptDateTimeParse(sourceDAO.getById(3281).get(), DateParsers.ONE, getFromArticles);
 
         reporter.getRunReports().stream().forEach(r -> logger.info(r.toString()));
 

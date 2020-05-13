@@ -134,7 +134,7 @@ public class DateTimeService {
         boolean allPassed = true;
 
         if(exampleDates.isEmpty()) {
-            reporter.report(Report.of(Event.DATE_NOT_FOUND, source.id()));
+            reporter.report(Report.of(Event.NO_EXAMPLES, source.id()));
             allPassed = false;
         }
 
@@ -156,9 +156,9 @@ public class DateTimeService {
 
                     Optional<LocalDateTime> maybeParsed = dateParser.parse(date);
                     if(maybeParsed.isPresent()){
-                        reporter.report(Report.of(Event.DATE_PARSE_SUCCESS, source.id()).message(date + StringUtils.join(dateParser.getFormatSpec(), "<|#|>")));
+//                        reporter.report(Report.of(Event.DATE_PARSE_SUCCESS, source.id()).message(date + StringUtils.join(dateParser.getFormatSpec(), "<|#|>")));
                         passingParser = Optional.of(dateParser);
-                        continue;
+                        break;
                     }
                 }
 

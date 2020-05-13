@@ -483,9 +483,10 @@ public class DateParsers {
             "ISO:|d/M/yyyy HH:mm||RE^Issued on: (.+)$|STRIP-" //Issued on: 16/02/2018 - 10:30
     ));
 
+    //понедељак, 02.03.2020. у 21:33
     //28. marta 2020. 15:59
     public static final DateParser dp118 = CompositeDateParser.of(ImmutableList.of(
-            "ISO:/dd. MMM'a' yyyy. HH:mm/"
+            "ISO:/dd.MM.yyyy HH:mm/en/RE.*(\\d{2}\\.\\d{2}\\.\\d{4})\\.? [уu] (\\d{2}:\\d{2}).*"
     ));
 
     public static final DateParser generic = CompositeDateParser.of(ImmutableList.of(
@@ -500,6 +501,8 @@ public class DateParsers {
     //Last updated at 08:37 pm March 2nd, 2017
     //Thursday, 16 January 2020 | markandey katju Janhvi Prakash'
     //17 de marzo de 2017 a las 11:03h
+
+    public static final List<DateParser> ONE = ImmutableList.of(dp118);
 
     public static final List<DateParser> ALL = ImmutableList.of(
             dp1,
@@ -619,16 +622,15 @@ public class DateParsers {
             dp115,
             dp116,
             dp117,
-//            dp118,
-            generic
+            dp118
     );
 
     public static void main(String... args) {
-        String date = "23. novembra 2018. 07:44";
+        String date = "Politika 29.04.2020 u 11:39 Premijerka objasnila zašto skupština nije ranije zasedala Premijerka Ana Brnabić objasnila je danas da se poslanici nisu ranije sastali, jer je procenat obolelih sa 4,27 odsto porastao na 33,08 odsto, koliko je iznosio 24. marta, navodeći da je vlada zamolila parlament da se sastane istog trenutka kada su se stvorili uslovi za to, preneo je Tanjug. „Nije reč samo o 250 poslanika. To je mnogo veći broj ljudi, više od 500”, rekla je Brnabić u Skupštini Srbije gde je u toku rasprava o potvrđivanju odluke o vanrednom stanju. Ona je objasnila da je 10. marta procenat obolelih bio 4,27 odsto u odnosu na testirane, a onda je već sledećeg dana bio 11,92 odsto, 14. marta 17,6 odsto, a 24. marta čak 33,08 odsto. Vanredno stanje u Srbiji je, inače, uvedeno 15. marta.";
 
         DateParser dp = CompositeDateParser.of(ImmutableList.of(
-//                "ISO:/dd. MMM'a' yyyy. HH:mm/bs_Latn_BA/" //8 min read . Updated: 28 Jul 2019, 07:00 PM IST
-                "NL:/.*/"
+                "ISO:/dd.MM.yyyy HH:mm//RE.*(\\d{2}\\.\\d{2}\\.\\d{4})\\.? [уu] (\\d{2}:\\d{2}).*" //8 min read . Updated: 28 Jul 2019, 07:00 PM IST
+//                "NL:/.*/"
         ));
 
         System.out.println(dp.parse(date).toString());

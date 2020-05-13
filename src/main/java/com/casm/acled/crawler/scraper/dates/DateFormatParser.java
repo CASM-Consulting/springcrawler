@@ -5,6 +5,7 @@ import com.ibm.icu.text.*;
 import com.ibm.icu.util.ULocale;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.jsoup.helper.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,6 +13,7 @@ import java.text.ParseException;
 import java.text.ParsePosition;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -59,7 +61,10 @@ class DateFormatParser implements DateParser {
 
     @Override
     public DateFormatParser locale(List<ULocale> locales) {
-        return new DateFormatParser(formatSpec, locales);
+        List<ULocale> newLocales = new ArrayList<>();
+        newLocales.addAll(locales);
+        newLocales.addAll(this.locales);
+        return new DateFormatParser(formatSpec, newLocales);
     }
 
     @Override
@@ -104,6 +109,20 @@ class DateFormatParser implements DateParser {
 //        return buildSimpleDateFormat(formatSpec, locale);
 //    }
 
+    private String applyExtraction(String date) {
+        Matcher m = extractPattern.matcher(date);
+        if(m.matches()) {
+            List<String> parts = new ArrayList<>();
+            for(int i = 1; i <= m.groupCount(); ++i) {
+                parts.add(m.group(i));
+            }
+            return StringUtil.join(parts, " ");
+        } else {
+            // Fail if no match.
+            return "";
+        }
+    }
+
     private String preProcessDate(String date) {
 
         if (normaliseWhitespace) {
@@ -113,13 +132,7 @@ class DateFormatParser implements DateParser {
             date = removeOrdinals(date);
         }
         if(extractPattern != null) {
-            Matcher m = extractPattern.matcher(date);
-            if(m.matches()) {
-                date = m.group(1);
-            } else {
-                // Fail if no match.
-                return "";
-            }
+            date = applyExtraction(date);
         }
         if(stripPattern != null) {
             date = stripByPattern(date);
