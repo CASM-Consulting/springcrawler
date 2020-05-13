@@ -522,7 +522,7 @@ public class DateParsers {
     ));
 
     public static final DateParser dp127 = CompositeDateParser.of(ImmutableList.of(
-            "ISO:/yyyy MM d'T'HH:mm//RE.*(\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}).*" // 2013-11-28T23:07:36-05:00
+            "ISO:/yyyy MM d'T'HH:mm:ssxxx//" // 2013-11-28T23:07:36-05:00
     ));
 
     public static final DateParser dp128 = CompositeDateParser.of(ImmutableList.of(
@@ -535,6 +535,10 @@ public class DateParsers {
 
     public static final DateParser dp130 = CompositeDateParser.of(ImmutableList.of(
             "ISO:/EEEE, d 'de' MMM 'de' yyyy/es/RE.*-\\s+(.*)\\s+-.*" // ENSENADA, BC - jueves, 1 de agosto de 2019 - AFN
+    ));
+
+    public static final DateParser nl1 = CompositeDateParser.of(ImmutableList.of(
+            "NL:/sata/"
     ));
 
     public static final DateParser generic = CompositeDateParser.of(ImmutableList.of(
@@ -700,8 +704,8 @@ public class DateParsers {
             dp127,
             dp128,
             dp129,
-            dp130
+            dp130,
+            nl1
     );
-
 
 }
