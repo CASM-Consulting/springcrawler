@@ -66,8 +66,7 @@ public class LocaleServiceRunner implements CommandLineRunner {
 //        System.out.println(localeService.determineLocale(source));
 //        System.out.println(localeService.determineTimeZone(source));
 
-        localeService.
-
+        localeService.autoAssignLocalesAndTimeZones(source);
 
     }
 }
