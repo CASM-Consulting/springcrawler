@@ -27,7 +27,7 @@ public class SpringCrawlerConfiguration {
         return DataSourceBuilder
                 .create()
                 .username("postgres")
-                .url("jdbc:postgresql://localhost:6432/acled_camunda?preparedStatementCacheQueries=0&prepareThreshold=0")
+                .url("jdbc:postgresql://localhost:5432/acled_camunda?preparedStatementCacheQueries=0&prepareThreshold=0")
                 .driverClassName("org.postgresql.Driver")
                 .build();
     }

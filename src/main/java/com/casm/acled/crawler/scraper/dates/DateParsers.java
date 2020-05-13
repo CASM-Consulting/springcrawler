@@ -489,9 +489,75 @@ public class DateParsers {
             "ISO:/dd.MM.yyyy HH:mm/en/RE.*(\\d{2}\\.\\d{2}\\.\\d{4})\\.? [уu] (\\d{2}:\\d{2}).*"
     ));
 
+    public static final DateParser dp119 = CompositeDateParser.of(ImmutableList.of(
+            "ISO:/d 'de' MMM, yyyy/" //14 de octubre, 2019
+    ));
+
+    public static final DateParser dp120 = CompositeDateParser.of(ImmutableList.of(
+            "ISO:-yyyy MM  dd'T'HH:mm" // 2020-05-12T07:03
+    ));
+
+    public static final DateParser dp121 = CompositeDateParser.of(ImmutableList.of(
+            "ISO:/d MMM',' yyyy',' HH:mm" // 30 Mar, 2020, 14:30
+    ));
+
+    public static final DateParser dp122 = CompositeDateParser.of(ImmutableList.of(
+            "ISO:/EEEE, MMM d, yyyy HH:mm a//AMPM" // jueves, diciembre 1, 2016 9:08 pm
+    ));
+
+    public static final DateParser dp123 = CompositeDateParser.of(ImmutableList.of(
+            "ISO:/EEEE d 'de' MMM 'de' yyyy, 'a las' HH:mm" // 'Miércoles 28 de agosto de 2019, a las 16:35'
+    ));
+
+    public static final DateParser dp124 = CompositeDateParser.of(ImmutableList.of(
+            "ISO:/EEEE d, MMM yyyy HH:mm" // 'Viernes 08, mayo 2020 12:39'
+    ));
+
+    public static final DateParser dp125 = CompositeDateParser.of(ImmutableList.of(
+            "ISO:/d 'DE' MMM, yyyy//REPublicado: (\\d{2} DE [a-zA-Z]+, \\d{4})" // 'Publicado: 09 DE MAYO, 2020'
+    ));
+
+    public static final DateParser dp126 = CompositeDateParser.of(ImmutableList.of(
+            "ISO:/EEEE d 'de' MMM 'de' yyyy//RE.*([a-zA-Z]+ \\d{2} de [a-zA-z]+ de \\d{4}).*" // '  / lunes 11 de mayo de 2020'
+    ));
+
+    public static final DateParser dp127 = CompositeDateParser.of(ImmutableList.of(
+            "ISO:/yyyy MM d'T'HH:mm//RE.*(\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}).*" // 2013-11-28T23:07:36-05:00
+    ));
+
+    public static final DateParser dp128 = CompositeDateParser.of(ImmutableList.of(
+            "ISO:/EEEE, d MMM, yyyy HH:mm a//AMPM" // lunes, 11 mayo, 2020 07:26 AM
+    ));
+
+    public static final DateParser dp129 = CompositeDateParser.of(ImmutableList.of(
+            "ISO:/d 'de' MMM 'del' yyyy 'a las' HH:mm//RE.*Por:.*(\\d{2}.*\\d{4}.*\\d{2}:\\d{2})" // Por: Tito Reséndez Treviño El Día Lunes 11 de Mayo del 2020 a las 17:26
+    ));
+
+    public static final DateParser dp130 = CompositeDateParser.of(ImmutableList.of(
+            "ISO:/EEEE, d 'de' MMM 'de' yyyy/es/RE.*-\\s+(.*)\\s+-.*" // ENSENADA, BC - jueves, 1 de agosto de 2019 - AFN
+    ));
+
     public static final DateParser generic = CompositeDateParser.of(ImmutableList.of(
             "NL:/.*/"
     ));
+
+    public static void main(String... args) {
+        String date = "ENSENADA, BC - jueves, 1 de agosto de 2019 - AFN.";
+        DateParser dp = CompositeDateParser.of(ImmutableList.of(
+                "ISO:/EEEE, d 'de' MMM 'de' yyyy/es/RE.*-\\s+(.*)\\s+-.*"
+        ));
+
+        System.out.println(dp.parse(date).toString());
+    }
+
+//    public static void main(String... args) {
+//        String date = "Por: Mario Portillo/Nuevo Laredo El Día Lunes 11 de Mayo del 2020 a las 20:03";
+//        DateParser dp = CompositeDateParser.of(ImmutableList.of(
+//                "ISO:/d 'de' MMM 'del' yyyy 'a las' HH:mm/es/RE(\\d{2}.*\\d{2}:\\d{2})$" //29 septiembre, 2019'
+//        ));
+//
+//        System.out.println(dp.parse(date).toString());
+//    }
 
 
     //Tue, 19 Nov 2019 04:13 PM
@@ -502,7 +568,7 @@ public class DateParsers {
     //Thursday, 16 January 2020 | markandey katju Janhvi Prakash'
     //17 de marzo de 2017 a las 11:03h
 
-    public static final List<DateParser> ONE = ImmutableList.of(dp118);
+    public static final List<DateParser> ONE = ImmutableList.of(dp130);
 
     public static final List<DateParser> ALL = ImmutableList.of(
             dp1,
@@ -622,17 +688,20 @@ public class DateParsers {
             dp115,
             dp116,
             dp117,
-            dp118
+            dp118,
+            dp119,
+            dp120,
+            dp121,
+            dp122,
+            dp123,
+            dp124,
+            dp125,
+            dp126,
+            dp127,
+            dp128,
+            dp129,
+            dp130
     );
 
-    public static void main(String... args) {
-        String date = "Politika 29.04.2020 u 11:39 Premijerka objasnila zašto skupština nije ranije zasedala Premijerka Ana Brnabić objasnila je danas da se poslanici nisu ranije sastali, jer je procenat obolelih sa 4,27 odsto porastao na 33,08 odsto, koliko je iznosio 24. marta, navodeći da je vlada zamolila parlament da se sastane istog trenutka kada su se stvorili uslovi za to, preneo je Tanjug. „Nije reč samo o 250 poslanika. To je mnogo veći broj ljudi, više od 500”, rekla je Brnabić u Skupštini Srbije gde je u toku rasprava o potvrđivanju odluke o vanrednom stanju. Ona je objasnila da je 10. marta procenat obolelih bio 4,27 odsto u odnosu na testirane, a onda je već sledećeg dana bio 11,92 odsto, 14. marta 17,6 odsto, a 24. marta čak 33,08 odsto. Vanredno stanje u Srbiji je, inače, uvedeno 15. marta.";
 
-        DateParser dp = CompositeDateParser.of(ImmutableList.of(
-                "ISO:/dd.MM.yyyy HH:mm//RE.*(\\d{2}\\.\\d{2}\\.\\d{4})\\.? [уu] (\\d{2}:\\d{2}).*" //8 min read . Updated: 28 Jul 2019, 07:00 PM IST
-//                "NL:/.*/"
-        ));
-
-        System.out.println(dp.parse(date).toString());
-    }
 }

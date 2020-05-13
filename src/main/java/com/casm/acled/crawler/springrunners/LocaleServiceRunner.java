@@ -62,6 +62,8 @@ public class LocaleServiceRunner implements CommandLineRunner {
 
         localeHelper.determineLocalesAndTimeZones(sourceDAO.getById(3281).get());
 
+
+
         localeHelper.assignLocale(sourceDAO.getById(2254).get(), new ULocale("sr_Latn_XK"));
     }
 }

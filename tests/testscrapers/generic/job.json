@@ -1,0 +1,72 @@
+{
+  "components": [
+    {
+      "opts": {
+        "route": "negqmd3vnp8p4e0cf6c9hkes57",
+        "fields": [
+          {
+            "field": "root/root",
+            "tags": [
+              {
+                "tag": "div#content"
+              }
+            ]
+          },
+          {
+            "field": "field.name/article",
+            "tags": [
+              {
+                "tag": "div",
+                "class": "article"
+              }
+            ]
+          },
+          {
+            "field": "field.name/date",
+            "tags": [
+              {
+                "tag": "span",
+                "class": "date"
+              }
+            ]
+          }
+        ]
+      },
+      "keyFilters": {
+        "literals": {},
+        "annotations": {},
+        "expressions": {}
+      },
+      "meta": {},
+      "typeCasting": {},
+      "optsClass": "uk.ac.susx.tag.method51.webcrawl.webscrape.WebScraper$Options",
+      "keyMapping": {},
+      "pathPrefix": ""
+    }
+  ],
+  "heartbeats": [],
+  "meta": {
+    "$created_at": 1579087659268,
+    "positions": [
+      {
+        "w": 250,
+        "x": 281,
+        "h": 140,
+        "y": 126
+      }
+    ],
+    "componentLabels": [
+      {
+        "outputLabels": [
+          ":output:"
+        ],
+        "inputLabels": [
+          ":input:"
+        ]
+      }
+    ]
+  },
+  "name": "arabtimesonline",
+  "edges": [],
+  "lastModified": 1561987806863
+}

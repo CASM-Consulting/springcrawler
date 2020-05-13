@@ -29,8 +29,8 @@ import java.util.function.Supplier;
 
 public class Crawl {
 
-    private static final Path ALL_SCRAPERS = Paths.get("/home/sw206/git/acled-scrapers");
-    private static final Path CACHE_DIR = Paths.get("/home/sw206/git/springcrawler/balkans_scrapers");
+    private static final Path ALL_SCRAPERS = Paths.get("/Users/jp242/Documents/Projects/ACLED2020/acled-scrapers");
+    private static final Path CACHE_DIR = Paths.get("/Users/jp242/Documents/workspace/springcrawler/mexico_scrapers");
 
     private final Source source;
 
