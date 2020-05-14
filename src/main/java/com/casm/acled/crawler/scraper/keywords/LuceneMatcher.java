@@ -28,22 +28,6 @@ public class LuceneMatcher {
             throw new RuntimeException(e);
         }
     }
-
-
-    public boolean isMatched(String text) {
-
-        MemoryIndex index = new MemoryIndex();
-        index.addField(FIELD, text, analyzer);
-        float score = index.search(query);
-
-        try {
-
-            Explanation explanation = index.createSearcher().explain(query,0);
-
-            int c = 0;
-        } catch (IOException e) {
-            //pass
-        }
 //
 //        QueryTermExtractor
 //        IndexSearcher searcher = new IndexSearcher(directory);
@@ -56,6 +40,13 @@ public class LuceneMatcher {
 //            System.out.println(doc.get("title"));
 //            System.out.println(explanation.toString());
 //        }
+
+    public boolean isMatched(String text) {
+
+        MemoryIndex index = new MemoryIndex();
+        index.addField(FIELD, text, analyzer);
+        float score = index.search(query);
+
 
         return score > 0.0f;
     }

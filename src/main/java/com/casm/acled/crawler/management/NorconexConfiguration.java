@@ -4,6 +4,7 @@ import com.casm.acled.crawler.scraper.ACLEDMetadataPreProcessor;
 import com.casm.acled.crawler.scraper.ACLEDScraper;
 import com.norconex.collector.core.crawler.ICrawlerConfig;
 import com.norconex.collector.core.data.store.impl.mvstore.MVStoreCrawlDataStoreFactory;
+import com.norconex.collector.core.filter.impl.ExtensionReferenceFilter;
 import com.norconex.collector.http.HttpCollectorConfig;
 import com.norconex.collector.http.crawler.HttpCrawlerConfig;
 import com.norconex.collector.http.crawler.URLCrawlScopeStrategy;
@@ -12,6 +13,7 @@ import com.norconex.collector.http.url.impl.GenericLinkExtractor;
 import com.norconex.importer.ImporterConfig;
 import com.norconex.importer.handler.IImporterHandler;
 import com.norconex.importer.handler.filter.AbstractDocumentFilter;
+import com.norconex.importer.handler.filter.OnMatch;
 import com.norconex.importer.parser.GenericDocumentParserFactory;
 
 import java.nio.charset.StandardCharsets;
@@ -121,6 +123,11 @@ public class NorconexConfiguration {
         crawler.setWorkDir(crawlStore.toFile());
 
         crawler.setCrawlDataStoreFactory(new MVStoreCrawlDataStoreFactory());
+
+        ExtensionReferenceFilter referenceFilter = new ExtensionReferenceFilter("jpeg,jpg,png,pdf,ico,mpg,mp4,avi,mp3,mov,dvi,gif,tiff,bmp,wav");
+        referenceFilter.setOnMatch(OnMatch.EXCLUDE);
+        crawler.setReferenceFilters(referenceFilter);
+
 
 //        crawler.setId(id);
 //            crawler.setStartSitemapURLs(seeds);

@@ -57,7 +57,11 @@ public class ScraperRunner implements CommandLineRunner {
         reporter.randomRunId();
 
 //        SourceList sourceList = sourceListDAO.getByUnique(SourceList.LIST_NAME, "balkans").get();
-        Source source = sourceDAO.getById(3281).get();
+//        Source source = sourceDAO.getById(3281).get();
+//        Source source = sourceDAO.getById(3795).get();
+//        Source source = sourceDAO.getById(1657).get();
+//        Source source = sourceDAO.getById(2230).get();
+        Source source = sourceDAO.getById(1265).get();
 
         scraperService.checkExampleURLs(scraperDir, source);
 

@@ -104,12 +104,30 @@ public class DateTimeServiceRunner implements CommandLineRunner {
 
 //        attemptSourceListExistingArticles("balkans");
 
+//        dateTimeService.attemptDateTimeParse(sourceDAO.getById(3281).get(), DateParsers.ALL, getFromArticles);
 //        dateTimeService.attemptDateTimeParse(sourceDAO.getById(1262).get(), DateParsers.ALL, getFromArticles);
-        dateTimeService.attemptDateTimeParse(sourceDAO.getById(1262).get(), DateParsers.ALL, getFromArticles);
+//        dateTimeService.attemptDateTimeParse(sourceDAO.getById(2977).get(), DateParsers.ALL, getFromArticles);
+//        dateTimeService.attemptDateTimeParse(sourceDAO.getById(17749).get(), DateParsers.ALL, getFromArticles);
+//        dateTimeService.attemptDateTimeParse(sourceDAO.getById(38).get(), DateParsers.ALL, getFromArticles);
+//        dateTimeService.attemptDateTimeParse(sourceDAO.getById(3795).get(), DateParsers.ALL, getFromArticles);
+//        dateTimeService.attemptDateTimeParse(sourceDAO.getById(1658).get(), DateParsers.ALL, getFromArticles);
+//        dateTimeService.attemptDateTimeParse(sourceDAO.getById(3591).get(), DateParsers.ALL, getFromArticles);
+//        dateTimeService.attemptDateTimeParse(sourceDAO.getById(4421).get(), DateParsers.ALL, getFromArticles);
+//        dateTimeService.attemptDateTimeParse(sourceDAO.getById(16778).get(), DateParsers.ALL, getFromArticles);
+//        dateTimeService.attemptDateTimeParse(sourceDAO.getById(2122).get(), DateParsers.ALL, getFromArticles);
+//        dateTimeService.attemptDateTimeParse(sourceDAO.getById(3264).get(), DateParsers.ALL, getFromArticles);
+//        dateTimeService.attemptDateTimeParse(sourceDAO.getById(3264).get(), DateParsers.ALL, getFromArticles);
+//        dateTimeService.attemptDateTimeParse(sourceDAO.getById(4345).get(), DateParsers.ALL, getFromArticles);
+//        dateTimeService.attemptDateTimeParse(sourceDAO.getById(1891).get(), DateParsers.ALL, getFromArticles);
+//        dateTimeService.attemptDateTimeParse(sourceDAO.getById(2139).get(), DateParsers.ALL, getFromArticles);
+//        dateTimeService.attemptDateTimeParse(sourceDAO.getById(4642).get(), DateParsers.ALL, getFromArticles);
+//        dateTimeService.attemptDateTimeParse(sourceDAO.getById(3596).get(), DateParsers.ALL, getFromArticles);
+//        dateTimeService.attemptDateTimeParse(sourceDAO.getById(17335).get(), DateParsers.ALL, getFromArticles);
+//        dateTimeService.attemptDateTimeParse(sourceDAO.getById(1265).get(), DateParsers.ALL, getFromArticles);
+        dateTimeService.attemptDateTimeParse(sourceDAO.getById(1263).get(), DateParsers.ALL, getFromArticles);
 
         reporter.getRunReports().stream().forEach(r -> logger.info(r.toString()));
 
-//        attemptSource(1263, );
     }
 
     public static void main(String[] args) {

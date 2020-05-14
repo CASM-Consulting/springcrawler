@@ -102,23 +102,16 @@ public class ACLEDImporter implements IHttpDocumentProcessor {
             String date = metadataGet(metadata, ScraperFields.SCRAPED_DATE);
             String standardDate = metadataGet(metadata, ScraperFields.STANDARD_DATE);
 
-            StringBuilder text = new StringBuilder();
             Article article = EntityVersions.get(Article.class)
                     .current();
 
-            text.append(date).append("\n");
-
             if(title != null) {
-                text.append(title).append("\n");
                 article = article.put(Article.TITLE, title);
             }
 
-            text.append(articleText);
-
-
             String url = doc.getReference();
 
-            article = article.put(Article.TEXT, text.toString())
+            article = article.put(Article.TEXT, articleText)
                     .put(Article.SCRAPE_DATE, date)
                     .put(Article.URL, url);
 
@@ -126,6 +119,9 @@ public class ACLEDImporter implements IHttpDocumentProcessor {
                 LocalDateTime parsedDate = ExcludingCustomDateMetadataFilter.toDate(standardDate);
                 article = article.put(Article.DATE, parsedDate.toLocalDate());
             }
+
+            int depth = metadata.getInt("collector.depth");
+            article = article.put(Article.CRAWL_DEPTH, depth);
 
             LocalDate crawlDate = LocalDate.now();
 

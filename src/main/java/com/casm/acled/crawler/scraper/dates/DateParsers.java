@@ -136,7 +136,7 @@ public class DateParsers {
     ));
 
     public static final DateParser dp32 = CompositeDateParser.of(ImmutableList.of(
-            "ISO:/dd.mm.yyyy HH:mm/" //25.11.2019, 15:20
+            "ISO:/dd.MM.yyyy HH:mm/" //25.11.2019, 15:20
     ));
 
     public static final DateParser dp33 = CompositeDateParser.of(ImmutableList.of(
@@ -261,7 +261,7 @@ public class DateParsers {
     ));
 
     public static final DateParser dp63 = CompositeDateParser.of(ImmutableList.of(
-            "ISO:§HH:mm dd.mm.yyyy§§RE.+обновлено:\\s+(.+)[)]" // '09:58 13.07.2013 (обновлено: 10:02 13.07.2013)'
+            "ISO:§HH:mm dd.MM.yyyy§§RE.+обновлено:\\s+(.+)[)]" // '09:58 13.07.2013 (обновлено: 10:02 13.07.2013)'
     ));
 
     public static final DateParser dp64 = CompositeDateParser.of(ImmutableList.of(
@@ -537,6 +537,46 @@ public class DateParsers {
             "ISO:/EEEE, d 'de' MMM 'de' yyyy/es/RE.*-\\s+(.*)\\s+-.*" // ENSENADA, BC - jueves, 1 de agosto de 2019 - AFN
     ));
 
+    public static final DateParser dp131 = CompositeDateParser.of(ImmutableList.of(
+            "ISO:/EEEE, dd.MM.yyyy. 'u' HH:mm" // ENSENADA, BC - jueves, 1 de agosto de 2019 - AFN
+    ));
+
+    public static final DateParser dp132 = CompositeDateParser.of(ImmutableList.of(
+            "ISO:/'Objavljeno' d. MMM, yyyy" // ENSENADA, BC - jueves, 1 de agosto de 2019 - AFN
+    ));
+
+    public static final DateParser dp133 = CompositeDateParser.of(ImmutableList.of(
+            "ISO:/dd. MM. yyyy." // ENSENADA, BC - jueves, 1 de agosto de 2019 - AFN
+    ));
+
+    public static final DateParser dp134 = CompositeDateParser.of(ImmutableList.of(
+            "ISO:/dd. MMM yyyy, HH:mm" // ENSENADA, BC - jueves, 1 de agosto de 2019 - AFN
+    ));
+
+    public static final DateParser dp135 = CompositeDateParser.of(ImmutableList.of(
+            "ISO:/dd.MM.yyyy HH:mm//RE.*\\|\\s(\\d{2}\\.\\d{2}\\.\\d{4} \\d{2}:\\d{2}).*" // "BETAVIDEO | 30.04.2020 22:05 > 30.04 22:05"
+    ));
+
+    public static final DateParser dp136 = CompositeDateParser.of(ImmutableList.of(
+            "ISO:/HH:mm, d. M. yyyy." // "BETAVIDEO | 30.04.2020 22:05 > 30.04 22:05"
+    ));
+
+    public static final DateParser dp137 = CompositeDateParser.of(ImmutableList.of(
+            "ISO:/dd.M.yyyy - HH:mm" // "BETAVIDEO | 30.04.2020 22:05 > 30.04 22:05"
+    ));
+
+    public static final DateParser dp138 = CompositeDateParser.of(ImmutableList.of(
+            "ISO:/MMMM dd, yyyy - HH:mm" // "BETAVIDEO | 30.04.2020 22:05 > 30.04 22:05"
+    ));
+
+    public static final DateParser dp139 = CompositeDateParser.of(ImmutableList.of(
+            "ISO:|HH:mm / dd.MM.yyyy" // "BETAVIDEO | 30.04.2020 22:05 > 30.04 22:05"
+    ));
+
+    public static final DateParser dp140 = CompositeDateParser.of(ImmutableList.of(
+            "ISO:/LLLL d, yyyy/" // "BETAVIDEO | 30.04.2020 22:05 > 30.04 22:05"
+    ));
+
     public static final DateParser nl1 = CompositeDateParser.of(ImmutableList.of(
             "NL:/prije/"
     ));
@@ -546,35 +586,31 @@ public class DateParsers {
     ));
 
     public static void main(String... args) {
-        String date = "ENSENADA, BC - jueves, 1 de agosto de 2019 - AFN.";
+        String date = "rujan 17, 2019";
         DateParser dp = CompositeDateParser.of(ImmutableList.of(
-                "ISO:/EEEE, d 'de' MMM 'de' yyyy/es/RE.*-\\s+(.*)\\s+-.*"
+                "ISO:|HH:mm / 'E' cccc, dd MMM yyyy|sq_AL|"
         ));
+
+        dp = dp140;
 
         System.out.println(dp.parse(date).toString());
     }
 
-//    public static void main(String... args) {
-//        String date = "Por: Mario Portillo/Nuevo Laredo El Día Lunes 11 de Mayo del 2020 a las 20:03";
-//        DateParser dp = CompositeDateParser.of(ImmutableList.of(
-//                "ISO:/d 'de' MMM 'del' yyyy 'a las' HH:mm/es/RE(\\d{2}.*\\d{2}:\\d{2})$" //29 septiembre, 2019'
-//        ));
-//
-//        System.out.println(dp.parse(date).toString());
-//    }
-
-
-    //Tue, 19 Nov 2019 04:13 PM
-    //Feb 4, 2020 - 2:41 PM
-    //Published at 11:14 pm March 7th, 2019
-    //07 Fév 2019 à 17:45
-    //Last updated at 08:37 pm March 2nd, 2017
-    //Thursday, 16 January 2020 | markandey katju Janhvi Prakash'
-    //17 de marzo de 2017 a las 11:03h
 
     public static final List<DateParser> ONE = ImmutableList.of(dp130);
 
     public static final List<DateParser> ALL = ImmutableList.of(
+//            generic,
+            dp140,
+            dp139,
+            dp138,
+            dp137,
+            dp136,
+            dp135,
+            dp134,
+            dp133,
+            dp132,
+            dp131,
             dp1,
             dp2,
             dp3,

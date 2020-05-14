@@ -3,6 +3,8 @@ package com.casm.acled.crawler.springrunners;
 
 import com.casm.acled.configuration.ObjectMapperConfiguration;
 import com.casm.acled.crawler.scraper.keywords.KeywordsService;
+import com.casm.acled.dao.entities.SourceListDAO;
+import com.casm.acled.entities.sourcelist.SourceList;
 import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
 import org.camunda.bpm.spring.boot.starter.rest.CamundaBpmRestJerseyAutoConfiguration;
 import org.slf4j.Logger;
@@ -19,6 +21,8 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
 
+import java.nio.file.Paths;
+
 @EnableAutoConfiguration(exclude={HibernateJpaAutoConfiguration.class, CamundaBpmAutoConfiguration.class, CamundaBpmRestJerseyAutoConfiguration.class, ValidationAutoConfiguration.class})
 // We need the special object mapper, though.
 //@Import({ObjectMapperConfiguration.class, CLIRunner.ShutdownConfig.class})
@@ -30,13 +34,23 @@ public class KeywordsServiceRunner implements CommandLineRunner {
     protected static final Logger logger = LoggerFactory.getLogger(KeywordsServiceRunner.class);
 
     @Autowired
-    private KeywordsService keywordsHelper;
+    private KeywordsService keywordsService;
 
+    @Autowired
+    private SourceListDAO sourceListDAO;
 
 
     @Override
     public void run(String... args) throws Exception {
-        keywordsHelper.determineKeywordsList();
+//        keywordsHelper.determineKeywordsList();
+        String query = keywordsService.importFromCSV(Paths.get("balkans-keywords.csv"));
+        System.out.println(query);
+
+//        keywordsService.test(query, "bomb");
+
+//        SourceList sourceList = sourceListDAO.getByUnique(SourceList.LIST_NAME, "balkans").get();
+//        keywordsService.assignKeywords(sourceList, query);
+
     }
 
     public static void main(String[] args) {

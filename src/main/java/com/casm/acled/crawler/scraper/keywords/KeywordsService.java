@@ -9,16 +9,21 @@ import com.casm.acled.entities.desk.Desk;
 import com.casm.acled.entities.source.Source;
 import com.casm.acled.entities.sourcelist.SourceList;
 import com.casm.acled.entities.sourcesourcelist.SourceSourceList;
+import com.opencsv.CSVReader;
 import net.sf.extjwnl.data.IndexWord;
 import net.sf.extjwnl.data.IndexWordSet;
 import net.sf.extjwnl.data.Synset;
 import net.sf.extjwnl.data.Word;
 import net.sf.extjwnl.dictionary.Dictionary;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+import java.io.Reader;
+import java.nio.file.Path;
 import java.util.*;
 
 @Service
@@ -104,5 +109,46 @@ public class KeywordsService {
             System.out.println(word);
         }
 
+    }
+
+    public String importFromCSV(Path path) throws IOException {
+
+        List<String> terms = new ArrayList<>();
+
+        try (
+                Reader reader = java.nio.file.Files.newBufferedReader(path);
+                CSVReader csvReader = new CSVReader(reader);
+        ) {
+            Iterator<String[]> itr = csvReader.iterator();
+
+            String[] headers = itr.next();
+
+            while(itr.hasNext()) {
+                String[] row = itr.next();
+                String term = row[0];
+
+                if(term.contains(" ")) {
+                    terms.add("\""+term+"\"");
+                } else {
+                    terms.add(term);
+                }
+            }
+        }
+
+        String query = "(" + StringUtils.join(terms, " ") + ")";
+        return query;
+    }
+
+    public boolean test(String query, String text) {
+        LuceneMatcher matcher = new LuceneMatcher(query);
+        boolean matched = matcher.isMatched(text);
+        return matched;
+    }
+
+    public SourceList assignKeywords(SourceList sourceList, String query) {
+
+        sourceList = sourceList.put(SourceList.KEYWORDS, query);
+        sourceListDAO.update(sourceList);
+        return sourceList;
     }
 }

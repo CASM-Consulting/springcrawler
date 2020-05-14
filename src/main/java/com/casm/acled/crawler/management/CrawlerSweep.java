@@ -11,6 +11,7 @@ import com.casm.acled.entities.sourcelist.SourceList;
 import com.enioka.jqm.api.JobRequest;
 import com.enioka.jqm.api.JqmClient;
 import com.enioka.jqm.api.JqmClientFactory;
+import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +22,7 @@ import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -71,7 +73,7 @@ public class CrawlerSweep {
         }
     }
 
-    public void sweepSourceList(SourceList sourceList, Path scraperDir) {
+    public void sweepSourceList(SourceList sourceList, Path scraperDir, LocalDate from, LocalDate to, Boolean skipKeywords) {
 
         List<Source> sources = sourceDAO.byList(sourceList);
 
@@ -79,7 +81,7 @@ public class CrawlerSweep {
                 .filter(s-> Util.isScrapable(scraperDir, s))
                 .collect(Collectors.toList());
 
-        submitJobs(sourcesWithScrapers, sourceList.id());
+        submitJobs(sourcesWithScrapers, sourceList.id(), from, to, skipKeywords);
     }
 
     public void sweepAvailableScrapers(Path scraperDir) throws IOException {
@@ -110,21 +112,27 @@ public class CrawlerSweep {
             .map(p->sources.get(p.getFileName().toString()))
             .collect(Collectors.toList());
 
-        submitJobs(sourcesWithScrapers, 1);
+        submitJobs(sourcesWithScrapers, 1, null, null, Boolean.TRUE);
     }
 
 
-    public void submitJobs(List<Source> sources, Integer sourceListId) {
+    public void submitJobs(List<Source> sources, Integer sourceListId, LocalDate from, LocalDate to, Boolean skipKeywords) {
         for(Source source : sources) {
             JobRequest jobRequest = JobRequest.create(JQM_APP_NAME, JQM_USER);
             jobRequest.addParameter( Crawl.SOURCE_ID, Integer.toString( source.id() ) );
             jobRequest.addParameter( Crawl.SOURCE_LIST_ID, sourceListId.toString() );
-            jobRequest.addParameter( Crawl.SKIP_KEYWORD_FILTER, Boolean.TRUE.toString() );
+            jobRequest.addParameter( Crawl.SKIP_KEYWORD_FILTER, skipKeywords.toString() );
 
-//            jobRequest.addParameter( Crawl.FROM, LocalDate.now().minusDays(7).toString() );
-//            jobRequest.addParameter( Crawl.TO, LocalDate.now().toString() );
+            if(from!=null) {
+                jobRequest.addParameter( Crawl.FROM, from.toString() );
+            }
+            if(to!=null) {
+                jobRequest.addParameter( Crawl.TO, to.toString() );
+            }
 
+            System.out.println(ImmutableMap.copyOf(jobRequest.getParameters()).toString());
             client.enqueue(jobRequest);
+            try{Thread.sleep(1000);}catch (InterruptedException e) {}
         }
     }
 

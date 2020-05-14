@@ -25,6 +25,7 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
 
 import java.nio.file.Paths;
+import java.time.LocalDate;
 
 @EnableAutoConfiguration(exclude={HibernateJpaAutoConfiguration.class, CamundaBpmAutoConfiguration.class, CamundaBpmRestJerseyAutoConfiguration.class, ValidationAutoConfiguration.class})
 // We need the special object mapper, though.
@@ -48,16 +49,15 @@ public class CrawlerSweepRunner implements CommandLineRunner {
     @Autowired
     private SourceDAO sourceDAO;
 
-    public void sweepSourceList(String name) {
+    public void sweepSourceList(String name, LocalDate from, LocalDate to, Boolean skipKeywords) {
         SourceList sourceList = sourceListDAO.getByUnique(SourceList.LIST_NAME, name).get();
-        crawlerSweep.sweepSourceList(sourceList, Paths.get("/home/sw206/git/acled-scrapers"));
+        crawlerSweep.sweepSourceList(sourceList, Paths.get("/home/sw206/git/acled-scrapers"), from, to, skipKeywords);
     }
 
-    public void singleSource(String listName, String sourceName) {
-
+    public void singleSource(String listName, String sourceName, LocalDate from, LocalDate to, Boolean skipKeywords) {
         Source source = sourceDAO.getByUnique(Source.STANDARD_NAME, sourceName).get();
         SourceList sourceList = sourceListDAO.getByUnique(SourceList.LIST_NAME, listName).get();
-        crawlerSweep.submitJobs(ImmutableList.of(source), sourceList.id());
+        crawlerSweep.submitJobs(ImmutableList.of(source), sourceList.id(), from, to, skipKeywords);
     }
 
     @Override
@@ -65,7 +65,7 @@ public class CrawlerSweepRunner implements CommandLineRunner {
 
 //        crawlerSweep.sweepAvailableScrapers(Paths.get("allscrapers"));
 
-        sweepSourceList("balkans");
+        sweepSourceList("balkans", LocalDate.of(2020, 5,3), LocalDate.of(2020, 5,9), Boolean.FALSE);
 //        singleSource(args[0], args[1]);
     }
 

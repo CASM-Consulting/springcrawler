@@ -340,4 +340,9 @@ public class LocaleService {
             }
         }
     }
+
+    public static void main(String[] args) {
+
+        System.out.println(ZoneId.of("Mexico/General"));
+    }
 }
