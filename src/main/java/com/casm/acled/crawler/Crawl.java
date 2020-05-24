@@ -39,6 +39,8 @@ public class Crawl {
     public static final String SKIP_KEYWORD_FILTER = "SKIP_KEYWORD_FILTER";
     public static final String FROM = "FROM";
     public static final String TO = "TO";
+    public static final String ARTICLE_LIMIT = "ARTICLE_LIMIT";
+    public static final String DEPTH_LIMIT = "DEPTH_LIMIT";
 
     private final LocalDate from;
     private final LocalDate to;

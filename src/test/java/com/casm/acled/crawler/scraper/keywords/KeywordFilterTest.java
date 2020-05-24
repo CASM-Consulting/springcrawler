@@ -7,6 +7,20 @@ import org.junit.Test;
 
 public class KeywordFilterTest {
 
+    @Test
+    public void test2() throws Exception {
+
+        LuceneMatcher luceneMatcher = new LuceneMatcher("\"hello world\"");
+
+//        Assert.assertFalse(luceneMatcher.isMatched("no id doesn't"));
+//        Assert.assertTrue(luceneMatcher.isMatched("hello it does! world"));
+
+        luceneMatcher.getMatches("it does! hello world. doesn't it");
+
+
+    }
+
+
 
     @Test
     public void test1() throws Exception {

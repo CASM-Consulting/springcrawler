@@ -102,6 +102,19 @@ public class DateTimeService {
         };
     }
 
+    public void checkExistingPasses(SourceList sourceList, Function<Source, List<String>> exampleGetter) {
+
+        List<Source> sources = sourceDAO.byList(sourceList);
+
+        for(Source source : sources) {
+            boolean passed = checkExistingPasses(source, exampleGetter);
+            if(passed) {
+                reporter.report(Report.of(Event.DATE_PARSE_SUCCESS).id(source.id()).message(source.get(Source.STANDARD_NAME)));
+            } else {
+                reporter.report(Report.of(Event.DATE_PARSE_FAILED).id(source.id()).message(source.get(Source.STANDARD_NAME)));
+            }
+        }
+    }
 
     public boolean checkExistingPasses(Source source, Function<Source, List<String>> exampleGetter) {
         List<String> formatSpecs = source.get(Source.DATE_FORMAT);

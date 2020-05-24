@@ -103,6 +103,7 @@ public class DateTimeServiceRunner implements CommandLineRunner {
         reporter.randomRunId();
 
 //        attemptSourceListExistingArticles("balkans");
+        dateTimeService.checkExistingPasses(sourceListDAO.getByUnique(SourceList.LIST_NAME, "balkans").get(), getFromArticles);
 
 //        dateTimeService.attemptDateTimeParse(sourceDAO.getById(3281).get(), DateParsers.ALL, getFromArticles);
 //        dateTimeService.attemptDateTimeParse(sourceDAO.getById(1262).get(), DateParsers.ALL, getFromArticles);
@@ -124,7 +125,7 @@ public class DateTimeServiceRunner implements CommandLineRunner {
 //        dateTimeService.attemptDateTimeParse(sourceDAO.getById(3596).get(), DateParsers.ALL, getFromArticles);
 //        dateTimeService.attemptDateTimeParse(sourceDAO.getById(17335).get(), DateParsers.ALL, getFromArticles);
 //        dateTimeService.attemptDateTimeParse(sourceDAO.getById(1265).get(), DateParsers.ALL, getFromArticles);
-        dateTimeService.attemptDateTimeParse(sourceDAO.getById(1263).get(), DateParsers.ALL, getFromArticles);
+//        dateTimeService.attemptDateTimeParse(sourceDAO.getById(1263).get(), DateParsers.ALL, getFromArticles);
 
         reporter.getRunReports().stream().forEach(r -> logger.info(r.toString()));
 

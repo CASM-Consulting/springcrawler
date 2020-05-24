@@ -2,8 +2,13 @@ package com.casm.acled.crawler.springrunners;
 
 
 import com.casm.acled.configuration.ObjectMapperConfiguration;
+import com.casm.acled.crawler.reporting.Event;
+import com.casm.acled.crawler.reporting.Report;
+import com.casm.acled.crawler.reporting.Reporter;
 import com.casm.acled.crawler.scraper.keywords.KeywordsService;
+import com.casm.acled.dao.entities.SourceDAO;
 import com.casm.acled.dao.entities.SourceListDAO;
+import com.casm.acled.entities.source.Source;
 import com.casm.acled.entities.sourcelist.SourceList;
 import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
 import org.camunda.bpm.spring.boot.starter.rest.CamundaBpmRestJerseyAutoConfiguration;
@@ -39,18 +44,44 @@ public class KeywordsServiceRunner implements CommandLineRunner {
     @Autowired
     private SourceListDAO sourceListDAO;
 
+    @Autowired
+    private SourceDAO sourceDAO;
+
+    @Autowired
+    private Reporter reporter;
+
+    public void testURL(String sourceListName, String sourceName, String url) {
+        SourceList sourceList = sourceListDAO.getByUnique(SourceList.LIST_NAME, sourceListName).get();
+        Source source = sourceDAO.getByUnique(Source.STANDARD_NAME, sourceName).get();
+
+        boolean matched = keywordsService.checkURL(sourceList, source, url);
+
+
+        if(matched) {
+            reporter.report(Report.of(Event.QUERY_MATCH).id(source.id()).message(url));
+        } else {
+            reporter.report(Report.of(Event.QUERY_NO_MATCH).id(source.id()).message(url));
+        }
+
+    }
+
 
     @Override
     public void run(String... args) throws Exception {
+        reporter.randomRunId();
+
+//        testURL("balkans", "Politika", "http://www.politika.rs/sr/clanak/453484/Vucic-osudio-napade-na-novinarku-lista-Jedinstvo");
+        testURL("balkans", "Politika", "http://www.politika.rs/sr/clanak/453708/Protest-ispred-Predsednistva");
+
+
 //        keywordsHelper.determineKeywordsList();
-        String query = keywordsService.importFromCSV(Paths.get("balkans-keywords.csv"));
-        System.out.println(query);
-
+//        String query = keywordsService.importFromCSV(Paths.get("balkans-keywords.csv"));
 //        keywordsService.test(query, "bomb");
-
 //        SourceList sourceList = sourceListDAO.getByUnique(SourceList.LIST_NAME, "balkans").get();
 //        keywordsService.assignKeywords(sourceList, query);
 
+
+        reporter.getRunReports().stream().forEach(r -> logger.info(r.toString()));
     }
 
     public static void main(String[] args) {

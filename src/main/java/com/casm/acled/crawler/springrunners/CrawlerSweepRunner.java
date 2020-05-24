@@ -65,7 +65,8 @@ public class CrawlerSweepRunner implements CommandLineRunner {
 
 //        crawlerSweep.sweepAvailableScrapers(Paths.get("allscrapers"));
 
-        sweepSourceList("balkans", LocalDate.of(2020, 5,3), LocalDate.of(2020, 5,9), Boolean.FALSE);
+//        sweepSourceList("balkans", LocalDate.of(2020, 5,3), LocalDate.of(2020, 5,9), Boolean.FALSE);
+        sweepSourceList("mexico-back-code-2018", LocalDate.of(2018, 1,1), LocalDate.of(2018, 12,31), Boolean.TRUE);
 //        singleSource(args[0], args[1]);
     }
 

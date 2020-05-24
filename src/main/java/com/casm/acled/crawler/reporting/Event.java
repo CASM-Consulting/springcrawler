@@ -18,5 +18,7 @@ public enum Event {
     SCRAPE_NO_DATE,
     SCRAPE_NO_TITLE,
     SCRAPE_NO_RESULT,
+    QUERY_MATCH,
+    QUERY_NO_MATCH,
     ;
 }

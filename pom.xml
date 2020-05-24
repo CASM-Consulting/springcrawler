@@ -17,6 +17,7 @@
         <jqm.version>2.2.1</jqm.version>
         <m52norconex.version>1.5.14-SNAPSHOT</m52norconex.version>
         <casm.acled.version>1.4-SNAPSHOT</casm.acled.version>
+        <lucene.version>8.5.1</lucene.version>
     </properties>
 
     <parent>
@@ -379,26 +380,35 @@
         <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-memory</artifactId>
-            <version>8.5.1</version>
+            <version>${lucene.version}</version>
         </dependency>
+
         <!-- https://mvnrepository.com/artifact/org.apache.lucene/lucene-core -->
         <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-core</artifactId>
-            <version>8.5.1</version>
+            <version>${lucene.version}</version>
         </dependency>
+
         <!-- https://mvnrepository.com/artifact/org.apache.lucene/lucene-analyzers-common -->
         <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-analyzers-common</artifactId>
-            <version>8.5.1</version>
+            <version>${lucene.version}</version>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/org.apache.lucene/lucene-highlighter -->
+        <dependency>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-highlighter</artifactId>
+            <version>${lucene.version}</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/org.apache.lucene/lucene-queryparser -->
         <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-queryparser</artifactId>
-            <version>8.5.1</version>
+            <version>${lucene.version}</version>
         </dependency>
 
         <dependency>
