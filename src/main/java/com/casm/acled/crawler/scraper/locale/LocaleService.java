@@ -101,6 +101,9 @@ public class LocaleService {
 
     public String getCountry(Source source){
         String country = source.get(Source.COUNTRY);
+        if(country == null) {
+            return country;
+        }
         if(countryMap.containsKey(country)) {
             country = countryMap.get(country);
         }
@@ -139,7 +142,7 @@ public class LocaleService {
                 throw new ReportingException(Report.of(Event.LOCALE_NOT_FOUND).message("language %s - possible %s", language, locales.size()));
             }
         } else {
-            reporting.report(Report.of(Event.LANGUAGE_NOT_FOUND).message("language %s", language));
+            throw new ReportingException(Report.of(Event.LANGUAGE_NOT_FOUND).message(language));
         }
 
         return locales;

@@ -63,7 +63,7 @@ public class LocaleServiceRunner implements CommandLineRunner {
         reporter.randomRunId();
 
 //        localeHelper.allS                return Optional.empty();
-//        localeHelper.determineSourceLocalesAndListTimeZones("balkans");
+        localeService.determineSourceLocalesAndListTimeZones("Balkans");
 
 //        Source source = sourceDAO.getById(1262).get();
 //        Source source = sourceDAO.getById(2977).get();
@@ -85,12 +85,12 @@ public class LocaleServiceRunner implements CommandLineRunner {
 //        Source source = sourceDAO.getById(17335).get();
 //        Source source = sourceDAO.getById(1265).get();
 //        Source source = sourceDAO.getById(1263).get();
-        Source source = sourceDAO.getById(2254).get();
+//        Source source = sourceDAO.getById(2254).get();
 
 //        System.out.println(localeService.determineLocale(source));
 //        System.out.println(localeService.determineTimeZone(source));
 
-        localeService.autoAssignLocalesAndTimeZones(source);
+//        localeService.autoAssignLocalesAndTimeZones(source);
 
         reporter.getRunReports().stream().forEach(r -> logger.info(r.toString()));
     }

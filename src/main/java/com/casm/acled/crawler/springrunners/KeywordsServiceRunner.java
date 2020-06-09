@@ -71,15 +71,14 @@ public class KeywordsServiceRunner implements CommandLineRunner {
         reporter.randomRunId();
 
 //        testURL("balkans", "Politika", "http://www.politika.rs/sr/clanak/453484/Vucic-osudio-napade-na-novinarku-lista-Jedinstvo");
-        testURL("balkans", "Politika", "http://www.politika.rs/sr/clanak/453708/Protest-ispred-Predsednistva");
+//        testURL("balkans", "Politika", "http://www.politika.rs/sr/clanak/453708/Protest-ispred-Predsednistva");
 
 
 //        keywordsHelper.determineKeywordsList();
-//        String query = keywordsService.importFromCSV(Paths.get("balkans-keywords.csv"));
+        String query = keywordsService.importFromCSV(Paths.get("/home/sw206/Dropbox/acled/spec/Balkans Keyword List_0522.csv"));
 //        keywordsService.test(query, "bomb");
-//        SourceList sourceList = sourceListDAO.getByUnique(SourceList.LIST_NAME, "balkans").get();
-//        keywordsService.assignKeywords(sourceList, query);
-
+        SourceList sourceList = sourceListDAO.getByUnique(SourceList.LIST_NAME, "Balkans").get();
+        keywordsService.assignKeywords(sourceList, query);
 
         reporter.getRunReports().stream().forEach(r -> logger.info(r.toString()));
     }

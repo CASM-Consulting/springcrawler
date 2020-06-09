@@ -67,9 +67,9 @@ public class CrawlerServiceRunner implements CommandLineRunner {
     }
 
 
-    private void collectExamples(String[] args) {
-        int sourceListId = Integer.parseInt(args[0]);
-        int sourceId = Integer.parseInt(args[1]);
+    private void collectExamples(int sourceId, int sourceListId) {
+
+
 
         crawlService.collectExamples(sourceListId, sourceId);
     }
@@ -79,7 +79,8 @@ public class CrawlerServiceRunner implements CommandLineRunner {
 
         reporter.randomRunId();
 
-        crawl(args);
+//        crawl(args);
+        collectExamples(1657,1);
 
         reporter.getRunReports().stream().forEach(r -> logger.info(r.toString()));
 

@@ -38,7 +38,7 @@ public class CrawlerSweep {
 
     private final JqmClient client;
 
-    private final static String JQM_APP_NAME = "JQMSpringCollectorV1";
+    public final static String JQM_APP_NAME = "JQMSpringCollectorV1";
     private static final String JQM_USER = "crawler-submission-service";
 
     @Autowired
@@ -73,7 +73,7 @@ public class CrawlerSweep {
         }
     }
 
-    public void sweepSourceList(SourceList sourceList, Path scraperDir, LocalDate from, LocalDate to, Boolean skipKeywords) {
+    public void sweepSourceList(String app, SourceList sourceList, Path scraperDir, LocalDate from, LocalDate to, Boolean skipKeywords) {
 
         List<Source> sources = sourceDAO.byList(sourceList);
 
@@ -81,10 +81,10 @@ public class CrawlerSweep {
                 .filter(s-> Util.isScrapable(scraperDir, s))
                 .collect(Collectors.toList());
 
-        submitJobs(sourcesWithScrapers, sourceList.id(), from, to, skipKeywords);
+        submitJobs(app, sourcesWithScrapers, sourceList.id(), from, to, skipKeywords);
     }
 
-    public void sweepAvailableScrapers(Path scraperDir) throws IOException {
+    public void sweepAvailableScrapers(String app, Path scraperDir) throws IOException {
 
         Map<String, Source> sources = sourceDAO.getAll().stream()
                 .filter(s-> hasScraper(s, scraperDir))
@@ -112,28 +112,31 @@ public class CrawlerSweep {
             .map(p->sources.get(p.getFileName().toString()))
             .collect(Collectors.toList());
 
-        submitJobs(sourcesWithScrapers, 1, null, null, Boolean.TRUE);
+        submitJobs(app, sourcesWithScrapers, 1, null, null, Boolean.TRUE);
     }
 
-
-    public void submitJobs(List<Source> sources, Integer sourceListId, LocalDate from, LocalDate to, Boolean skipKeywords) {
+    public void submitJobs(String app, List<Source> sources, Integer sourceListId, LocalDate from, LocalDate to, Boolean skipKeywords) {
         for(Source source : sources) {
-            JobRequest jobRequest = JobRequest.create(JQM_APP_NAME, JQM_USER);
-            jobRequest.addParameter( Crawl.SOURCE_ID, Integer.toString( source.id() ) );
-            jobRequest.addParameter( Crawl.SOURCE_LIST_ID, sourceListId.toString() );
-            jobRequest.addParameter( Crawl.SKIP_KEYWORD_FILTER, skipKeywords.toString() );
-
-            if(from!=null) {
-                jobRequest.addParameter( Crawl.FROM, from.toString() );
-            }
-            if(to!=null) {
-                jobRequest.addParameter( Crawl.TO, to.toString() );
-            }
-
-            System.out.println(ImmutableMap.copyOf(jobRequest.getParameters()).toString());
-            client.enqueue(jobRequest);
+            submitJob(app, source, sourceListId, from, to, skipKeywords);
             try{Thread.sleep(1000);}catch (InterruptedException e) {}
         }
+    }
+
+    public void submitJob(String app, Source source, Integer sourceListId, LocalDate from, LocalDate to, Boolean skipKeywords) {
+        JobRequest jobRequest = JobRequest.create(app, JQM_USER);
+        jobRequest.addParameter( Crawl.SOURCE_ID, Integer.toString( source.id() ) );
+        jobRequest.addParameter( Crawl.SOURCE_LIST_ID, sourceListId.toString() );
+        jobRequest.addParameter( Crawl.SKIP_KEYWORD_FILTER, skipKeywords.toString() );
+
+        if(from!=null) {
+            jobRequest.addParameter( Crawl.FROM, from.toString() );
+        }
+        if(to!=null) {
+            jobRequest.addParameter( Crawl.TO, to.toString() );
+        }
+
+        System.out.println(ImmutableMap.copyOf(jobRequest.getParameters()).toString());
+        client.enqueue(jobRequest);
     }
 
 }

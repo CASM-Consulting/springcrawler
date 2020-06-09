@@ -59,9 +59,13 @@ public class ScraperServiceRunner implements CommandLineRunner {
 //        Source source = sourceDAO.getById(3795).get();
 //        Source source = sourceDAO.getById(1657).get();
 //        Source source = sourceDAO.getById(2230).get();
-        Source source = sourceDAO.getById(1265).get();
+//        Source source = sourceDAO.getById(1265).get();
 
-        scraperService.checkExampleURLs(scraperDir, source);
+//        scraperService.checkExampleURLs(scraperDir, source);
+        scraperService.checkExampleURLs(scraperDir,  sourceListDAO.byName("Balkans").get());
+//        scraperService.checkExampleURLs(scraperDir,  sourceDAO.byName("Insajderi").get());
+
+//        scraperService.checkScraperCoverage(scraperDir, sourceListDAO.byName("Balkans").get());
 
         reporter.getRunReports().stream().forEach(r -> logger.info(r.toString()));
     }

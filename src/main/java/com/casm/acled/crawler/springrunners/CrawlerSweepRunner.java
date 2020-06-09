@@ -49,15 +49,29 @@ public class CrawlerSweepRunner implements CommandLineRunner {
     @Autowired
     private SourceDAO sourceDAO;
 
-    public void sweepSourceList(String name, LocalDate from, LocalDate to, Boolean skipKeywords) {
+    public static String JQMSpringCollectorV1 = "JQMSpringCollectorV1";
+    public static String JQMSpringExampleCollectorV1 = "JQMSpringExampleCollectorV1";
+
+    public void sweepSourceList(String app, String name, LocalDate from, LocalDate to, Boolean skipKeywords) {
         SourceList sourceList = sourceListDAO.getByUnique(SourceList.LIST_NAME, name).get();
-        crawlerSweep.sweepSourceList(sourceList, Paths.get("/home/sw206/git/acled-scrapers"), from, to, skipKeywords);
+        crawlerSweep.sweepSourceList(app, sourceList, Paths.get("/home/sw206/git/acled-scrapers"), from, to, skipKeywords);
     }
 
-    public void singleSource(String listName, String sourceName, LocalDate from, LocalDate to, Boolean skipKeywords) {
+    public void singleSource(String app, String listName, String sourceName, LocalDate from, LocalDate to, Boolean skipKeywords) {
         Source source = sourceDAO.getByUnique(Source.STANDARD_NAME, sourceName).get();
         SourceList sourceList = sourceListDAO.getByUnique(SourceList.LIST_NAME, listName).get();
-        crawlerSweep.submitJobs(ImmutableList.of(source), sourceList.id(), from, to, skipKeywords);
+        crawlerSweep.submitJobs(app, ImmutableList.of(source), sourceList.id(), from, to, skipKeywords);
+    }
+
+    public void sweepSourceListCollectExamples(String app, String name) {
+        SourceList sourceList = sourceListDAO.getByUnique(SourceList.LIST_NAME, name).get();
+        crawlerSweep.sweepSourceList(app, sourceList, Paths.get("/home/sw206/git/acled-scrapers"), null, null, Boolean.TRUE);
+    }
+
+    public void sweepSourceCollectExamples(String name, String list) {
+        Source source = sourceDAO.getByUnique(Source.STANDARD_NAME, name).get();
+        SourceList sourceList = sourceListDAO.getByUnique(SourceList.LIST_NAME, list).get();
+        crawlerSweep.submitJob(JQMSpringExampleCollectorV1, source, sourceList.id(), null,null, Boolean.TRUE);
     }
 
     @Override
@@ -66,7 +80,11 @@ public class CrawlerSweepRunner implements CommandLineRunner {
 //        crawlerSweep.sweepAvailableScrapers(Paths.get("allscrapers"));
 
 //        sweepSourceList("balkans", LocalDate.of(2020, 5,3), LocalDate.of(2020, 5,9), Boolean.FALSE);
-        sweepSourceList("mexico-back-code-2018", LocalDate.of(2018, 1,1), LocalDate.of(2018, 12,31), Boolean.TRUE);
+        sweepSourceList(JQMSpringCollectorV1, "Balkans", LocalDate.of(2020, 5,3), LocalDate.of(2020, 5,16), Boolean.FALSE);
+//        sweepSourceListCollectExamples(JQMSpringExampleCollectorV1, "Balkans");
+
+        //        sweepSourceCollectExamples("HRW", "Balkans");
+
 //        singleSource(args[0], args[1]);
     }
 

@@ -54,6 +54,7 @@ public class CrawlService {
 
             Crawl crawl = new Crawl(maybesSourceList.get(), maybeSource.get(), null, null, true, importer, reporter);
             crawl.getConfig().crawler().setMaxDepth(3);
+//            crawl.getConfig().crawler().setIgnoreSitemap(false);
             crawl.run();
         } else {
 

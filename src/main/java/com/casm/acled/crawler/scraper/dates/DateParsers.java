@@ -577,8 +577,32 @@ public class DateParsers {
             "ISO:/LLLL d, yyyy/" // "BETAVIDEO | 30.04.2020 22:05 > 30.04 22:05"
     ));
 
+    public static final DateParser dp141 = CompositeDateParser.of(ImmutableList.of(
+            "ISO:|dd. MMM, yyyy.||RE(?:Objavljeno)? ?(.*)" // "Objavljeno 30. siječnja, 2020."
+    ));
+
+    public static final DateParser dp142 = CompositeDateParser.of(ImmutableList.of(
+            "ISO:|mm:ss E, dd MMM yyyy|sq|RE(.*) / E (\\w{3}).*, (.*)" // "07:41 / E Diele, 22 Maj 2020"
+    ));
+
+    public static final DateParser dp143 = CompositeDateParser.of(ImmutableList.of(
+            "ISO:|dd.M.yyyy. 'u' HH:mm" // "07:41 / E Diele, 22 Maj 2020"
+    ));
+
+    public static final DateParser dp144 = CompositeDateParser.of(ImmutableList.of(
+            "ISO:|d. LLLL yyyy." // "2. April 2020."
+    ));
+
+    public static final DateParser dp145 = CompositeDateParser.of(ImmutableList.of(
+            "ISO:/dd. MMM yyyy. HH:mm/sr/RE.*\\| (.*?) [>|].*" //  "Б. Борисављевић | 24. мај 2020. 09:43 | Коментара: 0"
+    ));
+
     public static final DateParser nl1 = CompositeDateParser.of(ImmutableList.of(
             "NL:/prije/"
+    ));
+
+    public static final DateParser nl2 = CompositeDateParser.of(ImmutableList.of(
+            "NL:/(\\d+d|\\d+h|\\d+min)/"
     ));
 
     public static final DateParser generic = CompositeDateParser.of(ImmutableList.of(
@@ -586,12 +610,13 @@ public class DateParsers {
     ));
 
     public static void main(String... args) {
-        String date = "rujan 17, 2019";
+        String date = "4. marta 2015. 11:37";
         DateParser dp = CompositeDateParser.of(ImmutableList.of(
-                "ISO:|HH:mm / 'E' cccc, dd MMM yyyy|sq_AL|"
+                "ISO:/dd. MMM yyyy. HH:mm/sr/RE.*\\| (.*?) [>|].*"
         ));
 
-        dp = dp140;
+//        dp = dp140;
+        dp = generic;
 
         System.out.println(dp.parse(date).toString());
     }
@@ -600,7 +625,12 @@ public class DateParsers {
     public static final List<DateParser> ONE = ImmutableList.of(dp130);
 
     public static final List<DateParser> ALL = ImmutableList.of(
-//            generic,
+            generic,
+            dp145,
+            dp144,
+            dp143,
+            dp142,
+            dp141,
             dp140,
             dp139,
             dp138,
@@ -740,7 +770,8 @@ public class DateParsers {
             dp127,
             dp128,
             dp129,
-            dp130,
-            nl1
+            dp130
+            ,nl1
+            ,nl2
     );
 }

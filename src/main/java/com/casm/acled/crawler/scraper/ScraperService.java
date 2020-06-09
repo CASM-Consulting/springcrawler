@@ -8,6 +8,7 @@ import com.casm.acled.crawler.reporting.Reporter;
 import com.casm.acled.dao.entities.SourceDAO;
 import com.casm.acled.entities.source.Source;
 import com.casm.acled.entities.sourcelist.SourceList;
+import com.norconex.collector.core.CollectorException;
 import com.norconex.collector.http.client.impl.GenericHttpClientFactory;
 import com.norconex.collector.http.doc.HttpDocument;
 import com.norconex.collector.http.fetch.impl.GenericDocumentFetcher;
@@ -15,11 +16,13 @@ import com.norconex.collector.http.pipeline.importer.HttpImporterPipelineUtilPro
 import com.norconex.commons.lang.io.CachedInputStream;
 import com.norconex.commons.lang.io.CachedStreamFactory;
 import org.apache.http.client.HttpClient;
+import org.apache.http.conn.ConnectTimeoutException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -40,7 +43,7 @@ public class ScraperService {
         List<Source> sources = sourceDAO.byList(sourceList);
 
         for(Source source: sources) {
-            if(!Util.isDisabled(source)) {
+//            if(!Util.isDisabled(source)) {
                 if(Util.scraperExists(scraperDir, source)) {
                     reporter.report(Report.of(Event.SCRAPER_FOUND)
                             .id(source.id())
@@ -52,7 +55,7 @@ public class ScraperService {
                             .id(source.id())
                     );
                 }
-            }
+//            }
         }
     }
 
@@ -60,7 +63,7 @@ public class ScraperService {
 
         List<Source> sources = sourceDAO.byList(sourceList);
         for(Source source : sources) {
-            if(Util.isScrapable(scraperDir, source)) {
+            if(Util.scraperExists(scraperDir, source)) {
 
                checkExampleURLs(scraperDir, source);
             }
@@ -111,11 +114,20 @@ public class ScraperService {
         List<String> exampleURLs = source.get(Source.EXAMPLE_URLS);
 
         for(String exampleURL : exampleURLs) {
-            HttpDocument document = new HttpDocument(exampleURL, inputStream);
-            fetcher.fetchDocument(client, document);
-            HttpImporterPipelineUtilProxy.enhanceHTTPHeaders(document.getMetadata());
-            HttpImporterPipelineUtilProxy.applyMetadataToDocument(document);
-            scraper.processDocument(client, document);
+            try {
+
+                HttpDocument document = new HttpDocument(exampleURL, inputStream);
+                fetcher.fetchDocument(client, document);
+                HttpImporterPipelineUtilProxy.enhanceHTTPHeaders(document.getMetadata());
+                HttpImporterPipelineUtilProxy.applyMetadataToDocument(document);
+                scraper.processDocument(client, document);
+            } catch (IllegalStateException | CollectorException e){
+                reporter.report(Report.of(Event.ERROR)
+                        .type(Source.class.getName())
+                        .id(source.id())
+                        .message(e.getMessage())
+                );
+            }
         }
     }
 
