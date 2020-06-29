@@ -80,8 +80,11 @@ public class CrawlerSweepRunner implements CommandLineRunner {
 //        crawlerSweep.sweepAvailableScrapers(Paths.get("allscrapers"));
 
 //        sweepSourceList("balkans", LocalDate.of(2020, 5,3), LocalDate.of(2020, 5,9), Boolean.FALSE);
-        sweepSourceList(JQMSpringCollectorV1, "Balkans", LocalDate.of(2020, 5,3), LocalDate.of(2020, 5,16), Boolean.FALSE);
-//        sweepSourceListCollectExamples(JQMSpringExampleCollectorV1, "Balkans");
+//        sweepSourceList(JQMSpringCollectorV1, "Balkans", LocalDate.of(2020, 5,3), LocalDate.of(2020, 5,16), Boolean.FALSE);
+        //sweepSourceListCollectExamples(JQMSpringExampleCollectorV1, "Balkans");
+
+        sweepSourceList(JQMSpringCollectorV1, "mexico-back-code-2018", LocalDate.of(2018, 1,1), LocalDate.of(2018, 12,31), Boolean.FALSE);
+//        sweepSourceList(JQMSpringCollectorV1, "fake-net", LocalDate.now().minusDays(10), LocalDate.now(), Boolean.TRUE);
 
         //        sweepSourceCollectExamples("HRW", "Balkans");
 

@@ -1,5 +1,6 @@
 package com.casm.acled.crawler.scraper.keywords;
 
+import com.casm.acled.crawler.scraper.ScraperFields;
 import com.casm.acled.crawler.util.Util;
 import com.norconex.commons.lang.xml.EnhancedXMLStreamWriter;
 import com.norconex.importer.doc.ImporterMetadata;
@@ -29,9 +30,7 @@ public class ExcludingKeywordFilter extends AbstractDocumentFilter {
     private String queryConfig;
     private String field;
 
-    private final Analyzer analyzer;
-    private final Query query;
-
+    private final LuceneMatcher matcher;
 
     public ExcludingKeywordFilter(String field, String queryConfig) {
         setOnMatch(OnMatch.EXCLUDE);
@@ -39,24 +38,8 @@ public class ExcludingKeywordFilter extends AbstractDocumentFilter {
         this.queryConfig = queryConfig;
         this.field = field;
 
-        analyzer = new SimpleAnalyzer();
+        matcher = new LuceneMatcher(queryConfig);
 
-        QueryParser parser = new QueryParser(field, analyzer);
-
-        try {
-            query = parser.parse(this.queryConfig);
-        } catch (ParseException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public boolean isMatched(String text) {
-
-        MemoryIndex index = new MemoryIndex();
-        index.addField(field, text, analyzer);
-        float score = index.search(query);
-
-        return score > 0.0f;
     }
 
     @Override
@@ -64,17 +47,17 @@ public class ExcludingKeywordFilter extends AbstractDocumentFilter {
         if (queryConfig.isEmpty()) {
             return true;
         }
-        Collection<String> values =  metadata.getStrings(field);
+        String value =  metadata.getString(field);
 
-        for (Object value : values) {
+        String text = Objects.toString(value, StringUtils.EMPTY);
 
-            String strVal = Objects.toString(value, StringUtils.EMPTY);
+        if(matcher.isMatched(text)) {
+            metadata.setString(ScraperFields.KEYWORD_HIGHLIGHT, matcher.getHighlights(text));
 
-            if(isMatched(strVal)) {
-                return false;
-            }
+            return false;
+        } else {
+            return true;
         }
-        return true;
     }
 
     private void setField(String field) {

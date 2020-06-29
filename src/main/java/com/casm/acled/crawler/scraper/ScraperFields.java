@@ -6,4 +6,5 @@ public class ScraperFields {
     public static final String SCRAPED_DATE = "scraped.date";
     public static final String SCRAPED_TITLE = "scraped.title";
     public static final String STANDARD_DATE = "STANDARD_DATE";
+    public static final String KEYWORD_HIGHLIGHT = "KEYWORD_HIGHLIGHT";
 }

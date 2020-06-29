@@ -68,7 +68,7 @@ public class ACLEDImporter implements IHttpDocumentProcessor {
     }
 
     private boolean previouslyScraped(HttpDocument doc) {
-        String val = metadataGet(doc.getMetadata(), CrawlerArguments.PREVIOUSLYSCRAPED);
+        String val = doc.getMetadata().getString(CrawlerArguments.PREVIOUSLYSCRAPED);
         if(val == null) {
             return false;
         } else {
@@ -97,10 +97,10 @@ public class ACLEDImporter implements IHttpDocumentProcessor {
 
             HttpMetadata metadata = doc.getMetadata();
 
-            String articleText = metadataGet(metadata, ScraperFields.SCRAPED_ARTICLE);
-            String title = metadataGet(metadata, ScraperFields.SCRAPED_TITLE);
-            String date = metadataGet(metadata, ScraperFields.SCRAPED_DATE);
-            String standardDate = metadataGet(metadata, ScraperFields.STANDARD_DATE);
+            String articleText = metadata.getString( ScraperFields.SCRAPED_ARTICLE);
+            String title = metadata.getString( ScraperFields.SCRAPED_TITLE);
+            String date = metadata.getString( ScraperFields.SCRAPED_DATE);
+            String standardDate = metadata.getString( ScraperFields.STANDARD_DATE);
 
             Article article = EntityVersions.get(Article.class)
                     .current();
@@ -114,6 +114,10 @@ public class ACLEDImporter implements IHttpDocumentProcessor {
             article = article.put(Article.TEXT, articleText)
                     .put(Article.SCRAPE_DATE, date)
                     .put(Article.URL, url);
+
+            if(metadata.getString(ScraperFields.KEYWORD_HIGHLIGHT)!=null) {
+                article = article.put(Article.SCRAPE_KEYWORD_HIGHLIGHT, metadata.getString(ScraperFields.KEYWORD_HIGHLIGHT));
+            }
 
             if(standardDate != null) {
                 LocalDateTime parsedDate = ExcludingCustomDateMetadataFilter.toDate(standardDate);

@@ -13,6 +13,10 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicReference;
 
 
 @Component
@@ -72,11 +76,37 @@ public class CrawlService {
 
         if(maybesSourceList.isPresent() && maybeSource.isPresent()) {
 
-            ACLEDImporter importer = new ACLEDImporter(articleDAO, maybeSource.get(), sourceListDAO, true);
+            ThreadGroup tg = new ThreadGroup(Integer.toString(sourceId));
 
-            Crawl crawl = new Crawl(maybesSourceList.get(), maybeSource.get(), from, to, skipKeywords, importer, reporter);
+//            ExecutorService executor = Executors.newSingleThreadExecutor();
+//            Future<Void> future = executor.submit()
 
-            crawl.run();
+            Thread thread = new Thread(tg, () -> {
+
+                ACLEDImporter importer = new ACLEDImporter(articleDAO, maybeSource.get(), sourceListDAO, true);
+
+                Crawl crawl = new Crawl(maybesSourceList.get(), maybeSource.get(), from, to, skipKeywords, importer, reporter);
+
+                crawl.run();
+            });
+
+            AtomicReference<Throwable> thrown = new AtomicReference<>();
+
+            thread.setUncaughtExceptionHandler((Thread th, Throwable ex)->{
+                thrown.set(ex);
+            });
+
+            thread.start();
+
+            try {
+                thread.join();
+            } catch (InterruptedException e){
+                throw new RuntimeException(e);
+            }
+            if(thrown.get()!=null) {
+                throw new RuntimeException(thrown.get());
+            }
+
         } else {
 
             throw new RuntimeException("source or source list not found!");

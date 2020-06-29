@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 // utils for domain resolution etc..
@@ -47,13 +48,20 @@ public class ACLEDScraper implements IHttpDocumentProcessor {
 
     private final Path scraperPath;
     private GeneralSplitterFactory scraper;
+    private IForumSplitter splitter;
 
     private final Reporter reporter;
 
     private final Source source;
 
-    public ACLEDScraper(Path scraperPath, Source source, Reporter reporter) {
-        this.scraperPath = scraperPath.resolve(JOB_JSON);
+    public ACLEDScraper(Path path, Source source, Reporter reporter) {
+        if(source.hasValue(Source.CRAWL_SCRAPER_PATH)) {
+            path = Paths.get((String)source.get(Source.CRAWL_SCRAPER_PATH));
+        } else {
+            String id = Util.getID(source);
+            path = path.resolve(id);
+        }
+        this.scraperPath = path.resolve(JOB_JSON);
         this.reporter = reporter;
         this.source = source;
         if(Files.notExists(this.scraperPath)) {
@@ -80,6 +88,7 @@ public class ACLEDScraper implements IHttpDocumentProcessor {
         String processed = Util.processJSON(scraperPath.toFile());
         Map<String, List<Map<String, String>>> scraperDef = buildScraperDefinition(GeneralSplitterFactory.parseJsonTagSet(processed));
         scraper = new GeneralSplitterFactory(scraperDef);
+        splitter = scraper.create();
     }
 
     private Optional<String> maybeGet(Post post, String key) {
@@ -125,7 +134,6 @@ public class ACLEDScraper implements IHttpDocumentProcessor {
 
         if(isText(doc)) {
             String html = getRawHTML(doc);
-            IForumSplitter splitter = scraper.create();
             LinkedList<Post> posts = splitter.split(Jsoup.parse(html));
 
             if(posts.size() > 0) {

@@ -7,15 +7,21 @@ import com.casm.acled.crawler.scraper.dates.CompositeDateParser;
 import com.casm.acled.crawler.scraper.dates.ExcludingCustomDateMetadataFilter;
 import com.casm.acled.crawler.scraper.dates.DateParser;
 import com.casm.acled.crawler.scraper.keywords.ExcludingKeywordFilter;
-import com.casm.acled.crawler.util.Util;
+import com.casm.acled.crawler.util.CustomLoggerRepository;
 import com.casm.acled.entities.source.Source;
 import com.casm.acled.entities.sourcelist.SourceList;
-import com.ibm.icu.util.ULocale;
 import com.norconex.collector.http.HttpCollector;
+import com.norconex.collector.http.url.IURLNormalizer;
+import com.norconex.collector.http.url.impl.GenericURLNormalizer;
 import com.norconex.importer.handler.filter.AbstractDocumentFilter;
 import com.norconex.importer.handler.filter.OnMatch;
 import com.norconex.importer.handler.filter.impl.DateMetadataFilter;
 import com.norconex.importer.handler.filter.impl.EmptyMetadataFilter;
+import org.apache.log4j.Level;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.spi.DefaultRepositorySelector;
+import org.apache.log4j.spi.LoggerRepository;
+import org.apache.log4j.spi.RootLogger;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -53,6 +59,21 @@ public class Crawl {
 
     private final Reporter reporter;
 
+    private class RootLogAppenderClearingURLNormaliser implements IURLNormalizer {
+        private final GenericURLNormalizer genericURLNormalizer;
+        public RootLogAppenderClearingURLNormaliser() {
+            this.genericURLNormalizer = new GenericURLNormalizer();
+        }
+
+        @Override
+        public String normalizeURL(String url) {
+
+            LogManager.getRootLogger().removeAllAppenders();
+
+            return genericURLNormalizer.normalizeURL(url);
+        }
+    }
+
     public Crawl(SourceList sourceList, Source source, LocalDate from, LocalDate to, boolean skipKeywords,
                  ACLEDImporter importer, Reporter reporter) {
         this.source = source;
@@ -69,6 +90,9 @@ public class Crawl {
 //        importer.setMaxArticles(10);
 
         config = new NorconexConfiguration(CACHE_DIR.resolve(cachePath));
+        config.crawler().setUrlNormalizer(new RootLogAppenderClearingURLNormaliser());
+
+        configureLogging();
 
         List<AbstractDocumentFilter> filters = new ArrayList<>();
         filters.add(new AcceptFilter());
@@ -101,9 +125,9 @@ public class Crawl {
 
         String[] startURL =((String) source.get(Source.LINK)).split(",");
 
-        String scraperName = Util.getID(startURL[0]);
+//        String scraperName = Util.getID(startURL[0]);
 
-        ACLEDScraper scraper = ACLEDScraper.load(ALL_SCRAPERS.resolve(scraperName), source, reporter);
+        ACLEDScraper scraper = ACLEDScraper.load(ALL_SCRAPERS, source, reporter);
         ACLEDMetadataPreProcessor metadata = new ACLEDMetadataPreProcessor(startURL[0]);
 
         applySourceIdiosyncrasies(source, config);
@@ -117,6 +141,24 @@ public class Crawl {
 
     public NorconexConfiguration getConfig() {
         return config;
+    }
+
+    private void configureLogging(){
+
+        try {
+            Object guard = new Object();
+
+            LoggerRepository rs = new CustomLoggerRepository(new RootLogger((Level) Level.DEBUG), CACHE_DIR);
+            LogManager.setRepositorySelector(new DefaultRepositorySelector(rs), guard);
+        } catch (IllegalArgumentException e) {
+            //pass already installed
+            int x = 0;
+        }
+        ThreadGroup threadGroup = Thread.currentThread().getThreadGroup();
+        String name = threadGroup.getName();
+
+        CustomLoggerRepository.register(name, id());
+
     }
 
     private ExcludingKeywordFilter keywordFilter(SourceList sourceList, Source source) {

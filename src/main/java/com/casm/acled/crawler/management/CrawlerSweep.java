@@ -61,8 +61,14 @@ public class CrawlerSweep {
 
     private boolean hasScraper(Source source, Path scraperDir) {
         try {
-            String id = Util.getID(source);
-            if(ACLEDScraper.validPath(scraperDir.resolve(id))) {
+            Path path;
+            if(source.hasValue(Source.CRAWL_SCRAPER_PATH)) {
+                path = Paths.get(source.get(Source.CRAWL_SCRAPER_PATH));
+            } else {
+                String id = Util.getID(source);
+                path = scraperDir.resolve(id);
+            }
+            if(ACLEDScraper.validPath(path)) {
                 return true;
             } else {
                 return false;

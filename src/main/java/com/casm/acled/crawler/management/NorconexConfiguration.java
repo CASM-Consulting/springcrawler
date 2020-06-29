@@ -16,8 +16,11 @@ import com.norconex.importer.handler.filter.AbstractDocumentFilter;
 import com.norconex.importer.handler.filter.OnMatch;
 import com.norconex.importer.parser.GenericDocumentParserFactory;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,11 +31,11 @@ public class NorconexConfiguration {
     private final HttpCrawlerConfig crawler;
     private final ImporterConfig importer;
 
-    private Path crawlStore;
+    private Path workingDir;
     private String userAgent = "CASM Consulting LLP";
     private int numThreads = 3;
     private boolean ignoreRobots = false;
-    private boolean ignoreSiteMap = true;
+    private boolean ignoreSiteMap = false;
     private int depth = 5;
     private String urlRegex ;
     private long politeness = 100;
@@ -54,7 +57,7 @@ public class NorconexConfiguration {
         collector = new HttpCollectorConfig();
         crawler = new HttpCrawlerConfig();
 
-        crawlStore = workDir;
+        workingDir = workDir;
 
         configureImporter();
         configureCrawler();
@@ -76,12 +79,21 @@ public class NorconexConfiguration {
         crawler.setId(id);
     }
 
+    public Path getWorkingDir() {
+        return workingDir;
+    }
+
     private void configureCollector() {
 
         collector.setCrawlerConfigs(crawler);
-        collector.setProgressDir(crawlStore.resolve(PROGRESS).toString());
-        collector.setLogsDir(crawlStore.resolve(LOGS).toString());
-        //collector.setLogsUnmanaged(true);
+        collector.setProgressDir(workingDir.resolve(PROGRESS).toString());
+        collector.setLogsDir(workingDir.resolve(LOGS).toString());
+        try {
+            Files.createDirectories(Paths.get(collector.getLogsDir()));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+//        collector.setLogsUnmanaged(false);
     }
 
     private void configureCrawler() {
@@ -120,7 +132,7 @@ public class NorconexConfiguration {
         // set to false so crawl cache is only those of interest
         crawler.setKeepOutOfScopeLinks(false);
 
-        crawler.setWorkDir(crawlStore.toFile());
+        crawler.setWorkDir(workingDir.toFile());
 
         crawler.setCrawlDataStoreFactory(new MVStoreCrawlDataStoreFactory());
 
@@ -166,6 +178,10 @@ public class NorconexConfiguration {
 
     public NorconexConfiguration finalise() {
 
+//        FileLogManager fileLogManager = new FileLogManager(collector.getLogsDir());
+
+//        LogManager.
+
         importer.setPostParseHandlers(filters.toArray(new IImporterHandler[filters.size()]));
         return this;
     }
@@ -186,7 +202,7 @@ public class NorconexConfiguration {
         GenericDocumentParserFactory gdpf = new GenericDocumentParserFactory();
         gdpf.setIgnoredContentTypesRegex(".*");
         importer.setParserFactory(gdpf);
-        importer.setTempDir(crawlStore.toFile());
+        importer.setTempDir(workingDir.toFile());
 
     }
 

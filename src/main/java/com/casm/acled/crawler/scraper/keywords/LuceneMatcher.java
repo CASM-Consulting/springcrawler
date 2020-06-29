@@ -44,7 +44,7 @@ public class LuceneMatcher {
         }
     }
 
-    public List<String> getMatches(String text) {
+    public String getHighlights(String text) {
 
         MemoryIndex index = new MemoryIndex();
         index.addField(FIELD, text, analyzer);
@@ -60,60 +60,61 @@ public class LuceneMatcher {
 //            }
 
 
-        List<String> matched = new ArrayList<>();
-        WeightedTerm[] terms = QueryTermExtractor.getTerms(query);
-        for(WeightedTerm term : terms) {
-            if (term.getWeight() > 0) {
-                matched.add(term.getTerm());
-            }
-        }
+//        List<String> matched = new ArrayList<>();
+//        WeightedTerm[] terms = QueryTermExtractor.getTerms(query);
+//        for(WeightedTerm term : terms) {
+//            if (term.getWeight() > 0) {
+//                matched.add(term.getTerm());
+//            }
+//        }
 
-        IndexSearcher searcher = index.createSearcher();
+            IndexSearcher searcher = index.createSearcher();
 
-        //Search the lucene documents
-        TopDocs hits = searcher.search(query, 10);
+            //Search the lucene documents
+            TopDocs hits = searcher.search(query, 10);
 
-        /** Highlighter Code Start ****/
+            /** Highlighter Code Start ****/
 
-        //Uses HTML &lt;B&gt;&lt;/B&gt; tag to highlight the searched terms
-        Formatter formatter = new SimpleHTMLFormatter();
+            //Uses HTML &lt;B&gt;&lt;/B&gt; tag to highlight the searched terms
+            Formatter formatter = new SimpleHTMLFormatter();
 
-        //It scores text fragments by the number of unique query terms found
-        //Basically the matching score in layman terms
-        QueryScorer scorer = new QueryScorer(query);
+            //It scores text fragments by the number of unique query terms found
+            //Basically the matching score in layman terms
+            QueryScorer scorer = new QueryScorer(query);
 
-        //used to markup highlighted terms found in the best sections of a text
-        Highlighter highlighter = new Highlighter(formatter, scorer);
+            //used to markup highlighted terms found in the best sections of a text
+            Highlighter highlighter = new Highlighter(formatter, scorer);
 
-        //It breaks text up into same-size texts but does not split up spans
-        Fragmenter fragmenter = new SimpleSpanFragmenter(scorer, 100);
+            //It breaks text up into same-size texts but does not split up spans
+            Fragmenter fragmenter = new SimpleSpanFragmenter(scorer, 100);
 
-        //breaks text up into same-size fragments with no concerns over spotting sentence boundaries.
-        //Fragmenter fragmenter = new SimpleFragmenter(10);
+            //breaks text up into same-size fragments with no concerns over spotting sentence boundaries.
+            //Fragmenter fragmenter = new SimpleFragmenter(10);
 
-        //set fragmenter to highlighter
-        highlighter.setTextFragmenter(fragmenter);
+            //set fragmenter to highlighter
+            highlighter.setTextFragmenter(fragmenter);
 
-        //Iterate over found results
-        for (int i = 0; i < hits.scoreDocs.length; i++)
-        {
 
-            //Create token stream
-            TokenStream stream = analyzer.tokenStream(FIELD, text);
-
-            //Get highlighted text fragments
-            String[] frags = highlighter.getBestFragments(stream, text, 10);
-            for (String frag : frags)
+            StringBuilder sb = new StringBuilder();
+            //Iterate over found results
+            for (int i = 0; i < hits.scoreDocs.length; i++)
             {
-                System.out.println("=======================");
-                System.out.println(frag);
-            }
-        }
+                //Create token stream
+                TokenStream stream = analyzer.tokenStream(FIELD, text);
 
-        return matched;
-    } catch (IOException | InvalidTokenOffsetsException e) {
-        throw new RuntimeException(e);
-    }
+                //Get highlighted text fragments
+                String[] frags = highlighter.getBestFragments(stream, text, 10);
+                for (String frag : frags)
+                {
+                    sb.append("</br>");
+                    sb.append(frag);
+                }
+            }
+
+            return sb.toString();
+        } catch (IOException | InvalidTokenOffsetsException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public boolean isMatched(String text) {
