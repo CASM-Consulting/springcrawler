@@ -82,14 +82,14 @@ public class Crawl {
         this.reporter = reporter;
 
         String id = id();
-        Path cachePath = Paths.get(id);
+        Path scrqperCachePath = Paths.get(id);
 
         importer.setCollectorSupplier(collectorSupplier);
 
         //LOOK AT THIS !!!
 //        importer.setMaxArticles(10);
 
-        config = new NorconexConfiguration(CACHE_DIR.resolve(cachePath));
+        config = new NorconexConfiguration(CACHE_DIR.resolve(scrqperCachePath));
         config.crawler().setUrlNormalizer(new RootLogAppenderClearingURLNormaliser());
 
         configureLogging();

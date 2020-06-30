@@ -44,6 +44,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -127,14 +128,51 @@ public class Util implements CommandLineRunner {
     }
 
     public static String processScraperJSON(String json){
-        // BUG FOUND - NEED TO USE job.json!!
         return null;
     }
 
     // returns a web scraper based on a job spect of last_scrape file
     public static String processJSON(File scraperLocation) throws IOException {
         String json = Files.asCharSource(scraperLocation, Charset.defaultCharset()).read();
-        return (scraperLocation.getName().equals("last_scrape.json")) ? processScraperJSON(json) : processJobJSON(json);
+        return processJobJSON(json);
+    }
+
+    // returns a web scraper based on a job spect of last_scrape file
+    public static Map<String,String> getLastScrape(Path scraperPath)  {
+
+        Function<String,String> clean = dirty -> dirty.replaceAll("[\\\\Q\\\\E]", "").trim();
+
+        Map<String,String> lastScrape = new HashMap<>();
+        try {
+
+            Path path = scraperPath.resolve("last_scrape.json");
+            if(java.nio.file.Files.exists(path)) {
+
+
+                String json = Files.asCharSource(path.toFile(), Charset.defaultCharset()).read();
+                JSONObject jobj = new JSONObject(json);
+                String url = clean.apply(jobj.getString("url"));
+                if(jobj.has("field.name/article_0")) {
+                    String article = clean.apply(jobj.getString("field.name/article_0"));
+                    lastScrape.put("article", article);
+                }
+                if(jobj.has("field.name/date_0")) {
+                    String date = clean.apply(jobj.getString("field.name/date_0"));
+                    lastScrape.put("date", date);
+                }
+                if(jobj.has("field.name/title_0")) {
+                    String title = clean.apply(jobj.getString("field.name/title_0"));
+                    lastScrape.put("title", title);
+                }
+
+                lastScrape.put("url", url);
+
+            }
+
+            return lastScrape;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 //    public static void main(String[] args) throws Exception {

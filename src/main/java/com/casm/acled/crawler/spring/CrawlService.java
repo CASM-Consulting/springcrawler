@@ -76,6 +76,8 @@ public class CrawlService {
 
         if(maybesSourceList.isPresent() && maybeSource.isPresent()) {
 
+
+            //ThreadGroup required for logger context, see CustomLoggerRepository
             ThreadGroup tg = new ThreadGroup(Integer.toString(sourceId));
 
 //            ExecutorService executor = Executors.newSingleThreadExecutor();
