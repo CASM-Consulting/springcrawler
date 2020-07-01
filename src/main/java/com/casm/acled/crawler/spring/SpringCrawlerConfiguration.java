@@ -13,6 +13,8 @@ import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 
 import javax.sql.DataSource;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 @Configuration
 @EnableAutoConfiguration(exclude={HibernateJpaAutoConfiguration.class, CamundaBpmAutoConfiguration.class, CamundaBpmRestJerseyAutoConfiguration.class, ValidationAutoConfiguration.class})
@@ -30,5 +32,10 @@ public class SpringCrawlerConfiguration {
                 .url("jdbc:postgresql://localhost:6432/acled_camunda?preparedStatementCacheQueries=0&prepareThreshold=0")
                 .driverClassName("org.postgresql.Driver")
                 .build();
+    }
+
+    @Bean
+    public Path scraperDir() {
+        return Paths.get("/home/sw206/git/acled-scrapers");
     }
 }

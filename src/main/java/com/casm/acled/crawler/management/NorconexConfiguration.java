@@ -1,16 +1,10 @@
 package com.casm.acled.crawler.management;
 
-import com.casm.acled.crawler.ACLEDMetadataPreProcessor;
-import com.casm.acled.crawler.DateFilter;
+import com.casm.acled.crawler.scraper.ACLEDMetadataPreProcessor;
 import com.casm.acled.crawler.scraper.ACLEDScraper;
-import com.casm.acled.crawler.scraper.ScraperFields;
-import com.casm.acled.crawler.scraper.dates.CustomDateMetadataFilter;
-import com.casm.acled.crawler.scraper.dates.DateParser;
-import com.casm.acled.crawler.scraper.keywords.KeywordFilter;
-import com.casm.acled.crawler.utils.Util;
 import com.norconex.collector.core.crawler.ICrawlerConfig;
 import com.norconex.collector.core.data.store.impl.mvstore.MVStoreCrawlDataStoreFactory;
-import com.norconex.collector.core.filter.impl.RegexReferenceFilter;
+import com.norconex.collector.core.filter.impl.ExtensionReferenceFilter;
 import com.norconex.collector.http.HttpCollectorConfig;
 import com.norconex.collector.http.crawler.HttpCrawlerConfig;
 import com.norconex.collector.http.crawler.URLCrawlScopeStrategy;
@@ -20,21 +14,15 @@ import com.norconex.importer.ImporterConfig;
 import com.norconex.importer.handler.IImporterHandler;
 import com.norconex.importer.handler.filter.AbstractDocumentFilter;
 import com.norconex.importer.handler.filter.OnMatch;
-import com.norconex.importer.handler.filter.impl.DateMetadataFilter;
-import com.norconex.importer.handler.filter.impl.EmptyMetadataFilter;
-import com.norconex.importer.handler.filter.impl.RegexMetadataFilter;
 import com.norconex.importer.parser.GenericDocumentParserFactory;
-import uk.ac.susx.tag.norconex.jobqueuemanager.CrawlerArguments;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.sql.Date;
-import java.time.LocalDate;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class NorconexConfiguration {
 
@@ -43,12 +31,12 @@ public class NorconexConfiguration {
     private final HttpCrawlerConfig crawler;
     private final ImporterConfig importer;
 
-    private Path crawlStore;
+    private Path workingDir;
     private String userAgent = "CASM Consulting LLP";
     private int numThreads = 3;
     private boolean ignoreRobots = false;
-    private boolean ignoreSiteMap = true;
-    private int depth = 3;
+    private boolean ignoreSiteMap = false;
+    private int depth = 5;
     private String urlRegex ;
     private long politeness = 100;
     private List<String> regexFilterPatterns;
@@ -69,7 +57,7 @@ public class NorconexConfiguration {
         collector = new HttpCollectorConfig();
         crawler = new HttpCrawlerConfig();
 
-        crawlStore = workDir;
+        workingDir = workDir;
 
         configureImporter();
         configureCrawler();
@@ -91,12 +79,21 @@ public class NorconexConfiguration {
         crawler.setId(id);
     }
 
+    public Path getWorkingDir() {
+        return workingDir;
+    }
+
     private void configureCollector() {
 
         collector.setCrawlerConfigs(crawler);
-        collector.setProgressDir(crawlStore.resolve(PROGRESS).toString());
-        collector.setLogsDir(crawlStore.resolve(LOGS).toString());
-        //collector.setLogsUnmanaged(true);
+        collector.setProgressDir(workingDir.resolve(PROGRESS).toString());
+        collector.setLogsDir(workingDir.resolve(LOGS).toString());
+        try {
+            Files.createDirectories(Paths.get(collector.getLogsDir()));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+//        collector.setLogsUnmanaged(false);
     }
 
     private void configureCrawler() {
@@ -135,9 +132,14 @@ public class NorconexConfiguration {
         // set to false so crawl cache is only those of interest
         crawler.setKeepOutOfScopeLinks(false);
 
-        crawler.setWorkDir(crawlStore.toFile());
+        crawler.setWorkDir(workingDir.toFile());
 
         crawler.setCrawlDataStoreFactory(new MVStoreCrawlDataStoreFactory());
+
+        ExtensionReferenceFilter referenceFilter = new ExtensionReferenceFilter("jpeg,jpg,png,pdf,ico,mpg,mp4,avi,mp3,mov,dvi,gif,tiff,bmp,wav");
+        referenceFilter.setOnMatch(OnMatch.EXCLUDE);
+        crawler.setReferenceFilters(referenceFilter);
+
 
 //        crawler.setId(id);
 //            crawler.setStartSitemapURLs(seeds);
@@ -176,6 +178,10 @@ public class NorconexConfiguration {
 
     public NorconexConfiguration finalise() {
 
+//        FileLogManager fileLogManager = new FileLogManager(collector.getLogsDir());
+
+//        LogManager.
+
         importer.setPostParseHandlers(filters.toArray(new IImporterHandler[filters.size()]));
         return this;
     }
@@ -196,7 +202,7 @@ public class NorconexConfiguration {
         GenericDocumentParserFactory gdpf = new GenericDocumentParserFactory();
         gdpf.setIgnoredContentTypesRegex(".*");
         importer.setParserFactory(gdpf);
-        importer.setTempDir(crawlStore.toFile());
+        importer.setTempDir(workingDir.toFile());
 
     }
 

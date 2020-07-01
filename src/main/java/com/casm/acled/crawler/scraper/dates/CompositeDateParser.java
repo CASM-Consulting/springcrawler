@@ -1,13 +1,17 @@
 package com.casm.acled.crawler.scraper.dates;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import com.ibm.icu.text.SimpleDateFormat;
 import com.ibm.icu.util.ULocale;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -16,7 +20,27 @@ public class CompositeDateParser implements DateParser {
     private final List<DateParser> parsers;
 
     public CompositeDateParser(List<DateParser> parsers) {
-        this.parsers = parsers;
+        this.parsers = Lists.newArrayList(parsers);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+
+        if (o == null || getClass() != o.getClass()) return false;
+
+        CompositeDateParser that = (CompositeDateParser) o;
+
+        return new EqualsBuilder()
+                .append(parsers, that.parsers)
+                .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+                .append(parsers)
+                .toHashCode();
     }
 
     @Override
@@ -32,6 +56,18 @@ public class CompositeDateParser implements DateParser {
         }
 
         return attempt;
+    }
+
+
+    @Override
+    public DateParser locale(List<ULocale> locales) {
+        List<DateParser> newParsers = new ArrayList<>();
+
+        for(DateParser dateParser : parsers) {
+            newParsers.add(dateParser.locale(locales));
+        }
+
+        return new CompositeDateParser(newParsers);
     }
 
     public static DateParser of(List<String> formatSpecs) {

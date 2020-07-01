@@ -1,8 +1,7 @@
 package uk.ac.susx.tag.norconex;
 
 import com.casm.acled.crawler.scraper.ACLEDScraper;
-import com.casm.acled.crawler.IncorrectScraperJSONException;
-import com.casm.acled.crawler.utils.Util;
+import com.casm.acled.crawler.util.Util;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.junit.Test;

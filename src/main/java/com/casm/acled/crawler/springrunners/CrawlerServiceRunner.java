@@ -1,7 +1,14 @@
 package com.casm.acled.crawler.springrunners;
 
 import com.casm.acled.configuration.ObjectMapperConfiguration;
-import com.casm.acled.crawler.management.CrawlService;
+import com.casm.acled.crawler.reporting.Reporter;
+import com.casm.acled.crawler.spring.CrawlService;
+import com.casm.acled.crawler.util.CustomLoggerRepository;
+import org.apache.log4j.Level;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.spi.DefaultRepositorySelector;
+import org.apache.log4j.spi.LoggerRepository;
+import org.apache.log4j.spi.RootLogger;
 import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
 import org.camunda.bpm.spring.boot.starter.rest.CamundaBpmRestJerseyAutoConfiguration;
 import org.slf4j.Logger;
@@ -27,18 +34,23 @@ import java.time.format.DateTimeParseException;
 @Import({ObjectMapperConfiguration.class})
 // And we also need the DAOs.
 @ComponentScan(basePackages={"com.casm.acled.dao", "com.casm.acled.crawler"})
-public class CrawlRunner implements CommandLineRunner {
+public class CrawlerServiceRunner implements CommandLineRunner {
 
-    protected static final Logger logger = LoggerFactory.getLogger(CrawlRunner.class);
+//    static {
+//        Object guard = new Object();
+//        LoggerRepository rs = new CustomLoggerRepository(new RootLogger((Level) Level.DEBUG));
+//        LogManager.setRepositorySelector(new DefaultRepositorySelector(rs), guard);
+//    }
+    protected static final Logger logger = LoggerFactory.getLogger(CrawlerServiceRunner.class);
 
 
     @Autowired
     private CrawlService crawlService;
 
+    @Autowired
+    private Reporter reporter;
 
-    @Override
-    public void run(String... args) throws Exception {
-
+    public void crawl(String[] args) {
         int sourceListId = Integer.parseInt(args[0]);
         int sourceId = Integer.parseInt(args[1]);
 
@@ -55,7 +67,7 @@ public class CrawlRunner implements CommandLineRunner {
             to = null;
         }
 
-        boolean skipKeywords = Boolean.getBoolean(args[4]);
+        boolean skipKeywords = Boolean.parseBoolean(args[4]);
 
         if(from != null && to != null) {
             crawlService.run(sourceListId, sourceId, from, to, skipKeywords);
@@ -64,9 +76,29 @@ public class CrawlRunner implements CommandLineRunner {
         }
     }
 
+
+    private void collectExamples(int sourceId, int sourceListId) {
+
+
+
+        crawlService.collectExamples(sourceListId, sourceId);
+    }
+
+    @Override
+    public void run(String... args) throws Exception {
+
+        reporter.randomRunId();
+
+        crawl(args);
+//        collectExamples(1657,1);
+
+        reporter.getRunReports().stream().forEach(r -> logger.info(r.toString()));
+
+    }
+
     public static void main(String[] args) {
 
-        SpringApplication app = new SpringApplication(CrawlRunner.class);
+        SpringApplication app = new SpringApplication(CrawlerServiceRunner.class);
         app.setBannerMode(Banner.Mode.OFF);
         app.setWebApplicationType(WebApplicationType.NONE);
         ConfigurableApplicationContext ctx = app.run(args);

@@ -5,6 +5,7 @@ import com.ibm.icu.text.*;
 import com.ibm.icu.util.ULocale;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.jsoup.helper.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,6 +13,7 @@ import java.text.ParseException;
 import java.text.ParsePosition;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -33,22 +35,22 @@ class DateFormatParser implements DateParser {
     private final Pattern ordinalPattern = Pattern.compile("(\\d+)(?:st|nd|rd|th)");
     private final Pattern bstPattern = Pattern.compile("(?i)bdst");
     private final Pattern whitespacePattern = Pattern.compile("(\\h+|\\s+)");
-    private final ULocale locale;
+    private final List<ULocale> locales;
 
     private Pattern extractPattern;
     private Pattern stripPattern;
 
     public DateFormatParser(String formatSpec) {
-        this(formatSpec, ULocale.getDefault());
+        this(formatSpec, ULocale.getDefault().getName());
     }
 
     public DateFormatParser(String formatSpec, String locale) {
-        this(formatSpec, new ULocale(locale));
+        this(formatSpec, ImmutableList.of(new ULocale(locale)));
     }
 
-    public DateFormatParser(String formatSpec, ULocale locale) {
+    public DateFormatParser(String formatSpec, List<ULocale> locales) {
         this.formatSpec = formatSpec;
-        this.locale = locale;
+        this.locales = locales;
         removeOrdinals = false;
         fixBST = false;
         normaliseWhitespace = true;
@@ -57,12 +59,25 @@ class DateFormatParser implements DateParser {
 
     }
 
-    public DateFormatParser locale(ULocale locale) {
-        return new DateFormatParser(formatSpec, locale);
+    @Override
+    public DateFormatParser locale(List<ULocale> locales) {
+        List<ULocale> newLocales = new ArrayList<>();
+        newLocales.addAll(locales);
+        newLocales.addAll(this.locales);
+        return new DateFormatParser(formatSpec, newLocales);
     }
 
     @Override
     public Optional<LocalDateTime> parse(String date) {
+        for(ULocale locale : locales) {
+            Optional<LocalDateTime> parse = parse(date, locale);
+            if(parse.isPresent()){
+                return parse;
+            }
+        }
+        return Optional.empty();
+    }
+    public Optional<LocalDateTime> parse(String date, ULocale locale) {
         SimpleDateFormat formatter = buildSimpleDateFormat(formatSpec, locale);
 
         Optional<LocalDateTime> attempt = Optional.empty();
@@ -71,10 +86,15 @@ class DateFormatParser implements DateParser {
         Date d = formatter.parse(date, pos);
         if (d == null) {
             int idx = pos.getErrorIndex();
-            String parsed = date.substring(0, idx);
-            String errored = date.substring(idx);
+            if(idx < 0) {
+                logger.debug("Parse failed at NEGATIVE INDEX {}, {}", pos.getErrorIndex(), date);
+            } else {
 
-            logger.debug("Parse failed at {}, [{}] [{}]", pos.getErrorIndex(), parsed, errored);
+                String parsed = date.substring(0, idx);
+                String errored = date.substring(idx);
+
+                logger.debug("Parse failed at {}, [{}] [{}]", pos.getErrorIndex(), parsed, errored);
+            }
         } else if (pos.getIndex() != date.length()) {
             logger.debug("Parse incomplete at {}", pos.getIndex());
         }else {
@@ -85,8 +105,22 @@ class DateFormatParser implements DateParser {
         return attempt;
     }
 
-    public SimpleDateFormat formatter() {
-        return buildSimpleDateFormat(formatSpec, locale);
+//    public SimpleDateFormat formatter() {
+//        return buildSimpleDateFormat(formatSpec, locale);
+//    }
+
+    private String applyExtraction(String date) {
+        Matcher m = extractPattern.matcher(date);
+        if(m.matches()) {
+            List<String> parts = new ArrayList<>();
+            for(int i = 1; i <= m.groupCount(); ++i) {
+                parts.add(m.group(i));
+            }
+            return StringUtil.join(parts, " ");
+        } else {
+            // Fail if no match.
+            return "";
+        }
     }
 
     private String preProcessDate(String date) {
@@ -98,13 +132,7 @@ class DateFormatParser implements DateParser {
             date = removeOrdinals(date);
         }
         if(extractPattern != null) {
-            Matcher m = extractPattern.matcher(date);
-            if(m.matches()) {
-                date = m.group(1);
-            } else {
-                // Fail if no match.
-                return "";
-            }
+            date = applyExtraction(date);
         }
         if(stripPattern != null) {
             date = stripByPattern(date);
@@ -175,14 +203,14 @@ class DateFormatParser implements DateParser {
 
         String[] parts = formatSpec.split(delim);
         String pattern = parts[1];
-        if(!parts[2].isEmpty()) {
+        if(parts.length > 2 && !parts[2].isEmpty()) {
             locale = new ULocale(parts[2]);
         }
 
 
         // set up the generator
-        DateTimePatternGenerator generator
-                = DateTimePatternGenerator.getInstance(locale);
+//        DateTimePatternGenerator generator
+//                = DateTimePatternGenerator.getInstance(locale);
 
         // get a pattern for an abbreviated month and day
         SimpleDateFormat formatter = new SimpleDateFormat(pattern, locale);

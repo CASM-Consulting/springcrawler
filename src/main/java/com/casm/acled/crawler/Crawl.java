@@ -1,22 +1,27 @@
-package com.casm.acled.crawler.management;
+package com.casm.acled.crawler;
 
-import com.casm.acled.crawler.ACLEDImporter;
-import com.casm.acled.crawler.ACLEDMetadataPreProcessor;
+import com.casm.acled.crawler.management.NorconexConfiguration;
+import com.casm.acled.crawler.scraper.*;
 import com.casm.acled.crawler.reporting.Reporter;
-import com.casm.acled.crawler.scraper.ACLEDScraper;
-import com.casm.acled.crawler.scraper.ScraperFields;
 import com.casm.acled.crawler.scraper.dates.CompositeDateParser;
-import com.casm.acled.crawler.scraper.dates.CustomDateMetadataFilter;
+import com.casm.acled.crawler.scraper.dates.ExcludingCustomDateMetadataFilter;
 import com.casm.acled.crawler.scraper.dates.DateParser;
-import com.casm.acled.crawler.scraper.keywords.KeywordFilter;
-import com.casm.acled.crawler.utils.Util;
+import com.casm.acled.crawler.scraper.keywords.ExcludingKeywordFilter;
+import com.casm.acled.crawler.util.CustomLoggerRepository;
 import com.casm.acled.entities.source.Source;
 import com.casm.acled.entities.sourcelist.SourceList;
-import com.ibm.icu.util.ULocale;
 import com.norconex.collector.http.HttpCollector;
+import com.norconex.collector.http.url.IURLNormalizer;
+import com.norconex.collector.http.url.impl.GenericURLNormalizer;
+import com.norconex.importer.handler.filter.AbstractDocumentFilter;
 import com.norconex.importer.handler.filter.OnMatch;
 import com.norconex.importer.handler.filter.impl.DateMetadataFilter;
 import com.norconex.importer.handler.filter.impl.EmptyMetadataFilter;
+import org.apache.log4j.Level;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.spi.DefaultRepositorySelector;
+import org.apache.log4j.spi.LoggerRepository;
+import org.apache.log4j.spi.RootLogger;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -24,6 +29,7 @@ import java.sql.Date;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -39,6 +45,8 @@ public class Crawl {
     public static final String SKIP_KEYWORD_FILTER = "SKIP_KEYWORD_FILTER";
     public static final String FROM = "FROM";
     public static final String TO = "TO";
+    public static final String ARTICLE_LIMIT = "ARTICLE_LIMIT";
+    public static final String DEPTH_LIMIT = "DEPTH_LIMIT";
 
     private final LocalDate from;
     private final LocalDate to;
@@ -51,6 +59,21 @@ public class Crawl {
 
     private final Reporter reporter;
 
+    private class RootLogAppenderClearingURLNormaliser implements IURLNormalizer {
+        private final GenericURLNormalizer genericURLNormalizer;
+        public RootLogAppenderClearingURLNormaliser() {
+            this.genericURLNormalizer = new GenericURLNormalizer();
+        }
+
+        @Override
+        public String normalizeURL(String url) {
+
+            LogManager.getRootLogger().removeAllAppenders();
+
+            return genericURLNormalizer.normalizeURL(url);
+        }
+    }
+
     public Crawl(SourceList sourceList, Source source, LocalDate from, LocalDate to, boolean skipKeywords,
                  ACLEDImporter importer, Reporter reporter) {
         this.source = source;
@@ -59,16 +82,26 @@ public class Crawl {
         this.reporter = reporter;
 
         String id = id();
-        Path cachePath = Paths.get(id);
+        Path scrqperCachePath = Paths.get(id);
 
         importer.setCollectorSupplier(collectorSupplier);
-        importer.setMaxArticles(10);
 
-        config = new NorconexConfiguration(CACHE_DIR.resolve(cachePath));
+        //LOOK AT THIS !!!
+//        importer.setMaxArticles(10);
 
-        EmptyMetadataFilter emptyArticle = new EmptyMetadataFilter(OnMatch.EXCLUDE, ScraperFields.SCRAPED_ARTICLE);
+        config = new NorconexConfiguration(CACHE_DIR.resolve(scrqperCachePath));
+        config.crawler().setUrlNormalizer(new RootLogAppenderClearingURLNormaliser());
 
-        config.addFilter(emptyArticle);
+        configureLogging();
+
+        List<AbstractDocumentFilter> filters = new ArrayList<>();
+        filters.add(new AcceptFilter());
+
+        EmptyMetadataFilter emptyArticle = new EmptyMetadataFilter(OnMatch.EXCLUDE,
+                ScraperFields.SCRAPED_ARTICLE,
+                ScraperFields.SCRAPED_DATE);
+
+        filters.add(emptyArticle);
 
         if(from != null && to != null ) {
 
@@ -79,20 +112,22 @@ public class Crawl {
                     ZonedDateTime.of(to.atTime(0,0,0), zoneId)
             );
 
-            config.addFilter(dateFilter);
+            filters.add(dateFilter);
         }
 
         if(!skipKeywords) {
 
-            KeywordFilter keywordFilter = keywordFilter(sourceList, source);
-            config.addFilter(keywordFilter);
+            ExcludingKeywordFilter keywordFilter = keywordFilter(sourceList, source);
+            filters.add(keywordFilter);
         }
+
+        filters.forEach(config::addFilter);
 
         String[] startURL =((String) source.get(Source.LINK)).split(",");
 
-        String scraperName = Util.getID(startURL[0]);
+//        String scraperName = Util.getID(startURL[0]);
 
-        ACLEDScraper scraper = ACLEDScraper.load(ALL_SCRAPERS.resolve(scraperName), source, reporter);
+        ACLEDScraper scraper = ACLEDScraper.load(ALL_SCRAPERS, source, reporter);
         ACLEDMetadataPreProcessor metadata = new ACLEDMetadataPreProcessor(startURL[0]);
 
         applySourceIdiosyncrasies(source, config);
@@ -104,11 +139,33 @@ public class Crawl {
         config.crawler().setPostImportProcessors(importer);
     }
 
-    private KeywordFilter keywordFilter(SourceList sourceList, Source source) {
+    public NorconexConfiguration getConfig() {
+        return config;
+    }
 
-        List<String> query = resolveQuery(sourceList, source);
+    private void configureLogging(){
 
-        KeywordFilter keywordFilter = new KeywordFilter(ScraperFields.SCRAPED_ARTICLE, query);
+        try {
+            Object guard = new Object();
+
+            LoggerRepository rs = new CustomLoggerRepository(new RootLogger((Level) Level.DEBUG), CACHE_DIR);
+            LogManager.setRepositorySelector(new DefaultRepositorySelector(rs), guard);
+        } catch (IllegalArgumentException e) {
+            //pass already installed
+            int x = 0;
+        }
+        ThreadGroup threadGroup = Thread.currentThread().getThreadGroup();
+        String name = threadGroup.getName();
+
+        CustomLoggerRepository.register(name, id());
+
+    }
+
+    private ExcludingKeywordFilter keywordFilter(SourceList sourceList, Source source) {
+
+        String query = resolveQuery(sourceList, source);
+
+        ExcludingKeywordFilter keywordFilter = new ExcludingKeywordFilter(ScraperFields.SCRAPED_ARTICLE, query);
 
         return keywordFilter;
     }
@@ -119,18 +176,18 @@ public class Crawl {
 
         DateParser dateParser = CompositeDateParser.of(dateFormatSpecs);
 
-        DateMetadataFilter dateMetadataFilter = new CustomDateMetadataFilter(source, ScraperFields.SCRAPED_DATE, dateParser, reporter);
+        DateMetadataFilter dateMetadataFilter = new ExcludingCustomDateMetadataFilter(source, ScraperFields.SCRAPED_DATE, dateParser, reporter);
 
-        dateMetadataFilter.addCondition(DateMetadataFilter.Operator.GREATER_THAN, Date.from(from.toInstant()));
+        dateMetadataFilter.addCondition(DateMetadataFilter.Operator.GREATER_EQUAL, Date.from(from.toInstant()));
         dateMetadataFilter.addCondition(DateMetadataFilter.Operator.LOWER_EQUAL, Date.from(to.toInstant()));
 
         return dateMetadataFilter;
     }
 
-    private ULocale getLocale(Source source) {
-        ULocale locale = new ULocale(source.get(Source.LOCALE));
-        return locale;
-    }
+//    private ULocale getLocale(Source source) {
+//        ULocale locale = new ULocale(source.get(Source.LOCALE));
+//        return locale;
+//    }
 
     private void applySourceIdiosyncrasies(Source source, NorconexConfiguration config){
 //        if(source.get(Source.))
@@ -148,8 +205,11 @@ public class Crawl {
         return sb.toString();
     }
 
-    private List<String> resolveQuery(SourceList sourceList, Source list) {
-        return Util.KEYWORDS_LUCENE;
+    private String resolveQuery(SourceList sourceList, Source list) {
+        
+        String query = sourceList.get(SourceList.KEYWORDS);
+
+        return query;
     }
 
     public void run() {

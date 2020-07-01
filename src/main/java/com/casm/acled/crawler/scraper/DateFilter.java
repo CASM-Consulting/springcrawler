@@ -1,7 +1,6 @@
-package com.casm.acled.crawler;
+package com.casm.acled.crawler.scraper;
 
 // apache commons
-import com.casm.acled.crawler.scraper.ScraperFields;
 import com.casm.acled.crawler.scraper.dates.DateUtil;
 import com.norconex.importer.handler.filter.OnMatch;
 import org.apache.commons.configuration.XMLConfiguration;

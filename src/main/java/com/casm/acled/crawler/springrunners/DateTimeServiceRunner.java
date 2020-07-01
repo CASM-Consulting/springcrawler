@@ -1,6 +1,7 @@
 package com.casm.acled.crawler.springrunners;
 
 import com.casm.acled.configuration.ObjectMapperConfiguration;
+import com.casm.acled.crawler.reporting.Event;
 import com.casm.acled.crawler.reporting.Report;
 import com.casm.acled.crawler.reporting.Reporter;
 import com.casm.acled.crawler.scraper.dates.DateParser;
@@ -99,10 +100,38 @@ public class DateTimeServiceRunner implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
+        reporter.randomRunId();
 
 //        attemptSourceListExistingArticles("balkans");
+//        dateTimeService.checkExistingPasses(sourceListDAO.getByUnique(SourceList.LIST_NAME, "balkans").get(), getFromArticles);
+//        dateTimeService.attemptSourceListDateTimeParsers(sourceListDAO.getByUnique(SourceList.LIST_NAME, "Balkans").get(), DateParsers.ALL, getFromArticles);
 
-//        attemptSource(1263, );
+        dateTimeService.attemptDateTimeParse(sourceDAO.getById(2254).get(), DateParsers.ALL, getFromArticles);
+
+//        dateTimeService.attemptDateTimeParse(sourceDAO.getById(3281).get(), DateParsers.ALL, getFromArticles);
+//        dateTimeService.attemptDateTimeParse(sourceDAO.getById(1262).get(), DateParsers.ALL, getFromArticles);
+//        dateTimeService.attemptDateTimeParse(sourceDAO.getById(2977).get(), DateParsers.ALL, getFromArticles);
+//        dateTimeService.attemptDateTimeParse(sourceDAO.getById(17749).get(), DateParsers.ALL, getFromArticles);
+//        dateTimeService.attemptDateTimeParse(sourceDAO.getById(38).get(), DateParsers.ALL, getFromArticles);
+//        dateTimeService.attemptDateTimeParse(sourceDAO.getById(3795).get(), DateParsers.ALL, getFromArticles);
+//        dateTimeService.attemptDateTimeParse(sourceDAO.getById(1658).get(), DateParsers.ALL, getFromArticles);
+//        dateTimeService.attemptDateTimeParse(sourceDAO.getById(3591).get(), DateParsers.ALL, getFromArticles);
+//        dateTimeService.attemptDateTimeParse(sourceDAO.getById(4421).get(), DateParsers.ALL, getFromArticles);
+//        dateTimeService.attemptDateTimeParse(sourceDAO.getById(16778).get(), DateParsers.ALL, getFromArticles);
+//        dateTimeService.attemptDateTimeParse(sourceDAO.getById(2122).get(), DateParsers.ALL, getFromArticles);
+//        dateTimeService.attemptDateTimeParse(sourceDAO.getById(3264).get(), DateParsers.ALL, getFromArticles);
+//        dateTimeService.attemptDateTimeParse(sourceDAO.getById(3264).get(), DateParsers.ALL, getFromArticles);
+//        dateTimeService.attemptDateTimeParse(sourceDAO.getById(4345).get(), DateParsers.ALL, getFromArticles);
+//        dateTimeService.attemptDateTimeParse(sourceDAO.getById(1891).get(), DateParsers.ALL, getFromArticles);
+//        dateTimeService.attemptDateTimeParse(sourceDAO.getById(2139).get(), DateParsers.ALL, getFromArticles);
+//        dateTimeService.attemptDateTimeParse(sourceDAO.getById(4642).get(), DateParsers.ALL, getFromArticles);
+//        dateTimeService.attemptDateTimeParse(sourceDAO.getById(3596).get(), DateParsers.ALL, getFromArticles);
+//        dateTimeService.attemptDateTimeParse(sourceDAO.getById(17335).get(), DateParsers.ALL, getFromArticles);
+//        dateTimeService.attemptDateTimeParse(sourceDAO.getById(1265).get(), DateParsers.ALL, getFromArticles);
+//        dateTimeService.attemptDateTimeParse(sourceDAO.getById(1263).get(), DateParsers.ALL, getFromArticles);
+
+        reporter.getRunReports().stream().forEach(r -> logger.info(r.toString()));
+
     }
 
     public static void main(String[] args) {
