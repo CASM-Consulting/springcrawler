@@ -486,7 +486,12 @@ public class DateParsers {
             "ISO:|d/M/yyyy HH:mm||RE^Issued on: (.+)$|STRIP-" //Issued on: 16/02/2018 - 10:30
     ));
 
-    /* Conflicting names from MERGE conflict, TODO: add back in */
+    /*
+     * Note: source-specific-dates had additional date parsers dp118 - dp129 that had also
+     * been defined in the master branch, for now these have been commented out and the master
+     * branch DateParsers have been taken instead. These can be re-named (dp146 and onwards)
+     * and added back in if desired.
+     */
 //    public static final DateParser dp118 = CompositeDateParser.of(ImmutableList.of(
 //            "ISO:/d MMM yyyy HH:mm//STRIPгода," //9 ноября 2016 года, 20:11
 //    ));
