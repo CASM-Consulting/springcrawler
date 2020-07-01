@@ -1,10 +1,13 @@
 package com.casm.acled.crawler.scraper.dates;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class DateParsers {
 
@@ -682,6 +685,91 @@ public class DateParsers {
     }
 
     public static final List<DateParser> ONE = ImmutableList.of(dp130);
+
+    public static final Map<String, DateParser> SOURCE_SPECIFIC = ImmutableMap.<String, DateParser>builder()
+            .put("Antena San Luis", CompositeDateParser.of(ImmutableList.of(
+                    "ISO:/MMM d, yyyy/es"
+            )))
+
+            .put("La Prensa de Monclova", CompositeDateParser.of(ImmutableList.of(
+                    "ISO:/MMM d, yyyy//RE^On\\s(.+)"
+            )))
+
+            .put("AFN - Tijuana", CompositeDateParser.of(ImmutableList.of(
+                    "ISO:/EEE, d 'de' MMM 'de' yyyy/es/RE.*-\\s(.+)\\s-.*"
+            )))
+
+            .put("Entorno Informativo", CompositeDateParser.of(ImmutableList.of(
+                    "ISO:/d MMM, yyyy/es"
+            )))
+
+            .put("Imagen del Golfo", CompositeDateParser.of(ImmutableList.of(
+                    "ISO:/yyyy-MM-dd//RE.*(\\d{4}.\\d+.\\d+).*"
+            ))) // Example: ImmutableList.of("Policiaca | 2018-06-10 |", "Veracruz | 2018-09-24 |", "Veracruz | 2018-06-11 |")
+
+            .put("La Silla Rota", CompositeDateParser.of(ImmutableList.of(
+                    "ISO:|dd/MM/yyyy|"
+            ))) // Example: ImmutableList.of("11/06/2018")
+
+            .put("La Verdad", CompositeDateParser.of(ImmutableList.of(
+                    "ISO:/yyyy-MM-dd'T'HH:mm/"
+            ))) // Example: ImmutableList.of("2018-09-23T23:28")
+
+            .put("nncMX", CompositeDateParser.of(ImmutableList.of(
+                    "ISO:/dd 'DE' MMM, yyyy/es/RE.+:(.+\\d{4})"
+            ))) // Example: ImmutableList.of("Publicado: 10 DE JUNIO, 2018")
+
+            .put("Quadratin Oaxaca", CompositeDateParser.of(ImmutableList.of(
+                    "ISO:/dd 'de' MMM 'de' yyyy/es"
+            ))) // Example: ImmutableList.of("10 de junio de 2018")
+
+            .put("Riodoce", CompositeDateParser.of(ImmutableList.of(
+                    "ISO:/MMM dd, yyyy/es"
+            ))) // Example: ImmutableList.of("junio 10, 2018", "septiembre 23, 2018")
+
+            // XXX: unsure on timezone offset, if <UTC_TIME><OFFSET> then should be correct.
+            .put("Tribuna Campeche", CompositeDateParser.of(ImmutableList.of(
+                    "ISO:/yyyy-MM-dd'T'HH:mm:ssZ/"
+            ))) // Example: ImmutableList.of("2018-06-10T11:38:53-05:00", "2018-09-23T10:50:14-05:00", "2018-09-24T09:32:02-05:00")
+
+            .put("Animal Politico", CompositeDateParser.of(ImmutableList.of(
+                    "ISO:/dd 'de' MMM, yyyy/es"
+            ))) // Example: ImmutableList.of("23 de septiembre, 2018")
+
+            // TODO: unsure on format/language, only one example...
+            .put("Colima Noticias", CompositeDateParser.of(ImmutableList.of(
+                    "ISO:/M dd, yyyy/es/"
+            ))) // Example: ImmutableList.of("Sep 23, 2018")
+
+            .put("E-Consulta", CompositeDateParser.of(ImmutableList.of(
+                    "ISO:/EEE, MMM dd, yyyy/es/"
+            ))) // Example: ImmutableList.of("Domingo, Junio 10, 2018", "Domingo, Septiembre 23, 2018")
+
+            .put("Independiente de Hidalgo", CompositeDateParser.of(ImmutableList.of(
+                    "ISO:/d MMM, yyyy/es"
+            ))) // Example: ImmutableList.of("10 junio, 2018")
+
+            .put("El Sol de Acapulco", CompositeDateParser.of(ImmutableList.of(
+                    "ISO:|EEE d 'de' MMM 'de' yyyy|es|RE.*/(.+)|"
+            ))) // Example: ImmutableList.of("  / domingo 10 de junio de 2018", "  / lunes 24 de septiembre de 2018", "  / domingo 23 de septiembre de 2018", "  / lunes 11 de junio de 2018")
+
+            .put("Hoy Tamaulipas", CompositeDateParser.of(ImmutableList.of(
+                    "ISO:/d 'de' MMM 'del' yyyy 'a las' HH:mm/es/RE.*(\\d{1,2} de.+)/"
+            ))) // Example: ImmutableList.of("Por: Mesa de Redacción El Día Lunes 23 de Septiembre del 2019 a las 16:20")
+
+            .put("El Proceso", CompositeDateParser.of(ImmutableList.of(
+                    "ISO:/d MMM, yyyy/es"
+            ))) // Example: ImmutableList.of("10 junio, 2018", "11 junio, 2018")
+
+            .put("Sin Embargo", CompositeDateParser.of(ImmutableList.of(
+                    "ISO:/MMM d, yyyy/es"
+            ))) // Example: ImmutableList.of("junio 10, 2018", "junio 11, 2018", "septiembre 23, 2018",)
+
+            .put("Zona Franca", CompositeDateParser.of(ImmutableList.of(
+                    "ISO:/d 'de' MMM 'de' yyyy/es/"
+            ))) // Example: ImmutableList.of("24 de septiembre de 2018", "11 de junio de 2018", "10 de junio de 2018", "24 de septiembre de 2018")
+
+            .build();
 
     public static final List<DateParser> ALL = ImmutableList.of(
             generic,
