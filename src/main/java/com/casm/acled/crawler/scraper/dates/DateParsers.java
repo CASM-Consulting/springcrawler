@@ -2,10 +2,10 @@ package com.casm.acled.crawler.scraper.dates;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.ibm.icu.util.ULocale;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -736,10 +736,9 @@ public class DateParsers {
                     "ISO:/dd 'de' MMM, yyyy/es"
             ))) // Example: ImmutableList.of("23 de septiembre, 2018")
 
-            // TODO: unsure on format/language, only one example...
             .put("Colima Noticias", CompositeDateParser.of(ImmutableList.of(
-                    "ISO:/M dd, yyyy/es/"
-            ))) // Example: ImmutableList.of("Sep 23, 2018")
+                    "ISO:/MMM d, yyyy//"
+            )).locale(new ULocale("es_MX"))) // Example: ImmutableList.of("Sep 23, 2018", "Ene 7, 2019")
 
             .put("E-Consulta", CompositeDateParser.of(ImmutableList.of(
                     "ISO:/EEE, MMM dd, yyyy/es/"
