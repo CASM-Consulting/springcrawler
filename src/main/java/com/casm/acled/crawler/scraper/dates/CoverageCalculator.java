@@ -192,7 +192,7 @@ public class CoverageCalculator {
         CoverageCalculator cc = new CoverageCalculator(parsers, examples);
 
         cc.setMaxShownExamples(10);
-        cc.setWarnNoParse(false);
+        cc.setWarnNoParse(true);
         cc.setWarnParseOverlap(false);
 
         // Parse and keep track of stats.
