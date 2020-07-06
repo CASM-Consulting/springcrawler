@@ -4,6 +4,10 @@ import com.casm.acled.configuration.ObjectMapperConfiguration;
 import com.casm.acled.crawler.reporting.Reporter;
 import com.casm.acled.crawler.spring.CrawlService;
 import com.casm.acled.crawler.util.CustomLoggerRepository;
+import com.casm.acled.dao.entities.SourceDAO;
+import com.casm.acled.dao.entities.SourceListDAO;
+import com.casm.acled.entities.source.Source;
+import com.casm.acled.entities.sourcelist.SourceList;
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.spi.DefaultRepositorySelector;
@@ -27,6 +31,8 @@ import org.springframework.context.annotation.Import;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
+import java.util.List;
+import java.util.Map;
 
 @EnableAutoConfiguration(exclude={HibernateJpaAutoConfiguration.class, CamundaBpmAutoConfiguration.class, CamundaBpmRestJerseyAutoConfiguration.class, ValidationAutoConfiguration.class})
 // We need the special object mapper, though.
@@ -43,6 +49,8 @@ public class CrawlerServiceRunner implements CommandLineRunner {
 //    }
     protected static final Logger logger = LoggerFactory.getLogger(CrawlerServiceRunner.class);
 
+    @Autowired
+    private SourceListDAO sourceListDAO;
 
     @Autowired
     private CrawlService crawlService;
@@ -79,18 +87,24 @@ public class CrawlerServiceRunner implements CommandLineRunner {
 
     private void collectExamples(int sourceId, int sourceListId) {
 
-
-
         crawlService.collectExamples(sourceListId, sourceId);
     }
+
+
 
     @Override
     public void run(String... args) throws Exception {
 
         reporter.randomRunId();
 
+        args = new String[]{"36", "5012", "2018-01-01", "2018-12-31", "false"};
         crawl(args);
-//        collectExamples(1657,1);
+        collectExamples(1657,1);
+
+//        Map<String, List<String>> sitemaps = crawlService.getSitemaps(sourceListDAO.getByUnique(SourceList.LIST_NAME, "mexico-back-code-2018").get());
+//        System.out.println(sitemaps);
+
+//        crawlService.getRobots("https://www.elsoldesinaloa.com.mx");
 
         reporter.getRunReports().stream().forEach(r -> logger.info(r.toString()));
 

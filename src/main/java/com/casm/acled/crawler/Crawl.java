@@ -75,22 +75,24 @@ public class Crawl {
     }
 
     public Crawl(SourceList sourceList, Source source, LocalDate from, LocalDate to, boolean skipKeywords,
-                 ACLEDImporter importer, Reporter reporter) {
+                 ACLEDImporter importer, Reporter reporter, List<String> sitemaps) {
         this.source = source;
         this.from = from;
         this.to = to;
         this.reporter = reporter;
 
         String id = id();
-        Path scrqperCachePath = Paths.get(id);
+        Path scraperCachePath = Paths.get(id);
 
         importer.setCollectorSupplier(collectorSupplier);
 
         //LOOK AT THIS !!!
 //        importer.setMaxArticles(10);
 
-        config = new NorconexConfiguration(CACHE_DIR.resolve(scrqperCachePath));
+        config = new NorconexConfiguration(CACHE_DIR.resolve(scraperCachePath));
         config.crawler().setUrlNormalizer(new RootLogAppenderClearingURLNormaliser());
+
+        config.crawler().setStartSitemapURLs(sitemaps.toArray(new String[]{}));
 
         configureLogging();
 
@@ -105,7 +107,13 @@ public class Crawl {
 
         if(from != null && to != null ) {
 
-            ZoneId zoneId = ZoneId.of(source.get(Source.TIMEZONE));
+            String zid = source.get(Source.TIMEZONE);
+            ZoneId zoneId;
+            if(zid==null) {
+                zoneId = ZoneId.systemDefault();
+            } else {
+                zoneId = ZoneId.of(zid);
+            }
 
             DateMetadataFilter dateFilter = dateFilter(source,
                     ZonedDateTime.of(from.atTime(0,0,0), zoneId),

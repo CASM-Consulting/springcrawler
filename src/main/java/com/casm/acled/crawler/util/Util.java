@@ -85,11 +85,11 @@ public class Util implements CommandLineRunner {
 
         Matcher matcher = PROTOCOL.matcher(url.toLowerCase());
 
-        if(matcher.find()) {
+        if(!matcher.find()) {
             // get rid of any previous or malformed protocol
-            url = matcher.replaceFirst("");
+            //url = matcher.replaceFirst("");
+            url =  (https) ? "https://" + url : "http://" + url;
         }
-        url =  (https) ? "https://" + url : "http://" + url;
 
         return url;
     }

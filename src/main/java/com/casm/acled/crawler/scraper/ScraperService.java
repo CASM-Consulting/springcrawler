@@ -2,7 +2,6 @@ package com.casm.acled.crawler.scraper;
 
 
 import com.casm.acled.camunda.variables.Process;
-import com.casm.acled.crawler.Crawl;
 import com.casm.acled.crawler.reporting.*;
 import com.casm.acled.crawler.scraper.dates.CompositeDateParser;
 import com.casm.acled.crawler.scraper.dates.DateParser;
@@ -16,8 +15,10 @@ import com.casm.acled.entities.article.Article;
 import com.casm.acled.entities.crawlreport.CrawlReport;
 import com.casm.acled.entities.source.Source;
 import com.casm.acled.entities.sourcelist.SourceList;
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.ibm.icu.util.ULocale;
 import com.norconex.collector.core.CollectorException;
 import com.norconex.collector.http.client.impl.GenericHttpClientFactory;
@@ -31,7 +32,9 @@ import com.opencsv.CSVReader;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.QuoteMode;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.http.client.HttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,6 +48,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -111,7 +115,7 @@ public class ScraperService {
 //        String id = Util.getID(source);
         ACLEDScraper scraper = ACLEDScraper.load(scraperDir, source, reporter);
 
-        HttpDocument document = scrapeURL(scraper, url);
+        HttpDocument document = scrapeURL(scraper, url, source);
 
         String article = document.getMetadata().getString(ScraperFields.SCRAPED_ARTICLE);
 
@@ -125,8 +129,10 @@ public class ScraperService {
         checkExampleURLs(scraper, source);
     }
 
-    public HttpDocument scrapeURL(ACLEDScraper scraper, String url) {
+    public HttpDocument scrapeURL(ACLEDScraper scraper, String url, Source source) {
         GenericDocumentFetcher fetcher = new GenericDocumentFetcher();
+
+        String name = source.get(Source.STANDARD_NAME);
 
         HttpClient client = new GenericHttpClientFactory().createHTTPClient("www.acleddata.com");
         CachedInputStream inputStream = new CachedStreamFactory(10 * 1096, 10 * 1096).newInputStream("");
@@ -144,13 +150,13 @@ public class ScraperService {
 
                 return document;
             } else {
-                throw new ReportingException(Report.of(Event.SCRAPE_ERROR).message("status %d - %s", statusCode, url));
+                throw new ReportingException(Report.of(Event.SCRAPE_ERROR).message("%s - status code %d ", name, statusCode));
             }
         } catch (CollectorException e) {
 
             logger.error(e.getMessage(), e);
             String staceTrace = ExceptionUtils.getStackTrace(e);
-            throw new ReportingException(Report.of(Event.ERROR).message("%s - %s", url, staceTrace));
+            throw new ReportingException(Report.of(Event.ERROR).message("%s - %s", name, staceTrace));
         }
     }
 
@@ -208,23 +214,31 @@ public class ScraperService {
 //            String id = Util.getID(url);
 
 
-            testScraper(scraper, url, source.id());
+            Article article = EntityVersions.get(Article.class).current()
+                    .put(Article.URL, url)
+                    .id(i);
+
+            testScraper(scraper, article, source);
         }
     }
 
-    public Article testScraper(ACLEDScraper scraper, String url, int id) {
+    public Article testScraper(ACLEDScraper scraper, Article article, Source source) {
         HttpDocument document;
 
         Article base = EntityVersions.get(Article.class).current();
 
+        int id = article.id();
+        String url = article.get(Article.URL);
+        String name = source.get(Source.STANDARD_NAME);
+
         try {
-            document = scrapeURL(scraper, url);
+            document = scrapeURL(scraper, url, source);
         } catch (ReportingException e) {
             reporter.report(e.get().id(id));
             return base;
         } catch (Exception e) {
             String staceTrace = ExceptionUtils.getStackTrace(e);
-            reporter.report(Report.of(Event.SCRAPE_ERROR).id( id ).message("%s  - %s: %s", url, e.getMessage(), staceTrace));
+            reporter.report(Report.of(Event.SCRAPE_ERROR).id( id ).message("%s - %s: %s", name, e.getMessage(), staceTrace));
             return base;
         }
 
@@ -235,23 +249,23 @@ public class ScraperService {
 
         if(text != null && date != null && title != null) {
             //missing fields already reported
-            reporter.report(Report.of(Event.SCRAPE_PASS).id(id).message("%s",url));
+            reporter.report(Report.of(Event.SCRAPE_PASS).id(id).message("%s", name));
         } else {
-            reporter.report(Report.of(Event.SCRAPE_FAIL).id(id).message("%s",url));
+            reporter.report(Report.of(Event.SCRAPE_FAIL).id(id).message("%s", name));
         }
-        Article article = base.put(Article.URL, url);
+        Article scraped = base.put(Article.URL, url);
 
         if(title != null) {
-            article = article.put(Article.TITLE, title);
+            scraped = scraped.put(Article.TITLE, title);
         }
         if(date != null) {
-            article = article.put(Article.SCRAPE_DATE, date);
+            scraped = scraped.put(Article.SCRAPE_DATE, date);
         }
         if(text != null) {
-            article = article.put(Article.TEXT, text);
+            scraped = scraped.put(Article.TEXT, text);
         }
 
-        return article;
+        return scraped;
     }
 
     public void checkScrapersFromFile(Path path, Reporter reporter) {
@@ -361,11 +375,13 @@ public class ScraperService {
 
             Optional<Source> maybeSource = sourceDAO.byName(name);
 
+            LocalDate date = LocalDate.parse(datum.get("DATE"), formatter);
+
             Article article = base
                 .put(Article.TEXT, datum.get("TEXT"))
                 .put(Article.URL, url)
                 .put(Article.TITLE, datum.get("TITLE"))
-                .put(Article.DATE, formatter.parse(datum.get("DATE")))
+                .put(Article.DATE, date)
                 .put(Article.NOTES, name);
 
             if(maybeSource.isPresent()) {
@@ -377,6 +393,31 @@ public class ScraperService {
         }
 
         return articles;
+    }
+
+    public Pair<String, List<Article>> matchArticlesByContent(Article article, int snippetSize) {
+
+        Article blank = EntityVersions.get(Article.class).current();
+
+        String text = article.get(Article.TEXT);
+
+        int len = text.length();
+        int middle = len / 2;
+        int margin = snippetSize/2;
+        int from = Math.max(0, middle-margin);
+        int to = Math.min(middle+margin, len);
+
+        String snippet = text.substring(from, to);
+
+        Article query = EntityVersions.get(Article.class).current()
+                .put(Article.TEXT, snippet);
+
+        List<Article> matches = articleDAO.search(blank, blank, query)
+                .stream()
+                .filter(a -> !a.hasBusinessKey() || !a.businessKey().equalsIgnoreCase(article.businessKey()))
+                .collect(Collectors.toList());
+
+        return Pair.of(snippet, matches);
     }
 
     public List<Article> matchArticlesByUrl(Article article) {
@@ -416,6 +457,48 @@ public class ScraperService {
         return articles;
     }
 
+    public void matchArticlesByContent(List<Article> articles, int snippetSize) {
+
+        for(Article article : articles) {
+
+            Pair<String, List<Article>> matches = matchArticlesByContent(article, snippetSize);
+
+            if(matches.getRight().isEmpty()) {
+                reporter.report(Report.of(Event.ARTICLE_CONTENT_NO_MATCH).id(article.id()).message(article.get(Article.URL)));
+            } else if(matches.getRight().size() == 1) {
+                reporter.report(Report.of(Event.ARTICLE_CONTENT_MATCH).id(article.id()).message("%s %s", matches.getLeft(), article.get(Article.URL)));
+            } else {
+                reporter.report(Report.of(Event.ARTICLE_CONTENT_TOO_MANY_MATCHES).id(article.id()).message("%s %s", matches.getLeft(), article.get(Article.URL)));
+            }
+        }
+    }
+
+    public void matchArticlesUrlOrContent(List<Article> articles, int snippetSize) {
+
+        for(Article article : articles) {
+
+            List<Article> matches = matchArticlesByUrl(article);
+
+            if(matches.isEmpty()) {
+                Pair<String, List<Article>> contentMatches = matchArticlesByContent(article, snippetSize);
+
+                if(contentMatches.getRight().isEmpty()) {
+
+                    reporter.report(Report.of(Event.ARTICLE_NO_MATCH).id(article.id()).message(article.get(Article.URL)));
+                } else {
+                    String matchingUrls = Joiner.on(",").join(contentMatches.getRight().stream().map(a->a.get(Article.URL)).collect(Collectors.toList()));
+                    reporter.report(Report.of(Event.ARTICLE_CONTENT_MATCH).id(article.id()).message("%s %s", contentMatches.getLeft(),matchingUrls));
+//                    reporter.report(Report.of(Event.ARTICLE_CONTENT_TOO_MANY_MATCHES).id(article.id()).message("%s %s", contentMatches.getLeft(), article.get(Article.URL)));
+                }
+            } else if(matches.size() == 1) {
+                reporter.report(Report.of(Event.ARTICLE_URL_MATCH).id(article.id()).message(article.get(Article.URL)));
+            } else {
+                reporter.report(Report.of(Event.ARTICLE_URL_TOO_MANY_MATCHES).id(article.id()).message(article.get(Article.URL)));
+            }
+        }
+
+    }
+
     public void matchArticlesByUrl(List<Article> articles) {
 
         for(Article article : articles) {
@@ -423,11 +506,11 @@ public class ScraperService {
             List<Article> matches = matchArticlesByUrl(article);
 
             if(matches.isEmpty()) {
-                reporter.report(Report.of(Event.ARTICLE_NO_MATCH).id(article.id()).message(article.get(Article.URL)));
+                reporter.report(Report.of(Event.ARTICLE_URL_NO_MATCH).id(article.id()).message(article.get(Article.URL)));
             } else if(matches.size() == 1) {
-                reporter.report(Report.of(Event.ARTICLE_MATCH).id(article.id()).message(article.get(Article.URL)));
+                reporter.report(Report.of(Event.ARTICLE_URL_MATCH).id(article.id()).message(article.get(Article.URL)));
             } else {
-                reporter.report(Report.of(Event.ARTICLE_TOO_MANY_MATCHES).id(article.id()).message(article.get(Article.URL)));
+                reporter.report(Report.of(Event.ARTICLE_URL_TOO_MANY_MATCHES).id(article.id()).message(article.get(Article.URL)));
             }
         }
     }
@@ -436,9 +519,9 @@ public class ScraperService {
 
         for(Article article : articles) {
             if(article.hasValue(Article.SOURCE_ID)) {
-                reporter.report(Report.of(Event.SOURCE_FOUND).id(article.id()).message(article.get(Article.URL)));
+                reporter.report(Report.of(Event.SOURCE_FOUND).id(article.id()).message(article.get(Article.NOTES)));
             } else {
-                reporter.report(Report.of(Event.SOURCE_NOT_FOUND).id(article.id()).message(article.get(Article.URL)));
+                reporter.report(Report.of(Event.SOURCE_NOT_FOUND).id(article.id()).message(article.get(Article.NOTES)));
             }
         }
     }
@@ -454,9 +537,9 @@ public class ScraperService {
         Source source = sourceDAO.getById(article.get(Article.SOURCE_ID)).get();
 
         if(Util.scraperExists(scraperDir, source)) {
-            reporter.report(Report.of(Event.SCRAPER_FOUND).id(article.id()).message(article.get(Article.URL)));
+            reporter.report(Report.of(Event.SCRAPER_FOUND).id(article.id()).message(source.get(Source.NAME)));
         } else {
-            reporter.report(Report.of(Event.SCRAPER_NOT_FOUND).id(article.id()).message(article.get(Article.URL)));
+            reporter.report(Report.of(Event.SCRAPER_NOT_FOUND).id(article.id()).message(source.get(Source.NAME)));
         }
     }
 
@@ -477,7 +560,7 @@ public class ScraperService {
         String url = article.get(Article.URL);
         int id = article.id();
 
-        Article scraped = testScraper(scraper, url, id);
+        Article scraped = testScraper(scraper, article, source);
 
         if(scraped.hasValue(Article.SCRAPE_DATE)) {
             article = article.put(Article.SCRAPE_DATE, scraped.get(Article.SCRAPE_DATE));
@@ -491,10 +574,13 @@ public class ScraperService {
         return ((List<String>)source.get(Source.LOCALES)).stream().map(ULocale::new).collect(Collectors.toList());
     }
 
-    private boolean dateInRange(LocalDateTime localDateTime, Map<LocalDateTime, LocalDateTime> acceptableRanges) {
+    private boolean dateInRange(LocalDateTime dateTime, Map<LocalDateTime, LocalDateTime> acceptableRanges) {
         for(Map.Entry<LocalDateTime, LocalDateTime> entry : acceptableRanges.entrySet()) {
 
-            if(localDateTime.isAfter(entry.getKey()) && localDateTime.isBefore(entry.getValue())) {
+            LocalDateTime from  = entry.getKey();
+            LocalDateTime to  = entry.getValue();
+
+            if( (dateTime.equals(from) || dateTime.isAfter(from)) && (dateTime.equals(to) || dateTime.isBefore(to)) ) {
                 return true;
             }
         }
@@ -513,11 +599,12 @@ public class ScraperService {
         int id = article.id();
         String url = article.get(Article.URL);
         Source source = sourceDAO.getById(article.get(Article.SOURCE_ID)).get();
+        String name = source.get(Source.STANDARD_NAME);
 
         List<String> dateFormatSpecs = source.get(Source.DATE_FORMAT);
 
         if(dateFormatSpecs == null || dateFormatSpecs.isEmpty()) {
-            reporter.report(Report.of(Event.DATE_PARSER_NOT_FOUND).id(id).message(url));
+            reporter.report(Report.of(Event.DATE_PARSER_NOT_FOUND).id(id).message(name));
             return;
         }
 
@@ -533,15 +620,15 @@ public class ScraperService {
 
             if(dateInRange(maybeDateTime.get(), acceptableRanges)) {
 
-                reporter.report(Report.of(Event.DATE_PARSE_SUCCESS).id(id).message(url));
+                reporter.report(Report.of(Event.DATE_PARSE_SUCCESS).id(id).message(name));
             } else {
 
-                reporter.report(Report.of(Event.DATE_PARSE_INCORRECT).id(id).message(url));
+                reporter.report(Report.of(Event.DATE_PARSE_INCORRECT).id(id).message(name));
             }
 
         } else {
 
-            reporter.report(Report.of(Event.DATE_PARSE_FAILED).id(id).message(url));
+            reporter.report(Report.of(Event.DATE_PARSE_FAILED).id(id).message(name));
         }
 
     }
@@ -566,12 +653,14 @@ public class ScraperService {
                     String url = datum.get("URL");
                     boolean used = toBool(datum.get("USED"));
 
+                    Article article = EntityVersions.get(Article.class).current().put(Article.URL, url);
+
                     try {
 
-                        Article article = testScraper(scraper, url, source.id());
+                        Article scraped = testScraper(scraper, article, source);
 
-                        if(article.hasValue(Article.TEXT)) {
-                            String text = article.get(Article.TEXT);
+                        if(scraped.hasValue(Article.TEXT)) {
+                            String text = scraped.get(Article.TEXT);
                             boolean matched = keywordsService.test(query, text);
                             if(matched && used) {
                                 reporter.report(Report.of(Event.SCRAPE_TEST_TP).id(source.id()).message("%s %s", name, url));
@@ -627,7 +716,7 @@ public class ScraperService {
                 String URL= a.get(Article.URL);
                 String TEXT= a.get(Article.TEXT);
                 String TITLE = a.get(Article.TITLE);
-                String DATE = a.get(Article.DATE);
+                String DATE = a.get(Article.DATE).toString();
                 String SCRAPE_DATE = a.get(Article.SCRAPE_DATE);
                 String EVENT = c.get(CrawlReport.EVENT);
                 String MESSAGE = c.get(CrawlReport.MESSAGE);

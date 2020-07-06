@@ -4,6 +4,7 @@ import com.casm.acled.configuration.ObjectMapperConfiguration;
 import com.casm.acled.crawler.reporting.Event;
 import com.casm.acled.crawler.reporting.Report;
 import com.casm.acled.crawler.reporting.Reporter;
+import com.casm.acled.crawler.scraper.dates.CompositeDateParser;
 import com.casm.acled.crawler.scraper.dates.DateParser;
 import com.casm.acled.crawler.scraper.dates.DateParsers;
 import com.casm.acled.crawler.scraper.dates.DateTimeService;
@@ -33,6 +34,8 @@ import org.springframework.context.annotation.Import;
 
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -98,6 +101,45 @@ public class DateTimeServiceRunner implements CommandLineRunner {
         dateTimeService.attemptDateTimeParse(source, ImmutableList.of(dateParser), getFromArticles);
     }
 
+
+    public void assignParser(String sourceName, DateParser parser, boolean overwrite) {
+        Optional<Source> maybeSource = sourceDAO.getByUnique(Source.STANDARD_NAME, sourceName);
+        if(maybeSource.isPresent()) {
+
+            Source source = maybeSource.get();
+            if(source.hasValue(Source.DATE_FORMAT) && !overwrite) {
+
+                List<String> spec = parser.getFormatSpec();
+                List<String> existing = source.get(Source.DATE_FORMAT);
+
+                spec.addAll(existing);
+                source = source.put(Source.DATE_FORMAT, spec);
+                sourceDAO.update(source);
+
+                logger.error("updating date format {}", sourceName);
+            } else {
+
+                List<String> spec = parser.getFormatSpec();
+                source = source.put(Source.DATE_FORMAT, spec);
+                logger.error("adding date format {}", sourceName);
+                sourceDAO.update(source);
+            }
+        } else {
+            logger.error("source not found {}", sourceName);
+        }
+    }
+
+    public void assignParsers(Map<String, DateParser> parsres) {
+
+        for(Map.Entry<String, DateParser> entry : parsres.entrySet()) {
+
+            String sourceName = entry.getKey();
+            DateParser parser = entry.getValue();
+
+            assignParser(sourceName, parser, false);
+        }
+    }
+
     @Override
     public void run(String... args) throws Exception {
         reporter.randomRunId();
@@ -106,7 +148,13 @@ public class DateTimeServiceRunner implements CommandLineRunner {
 //        dateTimeService.checkExistingPasses(sourceListDAO.getByUnique(SourceList.LIST_NAME, "balkans").get(), getFromArticles);
 //        dateTimeService.attemptSourceListDateTimeParsers(sourceListDAO.getByUnique(SourceList.LIST_NAME, "Balkans").get(), DateParsers.ALL, getFromArticles);
 
-        dateTimeService.attemptDateTimeParse(sourceDAO.getById(2254).get(), DateParsers.ALL, getFromArticles);
+//        assignParsers(DateParsers.SOURCE_SPECIFIC);
+
+//        assignParser("Hoy Tamaulipas", CompositeDateParser.of(ImmutableList.of("ISO:/d 'de' MMM 'del' yyyy 'a las' HH:mm/es/RE.*?(\\d{1,2} de.+)/")), true);
+//        assignParser("8 Columnas", CompositeDateParser.of(ImmutableList.of("ISO:/MMM dd, yyyy/es/")), true);
+        assignParser("La Jornada", CompositeDateParser.of(ImmutableList.of( "ISO:/d 'de' MMM 'de' yyyy/es/RE.*?(\\d{1,2} de.+),.+/", "ISO:/dd MMM yyyy HH:mm/es/RE.*,(.*)")), true);
+
+//        dateTimeService.attemptDateTimeParse(sourceDAO.getById(2254).get(), DateParsers.ALL, getFromArticles);
 
 //        dateTimeService.attemptDateTimeParse(sourceDAO.getById(3281).get(), DateParsers.ALL, getFromArticles);
 //        dateTimeService.attemptDateTimeParse(sourceDAO.getById(1262).get(), DateParsers.ALL, getFromArticles);
@@ -129,6 +177,8 @@ public class DateTimeServiceRunner implements CommandLineRunner {
 //        dateTimeService.attemptDateTimeParse(sourceDAO.getById(17335).get(), DateParsers.ALL, getFromArticles);
 //        dateTimeService.attemptDateTimeParse(sourceDAO.getById(1265).get(), DateParsers.ALL, getFromArticles);
 //        dateTimeService.attemptDateTimeParse(sourceDAO.getById(1263).get(), DateParsers.ALL, getFromArticles);
+
+
 
         reporter.getRunReports().stream().forEach(r -> logger.info(r.toString()));
 

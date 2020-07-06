@@ -112,7 +112,7 @@ public class NorconexConfiguration {
         crawler.setImporterConfig(importer);
         // Basic crawler config
         crawler.setUserAgent(userAgent);
-        crawler.setMaxDepth(depth); // -1 for inf
+//        crawler.setMaxDepth(depth); // -1 for inf
         crawler.setIgnoreRobotsMeta(ignoreRobots);
         crawler.setIgnoreRobotsTxt(ignoreRobots);
         crawler.setIgnoreCanonicalLinks(false);
