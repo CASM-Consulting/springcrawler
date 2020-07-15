@@ -39,7 +39,7 @@ public class CrawlerSweep {
     private final JqmClient client;
 
     public final static String JQM_APP_NAME = "JQMSpringCollectorV1";
-    private static final String JQM_USER = "crawler-submission-service";
+    public static final String JQM_USER = "crawler-submission-service";
 
     @Autowired
     private SourceDAO sourceDAO;
@@ -57,6 +57,21 @@ public class CrawlerSweep {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public void sweep(CrawlArgs args) {
+
+        List<JobRequest> jobs = args.toJobRequests();
+
+        for(JobRequest job : jobs) {
+            System.out.println(ImmutableMap.copyOf(job.getParameters()).toString());
+            client.enqueue(job);
+            try {
+                Thread.sleep(1*1000);
+            } catch (InterruptedException e) {}
+
+        }
+
     }
 
     private boolean hasScraper(Source source, Path scraperDir) {

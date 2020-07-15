@@ -8,6 +8,8 @@ import com.casm.acled.configuration.ObjectMapperConfiguration;
 // norconex
 
 //camunda
+import com.casm.acled.crawler.management.CrawlArgs;
+import com.casm.acled.crawler.management.CrawlerSweep;
 import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
 import org.camunda.bpm.spring.boot.starter.rest.CamundaBpmRestJerseyAutoConfiguration;
 
@@ -16,7 +18,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 // java
-import java.util.*;
 
 // spring
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,24 +32,21 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
 
-import uk.ac.susx.tag.norconex.database.ConcurrentContentHashStore;
-import uk.ac.susx.tag.norconex.jobqueuemanager.CrawlerArguments;
-
 @EnableAutoConfiguration(exclude={HibernateJpaAutoConfiguration.class,CamundaBpmAutoConfiguration.class, CamundaBpmRestJerseyAutoConfiguration.class, ValidationAutoConfiguration.class})
 // We need the special object mapper, though.
 //@Import({ObjectMapperConfiguration.class, CLIRunner.ShutdownConfig.class})
 @Import({ObjectMapperConfiguration.class})
 // And we also need the DAOs.
-@ComponentScan(basePackages={"com.casm.acled.dao", "com.casm.acled.crawler.spring"})
+@ComponentScan(basePackages={"com.casm.acled.dao", "com.casm.acled.crawler"})
 public class CLIRunner implements CommandLineRunner {
 
     protected static final Logger logger = LoggerFactory.getLogger(CLIRunner.class);
 
-//    @Autowired
-//    private CrawlerServiceOld crawlerService;
+    @Autowired
+    private CrawlerSweep crawlerSweep;
 
-    private ConcurrentContentHashStore contentHashStore;
-
+    @Autowired
+    private CrawlArgs crawlArgs;
 
     public static void main(String[] args) {
 
@@ -56,46 +54,22 @@ public class CLIRunner implements CommandLineRunner {
         app.setBannerMode(Banner.Mode.OFF);
         app.setWebApplicationType(WebApplicationType.NONE);
         ConfigurableApplicationContext ctx = app.run(args);
-        logger.info("Spring Boot application started");
 
-        // Close when complete
-//        ctx.getBean(TerminateBean.class);
         ctx.close();
     }
-
-//    public class TerminateBean {
-//
-//        @PreDestroy
-//        public void onDestroy() throws Exception {
-//            contentHashStore.close();
-//            logger.info("Spring Container is destroyed!");
-//        }
-//    }
-//
-//    @Configuration
-//    public class ShutdownConfig {
-//
-//        @Bean
-//        public TerminateBean getTerminateBean() {
-//            return new TerminateBean();
-//        }
-//    }
 
     @Override
     public void run(String[] args) throws Exception {
 
-        List<String> splitArgs = new ArrayList<>();
-        for(String arg : args){
-            splitArgs.addAll(Arrays.asList(arg.split("\\s+")));
-        }
-
-        String[] corrArgs = splitArgs.toArray(new String[splitArgs.size()]);
-
-        CrawlerArguments crawlerArguments = new CrawlerArguments();
         JCommander.newBuilder()
-                .addObject(crawlerArguments)
+                .addObject(crawlArgs.raw)
                 .build()
-                .parse(corrArgs);
-//        crawlerService.run(crawlerArguments);
+                .parse(args);
+
+        crawlArgs.init();
+
+        crawlerSweep.sweep(crawlArgs);
     }
+
+
 }

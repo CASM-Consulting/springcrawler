@@ -48,9 +48,13 @@ public class NorconexConfiguration {
 
     private final List<AbstractDocumentFilter> filters;
 
-    public NorconexConfiguration(Path workDir) {
+    private final CrawlArgs args;
+
+    public NorconexConfiguration(Path workDir, CrawlArgs args) {
 //        this.from = from;
 //        this.to = to;
+
+        this.args = args;
 
         filters = new ArrayList<>();
         importer = new ImporterConfig();

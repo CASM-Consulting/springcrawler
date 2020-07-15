@@ -5,16 +5,15 @@ import com.casm.acled.camunda.BusinessKeys;
 import com.casm.acled.configuration.ObjectMapperConfiguration;
 import com.casm.acled.crawler.scraper.ACLEDScraper;
 import com.casm.acled.crawler.scraper.dates.*;
-import com.casm.acled.dao.entities.ArticleDAO;
-import com.casm.acled.dao.entities.SourceDAO;
-import com.casm.acled.dao.entities.SourceListDAO;
-import com.casm.acled.dao.entities.SourceSourceListDAO;
+import com.casm.acled.dao.entities.*;
 import com.casm.acled.dao.util.ExportCSV;
 import com.casm.acled.entities.EntityVersions;
 import com.casm.acled.entities.article.Article;
+import com.casm.acled.entities.desk.Desk;
 import com.casm.acled.entities.source.Source;
 import com.casm.acled.entities.sourcelist.SourceList;
 
+import com.casm.acled.entities.sourcesourcelist.SourceSourceList;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.Files;
 import com.google.gson.Gson;
@@ -75,6 +74,9 @@ public class Util implements CommandLineRunner {
 
     @Autowired
     private SourceDAO sourceDAO;
+
+    @Autowired
+    private DeskDAO deskDAO;
 
     @Autowired
     private ExportCSV exportCSV;
@@ -351,7 +353,103 @@ public class Util implements CommandLineRunner {
     }
 
 
-    private List<Source> importSourcesFromCSV(Path seedsPath, Source defaultSource) throws IOException {
+    public void exportSourceData() {
+
+
+    }
+
+    public List<SourceList> importSourceListsFromCSV(Path seedsPath) throws IOException {
+        try (
+                Reader reader = java.nio.file.Files.newBufferedReader(seedsPath);
+                CSVReader csvReader = new CSVReader(reader);
+        ) {
+            List<SourceList> sourceLists = new ArrayList<>();
+            Iterator<String[]> itr = csvReader.iterator();
+            String[] headers = itr.next();
+
+            Map<String,Integer> headerMap = new HashMap<>();
+
+            for(int i = 0; i < headers.length; ++i) {
+                headerMap.put(headers[i], i);
+            }
+
+            while(itr.hasNext()) {
+                String[] row = itr.next();
+
+                String LIST_NAME  = row[headerMap.get(SourceList.LIST_NAME)];
+                String KEYWORDS  = row[headerMap.get(SourceList.KEYWORDS)].trim();
+                String DESK_NAME  = row[headerMap.get(Desk.DESK_NAME)].trim();
+
+                Optional<Desk> maybeDesk = deskDAO.getByUnique(Desk.DESK_NAME, DESK_NAME);
+
+                if(!maybeDesk.isPresent()) {
+                    logger.warn("desk not found {}", DESK_NAME);
+                    continue;
+                }
+
+                Desk desk = maybeDesk.get();
+
+                SourceList list = EntityVersions.get(SourceList.class).current()
+                        .put(SourceList.LIST_NAME, LIST_NAME)
+                        .put(SourceList.KEYWORDS, KEYWORDS)
+                        .put(SourceList.DESK_ID, desk.id())
+                        ;
+
+                try {
+                    sourceLists.add(sourceListDAO.create(list));
+//                    System.out.println(source);
+                } catch (RuntimeException e) {
+                    System.out.println(e.getMessage());
+                    //already exists?
+                }
+            }
+            return sourceLists;
+        }
+    }
+
+    public List<SourceSourceList> importSourceSourceListsFromCSV(Path seedsPath) throws IOException {
+        try (
+                Reader reader = java.nio.file.Files.newBufferedReader(seedsPath);
+                CSVReader csvReader = new CSVReader(reader);
+        ) {
+            List<SourceSourceList> sourceSourceList = new ArrayList<>();
+            Iterator<String[]> itr = csvReader.iterator();
+            String[] headers = itr.next();
+
+            Map<String,Integer> headerMap = new HashMap<>();
+
+            for(int i = 0; i < headers.length; ++i) {
+                headerMap.put(headers[i], i);
+            }
+
+            while(itr.hasNext()) {
+                String[] row = itr.next();
+
+                String STANDARD_NAME  = row[headerMap.get(Source.STANDARD_NAME)].trim();
+                String LIST_NAME  = row[headerMap.get(SourceList.LIST_NAME)].trim();
+
+                Optional<Source> maybeSource = sourceDAO.byName(STANDARD_NAME);
+                Optional<SourceList> maybeSourceList = sourceListDAO.byName(LIST_NAME);
+
+                try {
+                    if(maybeSource.isPresent() && maybeSourceList.isPresent()) {
+
+                        sourceSourceListDAO.link(maybeSource.get(), maybeSourceList.get());
+                    } else {
+
+                        logger.warn("source or source list not found {} {}", STANDARD_NAME, LIST_NAME );
+
+                    }
+                } catch (RuntimeException e) {
+                    logger.warn(e.getMessage(), e);
+                    //already exists?
+                }
+            }
+            return sourceSourceList;
+        }
+    }
+
+    public List<Source> importSourcesFromCSV(Path seedsPath, Source defaultSource) throws IOException {
         try (
             Reader reader = java.nio.file.Files.newBufferedReader(seedsPath);
             CSVReader csvReader = new CSVReader(reader);
@@ -501,11 +599,11 @@ public class Util implements CommandLineRunner {
 
 //        createFakeNetSourceList();
 
-//        Source defaultSource = EntityVersions.get(Source.class).current();
-        exportSourceListArticlesToCSV(Paths.get("mexico-2018"), "mexico-back-code-2018");
+        Source defaultSource = EntityVersions.get(Source.class).current();
+//        exportSourceListArticlesToCSV(Paths.get("mexico-2018"), "mexico-back-code-2018");
 
-//        List<Source> sources = importSourcesFromCSV(Paths.get("/home/sw206/git/acledcamundaspringboot/data/europe/balkans-source-list.csv"));
-//        SourceList sourceList = createSourceList("balkans", "(clashing demonstrate demonstrated demonstraters demonstrates demonstrating demonstration demonstrations demonstrator demonstrator demonstrators detonated explode exploded explodes exploding explosion explosions gun fire gunfire kidnapping kill killed killer killers killing knifed lynched lynching march (lower case only) marched marches marching mob justice Molotov picket picketers picketing protest protested protester protesters protesting protestor protestors protests raid raided raiding raids rallied rallies rallying rape raped rapes raping rapist revolt revolted revolts riot rioted rioter rioters rioting riots set on fire shooter shooters shooting shoots shot stab stabbed stabbing strike striked strikes threw stones throwing stones to shoot turmoil unrest vigilante vigilantism violence wounded wounding wounds aktivista aktivisti bitka bitke bodenje bomba bombardovanje bombardovano bombaš bombaši bombe boreći se boriti se demonstracija demonstracije demonstrant demonstranti demonstrira demonstrirajući demonstrirali demonstrirati detonirana ekplodirala eksplozija eksplodira eksplodirati eksplozija eksplozije eksplozivna granatirano iz zasede iz zasjede izboden izbosti izveli raciju izvevši raciju kamenovali kamenovanje kidnapovanje linčovan linčovanje marš marširali marširanje maršovi Molotovljev napad napadač napadači napadajući napadi napadnut napasti iz zasede nasilje nemir okršaj okupili se okupivši se okupljeni osvetnik osvetništvo otmica pobuna pobune pobunili se pobunjeni prebijanje prebijen pretučen prosvjed prosvjedi prosvjednici prosvjednik prosvjedovali prosvjedovanje protest protestant protesti protestirali protestovali protestovanje pucanje pucao pucati pucnjava racija racije rane ranjavanje ranjen revolt revolti revoltirani rulja shod silovana silovanja silovanje silovatelj silujući strelac strelci sukob sukobi sukobili se sukobivši se ubica ubice ubijen ubistvo ubiti ubojica ubojice ubojstvo udarac udaren udari upucan zapaljen zaseda zasede zasjeda zasjede žrtva žrtve bastisje betejë bomba bombardim bombë demonstratë demonstrim demonstrues dhunë dhunë eksplodim forcë konflikt kryengritës kryengritje marshim ndeshje përdhunim përdhunime përdhunuar përplasje plagosur pritë protestat protestë protestuan protestuar protestues protestuesit protestuesit qitje revoltë rrahje rrebelim shkatërrues shpërthim shqetësim sulm sulmuar sulmues sulmuesit të xhiruar Therrja trazim trazire trazirë vetëgjyqësisë viktima vrarë vras vrasje zjarr активиста активисти битка битке бодење бомба бомбардовање бомбардовано бомбаш бомбаши бомбе борећи се борити се демонстрација демонстрације демонстрант демонстранти демонстрира демонстрирајући демонстрирали демонстрирати детонирана екплодирала експлозија експлодира експлодирати експлозија експлозије експлозивна гранатирано из заседе из засједе избоден избости извели рацију извевши рацију каменовали каменовање киднаповање линчован линчовање марш марширали марширање маршови Молотовљев напад нападач нападачи нападајући напади нападнут напасти из заседе насиље немир окршај окупили се окупивши се окупљени осветник осветништво отмица побуна побуне побунили се побуњени пребијање пребијен претучен просвјед просвједи просвједници просвједник просвједовали просвједовање протест протестант протести протестирали протестовали протестовање пуцање пуцао пуцати пуцњава рација рације ране рањавање рањен револт револти револтирани руља сход силована силовања силовање силоватељ силујући стрелац стрелци сукоб сукоби сукобили се сукобивши се убица убице убијен убиство убити убојица убојице убојство ударац ударен удари упуцан запаљен заседа заседе засједа засједе жртва жртве )");
+        List<Source> sources = importSourcesFromCSV(Paths.get("/home/sw206/git/acledcamundaspringboot/data/europe/balkans-source-list.csv"), defaultSource);
+        SourceList sourceList = createSourceList("balkans", "(clashing demonstrate demonstrated demonstraters demonstrates demonstrating demonstration demonstrations demonstrator demonstrator demonstrators detonated explode exploded explodes exploding explosion explosions gun fire gunfire kidnapping kill killed killer killers killing knifed lynched lynching march (lower case only) marched marches marching mob justice Molotov picket picketers picketing protest protested protester protesters protesting protestor protestors protests raid raided raiding raids rallied rallies rallying rape raped rapes raping rapist revolt revolted revolts riot rioted rioter rioters rioting riots set on fire shooter shooters shooting shoots shot stab stabbed stabbing strike striked strikes threw stones throwing stones to shoot turmoil unrest vigilante vigilantism violence wounded wounding wounds aktivista aktivisti bitka bitke bodenje bomba bombardovanje bombardovano bombaš bombaši bombe boreći se boriti se demonstracija demonstracije demonstrant demonstranti demonstrira demonstrirajući demonstrirali demonstrirati detonirana ekplodirala eksplozija eksplodira eksplodirati eksplozija eksplozije eksplozivna granatirano iz zasede iz zasjede izboden izbosti izveli raciju izvevši raciju kamenovali kamenovanje kidnapovanje linčovan linčovanje marš marširali marširanje maršovi Molotovljev napad napadač napadači napadajući napadi napadnut napasti iz zasede nasilje nemir okršaj okupili se okupivši se okupljeni osvetnik osvetništvo otmica pobuna pobune pobunili se pobunjeni prebijanje prebijen pretučen prosvjed prosvjedi prosvjednici prosvjednik prosvjedovali prosvjedovanje protest protestant protesti protestirali protestovali protestovanje pucanje pucao pucati pucnjava racija racije rane ranjavanje ranjen revolt revolti revoltirani rulja shod silovana silovanja silovanje silovatelj silujući strelac strelci sukob sukobi sukobili se sukobivši se ubica ubice ubijen ubistvo ubiti ubojica ubojice ubojstvo udarac udaren udari upucan zapaljen zaseda zasede zasjeda zasjede žrtva žrtve bastisje betejë bomba bombardim bombë demonstratë demonstrim demonstrues dhunë dhunë eksplodim forcë konflikt kryengritës kryengritje marshim ndeshje përdhunim përdhunime përdhunuar përplasje plagosur pritë protestat protestë protestuan protestuar protestues protestuesit protestuesit qitje revoltë rrahje rrebelim shkatërrues shpërthim shqetësim sulm sulmuar sulmues sulmuesit të xhiruar Therrja trazim trazire trazirë vetëgjyqësisë viktima vrarë vras vrasje zjarr активиста активисти битка битке бодење бомба бомбардовање бомбардовано бомбаш бомбаши бомбе борећи се борити се демонстрација демонстрације демонстрант демонстранти демонстрира демонстрирајући демонстрирали демонстрирати детонирана екплодирала експлозија експлодира експлодирати експлозија експлозије експлозивна гранатирано из заседе из засједе избоден избости извели рацију извевши рацију каменовали каменовање киднаповање линчован линчовање марш марширали марширање маршови Молотовљев напад нападач нападачи нападајући напади нападнут напасти из заседе насиље немир окршај окупили се окупивши се окупљени осветник осветништво отмица побуна побуне побунили се побуњени пребијање пребијен претучен просвјед просвједи просвједници просвједник просвједовали просвједовање протест протестант протести протестирали протестовали протестовање пуцање пуцао пуцати пуцњава рација рације ране рањавање рањен револт револти револтирани руља сход силована силовања силовање силоватељ силујући стрелац стрелци сукоб сукоби сукобили се сукобивши се убица убице убијен убиство убити убојица убојице убојство ударац ударен удари упуцан запаљен заседа заседе засједа засједе жртва жртве )");
 //        link(sources, sourceList);
 
 //        String mexico2018Query = getKeywordsFromCSV(Paths.get("/home/sw206/Dropbox/acled/spec/Mexico Backcoding Keywords_0520.csv"));

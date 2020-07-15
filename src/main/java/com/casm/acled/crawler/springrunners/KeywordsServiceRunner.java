@@ -80,14 +80,14 @@ public class KeywordsServiceRunner implements CommandLineRunner {
 //        testURL("balkans", "Politika", "http://www.politika.rs/sr/clanak/453708/Protest-ispred-Predsednistva");
 //        testURL("Balkans", "24sata.hr", "https://www.24sata.hr/news/mirni-prosvjed-s-300-autobusa-problemi-su-lizing-i-krediti-691882");
 //        testURL("Balkans", "24sata.hr", "https://www.24sata.hr/news/otkrivamo-misterij-stepinceva-dnevnika-koji-je-uzela-udba-690916");
-        testURL("Balkans", "Glas Slavonije", "http://www.glas-slavonije.hr/431867/1/Turisticki-prijevoznici-traze-odgadjanje-placanja-leasinga");
+//        testURL("Balkans", "Glas Slavonije", "http://www.glas-slavonije.hr/431867/1/Turisticki-prijevoznici-traze-odgadjanje-placanja-leasinga");
 
 
 //        keywordsHelper.determineKeywordsList();
 //        String query = keywordsService.importFromCSV(Paths.get("/home/sw206/Dropbox/acled/spec/Balkans Keyword List_0522.csv"));
 //        keywordsService.test(query, "bomb");
-//        SourceList sourceList = sourceListDAO.getByUnique(SourceList.LIST_NAME, "Balkans").get();
-//        keywordsService.assignKeywords(sourceList, query);
+        SourceList sourceList = sourceListDAO.getByUnique(SourceList.LIST_NAME, "fake-net").get();
+        keywordsService.assignKeywords(sourceList, "(attack bomb explosion)");
 
         reporter.getRunReports().stream().forEach(r -> logger.info(r.toString()));
     }

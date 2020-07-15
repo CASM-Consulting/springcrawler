@@ -64,7 +64,9 @@ public class ACLEDImporter implements IHttpDocumentProcessor {
     }
 
     public void setMaxArticles(Integer maxArticles) {
-        this.maxArticles = maxArticles;
+        if(maxArticles != null && maxArticles >= 0) {
+            this.maxArticles = maxArticles;
+        }
     }
 
     private boolean previouslyScraped(HttpDocument doc) {

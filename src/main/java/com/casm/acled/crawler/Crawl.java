@@ -1,5 +1,6 @@
 package com.casm.acled.crawler;
 
+import com.casm.acled.crawler.management.CrawlArgs;
 import com.casm.acled.crawler.management.NorconexConfiguration;
 import com.casm.acled.crawler.scraper.*;
 import com.casm.acled.crawler.reporting.Reporter;
@@ -74,11 +75,10 @@ public class Crawl {
         }
     }
 
-    public Crawl(SourceList sourceList, Source source, LocalDate from, LocalDate to, boolean skipKeywords,
-                 ACLEDImporter importer, Reporter reporter, List<String> sitemaps) {
-        this.source = source;
-        this.from = from;
-        this.to = to;
+    public Crawl(CrawlArgs args, ACLEDImporter importer, Reporter reporter, List<String> sitemaps) {
+        this.source = args.sources.get(0);
+        this.from = args.from;
+        this.to = args.to;
         this.reporter = reporter;
 
         String id = id();
@@ -87,14 +87,16 @@ public class Crawl {
         importer.setCollectorSupplier(collectorSupplier);
 
         //LOOK AT THIS !!!
-//        importer.setMaxArticles(10);
+        importer.setMaxArticles(args.maxArticle);
 
-        config = new NorconexConfiguration(CACHE_DIR.resolve(scraperCachePath));
+        Path workingDir = args.workingDir;
+
+        config = new NorconexConfiguration(workingDir.resolve(scraperCachePath), args);
         config.crawler().setUrlNormalizer(new RootLogAppenderClearingURLNormaliser());
 
         config.crawler().setStartSitemapURLs(sitemaps.toArray(new String[]{}));
 
-        configureLogging();
+        configureLogging(workingDir);
 
         List<AbstractDocumentFilter> filters = new ArrayList<>();
         filters.add(new AcceptFilter());
@@ -123,9 +125,9 @@ public class Crawl {
             filters.add(dateFilter);
         }
 
-        if(!skipKeywords) {
+        if(!args.skipKeywords) {
 
-            ExcludingKeywordFilter keywordFilter = keywordFilter(sourceList, source);
+            ExcludingKeywordFilter keywordFilter = keywordFilter(args.sourceList, source);
             filters.add(keywordFilter);
         }
 
@@ -135,7 +137,7 @@ public class Crawl {
 
 //        String scraperName = Util.getID(startURL[0]);
 
-        ACLEDScraper scraper = ACLEDScraper.load(ALL_SCRAPERS, source, reporter);
+        ACLEDScraper scraper = ACLEDScraper.load(args.scrapersDir, source, reporter);
         ACLEDMetadataPreProcessor metadata = new ACLEDMetadataPreProcessor(startURL[0]);
 
         applySourceIdiosyncrasies(source, config);
@@ -151,12 +153,12 @@ public class Crawl {
         return config;
     }
 
-    private void configureLogging(){
+    private void configureLogging(Path workingDir){
 
         try {
             Object guard = new Object();
 
-            LoggerRepository rs = new CustomLoggerRepository(new RootLogger((Level) Level.DEBUG), CACHE_DIR);
+            LoggerRepository rs = new CustomLoggerRepository(new RootLogger((Level) Level.DEBUG), workingDir);
             LogManager.setRepositorySelector(new DefaultRepositorySelector(rs), guard);
         } catch (IllegalArgumentException e) {
             //pass already installed

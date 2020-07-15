@@ -1,18 +1,11 @@
 package com.casm.acled.crawler.springrunners;
 
 import com.casm.acled.configuration.ObjectMapperConfiguration;
+import com.casm.acled.crawler.management.CrawlArgs;
+import com.casm.acled.crawler.management.CrawlerSweep;
 import com.casm.acled.crawler.reporting.Reporter;
 import com.casm.acled.crawler.spring.CrawlService;
-import com.casm.acled.crawler.util.CustomLoggerRepository;
-import com.casm.acled.dao.entities.SourceDAO;
 import com.casm.acled.dao.entities.SourceListDAO;
-import com.casm.acled.entities.source.Source;
-import com.casm.acled.entities.sourcelist.SourceList;
-import org.apache.log4j.Level;
-import org.apache.log4j.LogManager;
-import org.apache.log4j.spi.DefaultRepositorySelector;
-import org.apache.log4j.spi.LoggerRepository;
-import org.apache.log4j.spi.RootLogger;
 import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
 import org.camunda.bpm.spring.boot.starter.rest.CamundaBpmRestJerseyAutoConfiguration;
 import org.slf4j.Logger;
@@ -31,8 +24,6 @@ import org.springframework.context.annotation.Import;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
-import java.util.List;
-import java.util.Map;
 
 @EnableAutoConfiguration(exclude={HibernateJpaAutoConfiguration.class, CamundaBpmAutoConfiguration.class, CamundaBpmRestJerseyAutoConfiguration.class, ValidationAutoConfiguration.class})
 // We need the special object mapper, though.
@@ -57,6 +48,9 @@ public class CrawlerServiceRunner implements CommandLineRunner {
 
     @Autowired
     private Reporter reporter;
+
+    @Autowired
+    private CrawlArgs crawlArgs;
 
     public void crawl(String[] args) {
         int sourceListId = Integer.parseInt(args[0]);
@@ -97,9 +91,17 @@ public class CrawlerServiceRunner implements CommandLineRunner {
 
         reporter.randomRunId();
 
-        args = new String[]{"36", "5012", "2018-01-01", "2018-12-31", "false"};
-        crawl(args);
-        collectExamples(1657,1);
+        crawlArgs.raw.skipKeywords = true;
+        crawlArgs.raw.program = "crawl";
+        crawlArgs.raw.sourceList = "fake-net";
+        crawlArgs.raw.from = "2020-07-10";
+        crawlArgs.raw.to = "2020-07-15";
+        crawlArgs.raw.workingDir = "test";
+
+        crawlArgs.init();
+
+        crawlService.run(crawlArgs);
+//        collectExamples(1657,1);
 
 //        Map<String, List<String>> sitemaps = crawlService.getSitemaps(sourceListDAO.getByUnique(SourceList.LIST_NAME, "mexico-back-code-2018").get());
 //        System.out.println(sitemaps);
