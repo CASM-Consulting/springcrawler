@@ -430,10 +430,8 @@ public class Util implements CommandLineRunner {
             Optional<Source> maybeSource = sourceDAO.byName(source.get(Source.STANDARD_NAME));
             if(maybeSource.isPresent()) {
                 source.id(maybeSource.get().id());
-                sourceDAO.update(source);
-            } else {
-                sourceDAO.create(source);
             }
+            sourceDAO.create(source);
         }
 
         //update source lists by name
@@ -441,10 +439,8 @@ public class Util implements CommandLineRunner {
             Optional<SourceList> maybeSourceList = sourceListDAO.byName(sourceList.get(SourceList.LIST_NAME));
             if(maybeSourceList.isPresent()) {
                 sourceList.id(maybeSourceList.get().id());
-                sourceListDAO.update(sourceList);
-            } else {
-                sourceListDAO.create(sourceList);
             }
+            sourceListDAO.create(sourceList);
         }
 
         //create links for updated source / source list refs
