@@ -1,23 +1,35 @@
 package com.casm.acled.crawler.util;
 
 
+import com.casm.acled.AcledObjectMapper;
 import com.casm.acled.camunda.BusinessKeys;
 import com.casm.acled.configuration.ObjectMapperConfiguration;
 import com.casm.acled.crawler.scraper.ACLEDScraper;
 import com.casm.acled.crawler.scraper.dates.*;
+import com.casm.acled.dao.VersionedEntityDAO;
+import com.casm.acled.dao.VersionedEntityDAOs;
 import com.casm.acled.dao.entities.*;
 import com.casm.acled.dao.util.ExportCSV;
 import com.casm.acled.entities.EntityVersions;
+import com.casm.acled.entities.VersionedEntity;
 import com.casm.acled.entities.article.Article;
 import com.casm.acled.entities.desk.Desk;
 import com.casm.acled.entities.source.Source;
 import com.casm.acled.entities.sourcelist.SourceList;
 
 import com.casm.acled.entities.sourcesourcelist.SourceSourceList;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Multimaps;
 import com.google.common.io.Files;
 import com.google.gson.Gson;
 import com.opencsv.CSVReader;
+import org.apache.commons.collections.MultiMap;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVPrinter;
+import org.apache.commons.csv.QuoteMode;
 import org.apache.commons.lang3.StringUtils;
 import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
 import org.camunda.bpm.spring.boot.starter.rest.CamundaBpmRestJerseyAutoConfiguration;
@@ -34,13 +46,13 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
 
 
-import java.io.File;
-import java.io.IOException;
-import java.io.Reader;
+import java.io.*;
 import java.net.URI;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.function.Function;
@@ -80,6 +92,9 @@ public class Util implements CommandLineRunner {
 
     @Autowired
     private ExportCSV exportCSV;
+
+    @Autowired
+    private VersionedEntityDAOs entityDAOs;
 
     private static final Pattern PROTOCOL = Pattern.compile(".*:[/]{2}", Pattern.CASE_INSENSITIVE);
 
@@ -353,9 +368,159 @@ public class Util implements CommandLineRunner {
     }
 
 
-    public void exportSourceData() {
+    /*
+        DOESN'T WORK, USE JSON
+     */
+    public void importSourceDataCSV(Path inputDir) throws IOException {
+        Source defaultSource = EntityVersions.get(Source.class).current();
+        importSourcesFromCSV(inputDir.resolve("sources.csv"), defaultSource);
+
+        SourceList defaultSourceList = EntityVersions.get(SourceList.class).current();
+        importSourcesFromCSV(inputDir.resolve("source-lists.csv"), defaultSource);
+
+        SourceSourceList defaultSourceSourceList = EntityVersions.get(SourceSourceList.class).current();
+        importSourcesFromCSV(inputDir.resolve("source-source-lists.csv"), defaultSource);
+    }
 
 
+    public void exportSourceDataJSON(Path outputDir) throws IOException {
+
+        outputDir.toFile().mkdirs();
+
+        ObjectMapper om = AcledObjectMapper.get();
+
+        om.writeValue(outputDir.resolve("sources.json").toFile(), sourceDAO.getAll());
+        om.writeValue(outputDir.resolve("source-lists.json").toFile(), sourceListDAO.getAll());
+        om.writeValue(outputDir.resolve("source-source-lists.json").toFile(), sourceSourceListDAO.getAll());
+
+    }
+
+    public void importSourceDataJSON(Path outputDir) throws IOException {
+
+        ObjectMapper om = AcledObjectMapper.get();
+
+        List<Source> sources = om.readValue(outputDir.resolve("sources.json").toFile(), om.getTypeFactory().constructCollectionType(List.class, Source.class));
+        List<SourceList> sourceLists = om.readValue(outputDir.resolve("source-lists.json").toFile(), om.getTypeFactory().constructCollectionType(List.class, SourceList.class));
+        List<SourceSourceList> sourceSourceLists = om.readValue(outputDir.resolve("source-source-lists.json").toFile(), om.getTypeFactory().constructCollectionType(List.class, SourceSourceList.class));
+
+        Map<Integer, Source> sourceIdMap = sources.stream().collect(Collectors.toMap(s->s.id(), s->s));
+        Map<Integer, SourceList> sourceListIdMap = sourceLists.stream().collect(Collectors.toMap(sl->sl.id(), sl->sl));
+
+        HashMultimap<String, String> map = HashMultimap.create();
+
+        //map links of updated ids
+        for(SourceSourceList ssl : sourceSourceLists) {
+
+            Source source = sourceIdMap.get(ssl.id1());
+            SourceList sourceList = sourceListIdMap.get(ssl.id2());
+
+            if(source == null && sourceList == null) {
+                continue;
+            }
+
+            String sourceName = source.get(Source.STANDARD_NAME);
+            String listName = sourceList.get(SourceList.LIST_NAME);
+
+            map.put(listName, sourceName);
+        }
+
+
+        //update sources by name
+        for(Source source : sources ) {
+            Optional<Source> maybeSource = sourceDAO.byName(source.get(Source.STANDARD_NAME));
+            if(maybeSource.isPresent()) {
+                source.id(maybeSource.get().id());
+                sourceDAO.update(source);
+            } else {
+                sourceDAO.create(source);
+            }
+        }
+
+        //update source lists by name
+        for(SourceList sourceList : sourceLists ) {
+            Optional<SourceList> maybeSourceList = sourceListDAO.byName(sourceList.get(SourceList.LIST_NAME));
+            if(maybeSourceList.isPresent()) {
+                sourceList.id(maybeSourceList.get().id());
+                sourceListDAO.update(sourceList);
+            } else {
+                sourceListDAO.create(sourceList);
+            }
+        }
+
+        //create links for updated source / source list refs
+        for(Map.Entry<String, Collection<String>> entry : map.asMap().entrySet()) {
+
+            String listName = entry.getKey();
+
+            for(String sourceName : entry.getValue()) {
+
+                Optional<Source> maybeSource = sourceDAO.byName(sourceName);
+                Optional<SourceList> maybeList = sourceListDAO.byName(listName);
+
+                if(maybeSource.isPresent() && maybeList.isPresent()) {
+
+                    int sourceId = maybeSource.get().id();
+                    int listId = maybeList.get().id();
+
+                    sourceSourceListDAO.link(sourceId, listId);
+
+                    logger.info("source {} <-> list {}", sourceId, listId);
+                } else {
+
+                    logger.info("{} {}", sourceName, listName);
+                }
+            }
+        }
+    }
+
+    public void exportSourceDataCSV(Path outputDir) throws IOException {
+
+        java.nio.file.Files.createDirectories(outputDir);
+
+        Source missingSource = EntityVersions.get(Source.class).current().put(Source.STANDARD_NAME, "__MISSING__");
+        SourceList missingSourceList = EntityVersions.get(SourceList.class).current().put(SourceList.LIST_NAME, "__MISSING__");
+
+        exportEntityCSV(Source.class, sourceDAO,  outputDir, "sources.csv");
+        exportEntityCSV(SourceList.class, sourceListDAO, outputDir, "source-lists.csv");
+        exportEntityCSV(SourceSourceList.class, sourceSourceListDAO, outputDir, "sources-source-list.csv",
+                ImmutableList.of(Source.STANDARD_NAME, SourceList.LIST_NAME), ssl -> ImmutableList.of(
+                        sourceDAO.getById(ssl.id1()).orElse(missingSource).get(Source.STANDARD_NAME),
+                        sourceListDAO.getById(ssl.id2()).orElse(missingSourceList).get(SourceList.LIST_NAME)
+                )
+        );
+    }
+
+    public <V extends VersionedEntity<V>> void exportEntityCSV(Class<V> klass, VersionedEntityDAO<V> dao, Path outputDir, String fileName) throws IOException {
+        exportEntityCSV(klass, dao, outputDir, fileName, ImmutableList.of(), e -> ImmutableList.of() );
+    }
+
+    public <V extends VersionedEntity<V>> void exportEntityCSV(Class<V> klass, VersionedEntityDAO<V> dao, Path outputDir, String fileName, List<String> extraHeaders,
+                                                               Function<V, List> extraFields) throws IOException {
+        String name = klass.getName();
+        int i = name.lastIndexOf(".");
+        name = name.substring(i+1).toLowerCase();
+        List<V> entities = dao.getAll();
+        V entity = EntityVersions.get(klass).current();
+
+        List<String> headers = new ArrayList<>(entity.spec().names());
+        List<String> allHeaders = new ArrayList<>(headers);
+        allHeaders.addAll(extraHeaders);
+
+
+        try (
+                final OutputStream outputStream = java.nio.file.Files.newOutputStream(outputDir.resolve(fileName), StandardOpenOption.CREATE_NEW);
+                final PrintWriter writer = new PrintWriter(new BufferedWriter(new OutputStreamWriter(outputStream, StandardCharsets.UTF_8)), false);
+                final CSVPrinter csv = new CSVPrinter(writer, CSVFormat.EXCEL.withQuoteMode(QuoteMode.NON_NUMERIC))
+        ) {
+            csv.printRecord(allHeaders);
+
+            for (V e : entities) {
+
+                List row = e.get(headers);
+                row.addAll(extraFields.apply(e));
+                csv.printRecord( row );
+            }
+        }
     }
 
     public List<SourceList> importSourceListsFromCSV(Path seedsPath) throws IOException {
@@ -471,6 +636,9 @@ public class Util implements CommandLineRunner {
 
                 String STANDARD_NAME  = row[headerMap.get(Source.STANDARD_NAME)];
                 String LINK  = row[headerMap.get(Source.LINK)].trim();
+                String COUNTRY  = row[headerMap.get(Source.COUNTRY)].trim();
+                String REGION  = row[headerMap.get(Source.REGION)].trim();
+                String DATE_FORMAT  = row[headerMap.get(Source.DATE_FORMAT)].trim();
                 Boolean CRAWL_DISABLED  = Boolean.valueOf(row[headerMap.get(Source.CRAWL_DISABLED)]);
                 List<String> EXAMPLE_URLS  =  gson.fromJson(row[headerMap.get(Source.EXAMPLE_URLS)], List.class);
 
@@ -599,11 +767,19 @@ public class Util implements CommandLineRunner {
 
 //        createFakeNetSourceList();
 
-        Source defaultSource = EntityVersions.get(Source.class).current();
+//        exportSourceDataCSV(Paths.get("all-source-data"));
+
+//        exportSourceDataJSON(Paths.get("all-source-data"));
+//
+//        importSourceDataJSON(Paths.get("all-source-data"));
+
+        exportSourceDataJSON(Paths.get("all-source-data-2"));
+
+//        Source defaultSource = EntityVersions.get(Source.class).current();
 //        exportSourceListArticlesToCSV(Paths.get("mexico-2018"), "mexico-back-code-2018");
 
-        List<Source> sources = importSourcesFromCSV(Paths.get("/home/sw206/git/acledcamundaspringboot/data/europe/balkans-source-list.csv"), defaultSource);
-        SourceList sourceList = createSourceList("balkans", "(clashing demonstrate demonstrated demonstraters demonstrates demonstrating demonstration demonstrations demonstrator demonstrator demonstrators detonated explode exploded explodes exploding explosion explosions gun fire gunfire kidnapping kill killed killer killers killing knifed lynched lynching march (lower case only) marched marches marching mob justice Molotov picket picketers picketing protest protested protester protesters protesting protestor protestors protests raid raided raiding raids rallied rallies rallying rape raped rapes raping rapist revolt revolted revolts riot rioted rioter rioters rioting riots set on fire shooter shooters shooting shoots shot stab stabbed stabbing strike striked strikes threw stones throwing stones to shoot turmoil unrest vigilante vigilantism violence wounded wounding wounds aktivista aktivisti bitka bitke bodenje bomba bombardovanje bombardovano bombaš bombaši bombe boreći se boriti se demonstracija demonstracije demonstrant demonstranti demonstrira demonstrirajući demonstrirali demonstrirati detonirana ekplodirala eksplozija eksplodira eksplodirati eksplozija eksplozije eksplozivna granatirano iz zasede iz zasjede izboden izbosti izveli raciju izvevši raciju kamenovali kamenovanje kidnapovanje linčovan linčovanje marš marširali marširanje maršovi Molotovljev napad napadač napadači napadajući napadi napadnut napasti iz zasede nasilje nemir okršaj okupili se okupivši se okupljeni osvetnik osvetništvo otmica pobuna pobune pobunili se pobunjeni prebijanje prebijen pretučen prosvjed prosvjedi prosvjednici prosvjednik prosvjedovali prosvjedovanje protest protestant protesti protestirali protestovali protestovanje pucanje pucao pucati pucnjava racija racije rane ranjavanje ranjen revolt revolti revoltirani rulja shod silovana silovanja silovanje silovatelj silujući strelac strelci sukob sukobi sukobili se sukobivši se ubica ubice ubijen ubistvo ubiti ubojica ubojice ubojstvo udarac udaren udari upucan zapaljen zaseda zasede zasjeda zasjede žrtva žrtve bastisje betejë bomba bombardim bombë demonstratë demonstrim demonstrues dhunë dhunë eksplodim forcë konflikt kryengritës kryengritje marshim ndeshje përdhunim përdhunime përdhunuar përplasje plagosur pritë protestat protestë protestuan protestuar protestues protestuesit protestuesit qitje revoltë rrahje rrebelim shkatërrues shpërthim shqetësim sulm sulmuar sulmues sulmuesit të xhiruar Therrja trazim trazire trazirë vetëgjyqësisë viktima vrarë vras vrasje zjarr активиста активисти битка битке бодење бомба бомбардовање бомбардовано бомбаш бомбаши бомбе борећи се борити се демонстрација демонстрације демонстрант демонстранти демонстрира демонстрирајући демонстрирали демонстрирати детонирана екплодирала експлозија експлодира експлодирати експлозија експлозије експлозивна гранатирано из заседе из засједе избоден избости извели рацију извевши рацију каменовали каменовање киднаповање линчован линчовање марш марширали марширање маршови Молотовљев напад нападач нападачи нападајући напади нападнут напасти из заседе насиље немир окршај окупили се окупивши се окупљени осветник осветништво отмица побуна побуне побунили се побуњени пребијање пребијен претучен просвјед просвједи просвједници просвједник просвједовали просвједовање протест протестант протести протестирали протестовали протестовање пуцање пуцао пуцати пуцњава рација рације ране рањавање рањен револт револти револтирани руља сход силована силовања силовање силоватељ силујући стрелац стрелци сукоб сукоби сукобили се сукобивши се убица убице убијен убиство убити убојица убојице убојство ударац ударен удари упуцан запаљен заседа заседе засједа засједе жртва жртве )");
+//        List<Source> sources = importSourcesFromCSV(Paths.get("/home/sw206/git/acledcamundaspringboot/data/europe/balkans-source-list.csv"), defaultSource);
+//        SourceList sourceList = createSourceList("balkans", "(clashing demonstrate demonstrated demonstraters demonstrates demonstrating demonstration demonstrations demonstrator demonstrator demonstrators detonated explode exploded explodes exploding explosion explosions gun fire gunfire kidnapping kill killed killer killers killing knifed lynched lynching march (lower case only) marched marches marching mob justice Molotov picket picketers picketing protest protested protester protesters protesting protestor protestors protests raid raided raiding raids rallied rallies rallying rape raped rapes raping rapist revolt revolted revolts riot rioted rioter rioters rioting riots set on fire shooter shooters shooting shoots shot stab stabbed stabbing strike striked strikes threw stones throwing stones to shoot turmoil unrest vigilante vigilantism violence wounded wounding wounds aktivista aktivisti bitka bitke bodenje bomba bombardovanje bombardovano bombaš bombaši bombe boreći se boriti se demonstracija demonstracije demonstrant demonstranti demonstrira demonstrirajući demonstrirali demonstrirati detonirana ekplodirala eksplozija eksplodira eksplodirati eksplozija eksplozije eksplozivna granatirano iz zasede iz zasjede izboden izbosti izveli raciju izvevši raciju kamenovali kamenovanje kidnapovanje linčovan linčovanje marš marširali marširanje maršovi Molotovljev napad napadač napadači napadajući napadi napadnut napasti iz zasede nasilje nemir okršaj okupili se okupivši se okupljeni osvetnik osvetništvo otmica pobuna pobune pobunili se pobunjeni prebijanje prebijen pretučen prosvjed prosvjedi prosvjednici prosvjednik prosvjedovali prosvjedovanje protest protestant protesti protestirali protestovali protestovanje pucanje pucao pucati pucnjava racija racije rane ranjavanje ranjen revolt revolti revoltirani rulja shod silovana silovanja silovanje silovatelj silujući strelac strelci sukob sukobi sukobili se sukobivši se ubica ubice ubijen ubistvo ubiti ubojica ubojice ubojstvo udarac udaren udari upucan zapaljen zaseda zasede zasjeda zasjede žrtva žrtve bastisje betejë bomba bombardim bombë demonstratë demonstrim demonstrues dhunë dhunë eksplodim forcë konflikt kryengritës kryengritje marshim ndeshje përdhunim përdhunime përdhunuar përplasje plagosur pritë protestat protestë protestuan protestuar protestues protestuesit protestuesit qitje revoltë rrahje rrebelim shkatërrues shpërthim shqetësim sulm sulmuar sulmues sulmuesit të xhiruar Therrja trazim trazire trazirë vetëgjyqësisë viktima vrarë vras vrasje zjarr активиста активисти битка битке бодење бомба бомбардовање бомбардовано бомбаш бомбаши бомбе борећи се борити се демонстрација демонстрације демонстрант демонстранти демонстрира демонстрирајући демонстрирали демонстрирати детонирана екплодирала експлозија експлодира експлодирати експлозија експлозије експлозивна гранатирано из заседе из засједе избоден избости извели рацију извевши рацију каменовали каменовање киднаповање линчован линчовање марш марширали марширање маршови Молотовљев напад нападач нападачи нападајући напади нападнут напасти из заседе насиље немир окршај окупили се окупивши се окупљени осветник осветништво отмица побуна побуне побунили се побуњени пребијање пребијен претучен просвјед просвједи просвједници просвједник просвједовали просвједовање протест протестант протести протестирали протестовали протестовање пуцање пуцао пуцати пуцњава рација рације ране рањавање рањен револт револти револтирани руља сход силована силовања силовање силоватељ силујући стрелац стрелци сукоб сукоби сукобили се сукобивши се убица убице убијен убиство убити убојица убојице убојство ударац ударен удари упуцан запаљен заседа заседе засједа засједе жртва жртве )");
 //        link(sources, sourceList);
 
 //        String mexico2018Query = getKeywordsFromCSV(Paths.get("/home/sw206/Dropbox/acled/spec/Mexico Backcoding Keywords_0520.csv"));
