@@ -247,8 +247,8 @@ public class CheckListRunner implements CommandLineRunner {
         crawlArgs.init();
 
 //        checkSourceList(crawlArgs);
-//        outputCrawlerSourceList(crawlArgs);
-        importCrawlerSourceList(crawlArgs);
+        outputCrawlerSourceList(crawlArgs);
+//        importCrawlerSourceList(crawlArgs);
 
         reporter.getRunReports().stream().forEach(r -> logger.info(r.toString()));
 

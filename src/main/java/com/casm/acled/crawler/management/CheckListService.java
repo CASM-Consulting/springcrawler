@@ -51,12 +51,15 @@ public class CheckListService {
 
                 for(String field : fields) {
 
+                    List<String> values;
 
-                    if(!source.hasValue(field)) {
-                        continue;
+                    if(source.hasValue(field) && !((List)source.get(field)).isEmpty()) {
+
+                        values = source.get(field);
+                    } else {
+
+                        values = ImmutableList.of("");
                     }
-
-                    List<String> values = source.get(field);
 
                     for(String value : values){
 
@@ -126,12 +129,6 @@ public class CheckListService {
             }
 
             List<Source> sources = sourceMap.values().stream().map(s-> {
-//                doesn't work.
-//                for(String field : allowedFields) {
-//                    if(s.hasValue(field) && ((List)s.get(field)).isEmpty()) {
-//                        s.put(field, null);
-//                    }
-//                }
 
                 Optional<Source> maybeSource = sourceDAO.byName(s.get(Source.STANDARD_NAME));
                 if(maybeSource.isPresent()) {
