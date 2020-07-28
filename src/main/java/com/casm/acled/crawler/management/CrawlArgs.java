@@ -149,7 +149,9 @@ public class CrawlArgs {
         politeness = raw.politeness;
         ignoreSiteMap = raw.ignoreSiteMap;
         skipKeywords = raw.skipKeywords;
-        workingDir = Paths.get(raw.workingDir);
+        if(raw.workingDir != null) {
+            workingDir = Paths.get(raw.workingDir);
+        }
         scrapersDir = Paths.get(raw.scrapersDir);
 
 

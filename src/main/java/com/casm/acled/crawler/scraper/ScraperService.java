@@ -160,13 +160,15 @@ public class ScraperService {
         }
     }
 
-    public void checkExampleURLs(ACLEDScraper scraper, Source source) {
+    public List<HttpDocument> checkExampleURLs(ACLEDScraper scraper, Source source) {
 
         GenericDocumentFetcher fetcher = new GenericDocumentFetcher();
 
         HttpClient client = new GenericHttpClientFactory().createHTTPClient("www.acleddata.com");
         CachedInputStream inputStream = new CachedStreamFactory(10 * 1024, 10 * 1024).newInputStream("");
         List<String> exampleURLs = source.get(Source.EXAMPLE_URLS);
+
+        List<HttpDocument> docs = new ArrayList<>();
 
         for(String exampleURL : exampleURLs) {
             try {
@@ -176,6 +178,7 @@ public class ScraperService {
                 HttpImporterPipelineUtilProxy.enhanceHTTPHeaders(document.getMetadata());
                 HttpImporterPipelineUtilProxy.applyMetadataToDocument(document);
                 scraper.processDocument(client, document);
+                docs.add(document);
             } catch (IllegalStateException | CollectorException e){
                 reporter.report(Report.of(Event.ERROR)
                         .type(Source.class.getName())
@@ -184,6 +187,7 @@ public class ScraperService {
                 );
             }
         }
+        return docs;
     }
 
 

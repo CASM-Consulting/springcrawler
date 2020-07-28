@@ -58,7 +58,7 @@ public class CustomLoggerRepository extends Hierarchy {
 
         String appenderName = name + "-" + threadGroup;
 
-        Logger logger =  super.getLogger(appenderName);
+        Logger logger = super.getLogger(appenderName);
 
         synchronized (loggerCache) {
 

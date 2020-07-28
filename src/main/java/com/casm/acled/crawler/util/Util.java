@@ -767,9 +767,9 @@ public class Util implements CommandLineRunner {
 
 //        exportSourceDataJSON(Paths.get("all-source-data"));
 //
-//        importSourceDataJSON(Paths.get("all-source-data"));
+        importSourceDataJSON(Paths.get("all-source-data"));
 
-        exportSourceDataJSON(Paths.get("all-source-data-2"));
+//        exportSourceDataJSON(Paths.get("all-source-data-2"));
 
 //        Source defaultSource = EntityVersions.get(Source.class).current();
 //        exportSourceListArticlesToCSV(Paths.get("mexico-2018"), "mexico-back-code-2018");

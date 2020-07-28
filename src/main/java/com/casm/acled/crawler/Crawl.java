@@ -36,8 +36,8 @@ import java.util.function.Supplier;
 
 public class Crawl {
 
-    private static final Path ALL_SCRAPERS = Paths.get("/home/sw206/git/acled-scrapers");
-    private static final Path CACHE_DIR = Paths.get("/home/sw206/git/springcrawler/balkans_scrapers");
+//    private static final Path ALL_SCRAPERS = Paths.get("/home/sw206/git/acled-scrapers");
+//    private static final Path CACHE_DIR = Paths.get("/home/sw206/git/springcrawler/balkans_scrapers");
 
     private final Source source;
 
@@ -86,7 +86,6 @@ public class Crawl {
 
         importer.setCollectorSupplier(collectorSupplier);
 
-        //LOOK AT THIS !!!
         importer.setMaxArticles(args.maxArticle);
 
         Path workingDir = args.workingDir;
