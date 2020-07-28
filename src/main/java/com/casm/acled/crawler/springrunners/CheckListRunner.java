@@ -2,6 +2,7 @@ package com.casm.acled.crawler.springrunners;
 
 import com.beust.jcommander.JCommander;
 import com.casm.acled.configuration.ObjectMapperConfiguration;
+import com.casm.acled.crawler.management.CheckListService;
 import com.casm.acled.crawler.management.CrawlArgs;
 import com.casm.acled.crawler.reporting.Event;
 import com.casm.acled.crawler.reporting.Report;
@@ -17,6 +18,7 @@ import com.casm.acled.crawler.util.Util;
 import com.casm.acled.dao.entities.ArticleDAO;
 import com.casm.acled.dao.entities.SourceDAO;
 import com.casm.acled.dao.entities.SourceListDAO;
+import com.casm.acled.entities.EntityVersions;
 import com.casm.acled.entities.article.Article;
 import com.casm.acled.entities.source.Source;
 import com.casm.acled.entities.sourcelist.SourceList;
@@ -38,8 +40,8 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
 
+import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -53,6 +55,9 @@ import java.util.stream.Collectors;
 public class CheckListRunner implements CommandLineRunner {
 
     protected static final Logger logger = LoggerFactory.getLogger(CheckListRunner.class);
+
+    @Autowired
+    private CheckListService checkListService;
 
     @Autowired
     private DateTimeService dateTimeService;
@@ -199,6 +204,23 @@ public class CheckListRunner implements CommandLineRunner {
 
     }
 
+    public void outputCrawlerSourceList(CrawlArgs args) throws IOException {
+
+        SourceList sourceList = args.sourceList;
+        String name = sourceList.get(SourceList.LIST_NAME);
+
+        checkListService.exportCrawlerSourcesToCSV(args.workingDir, name+".csv", sourceList);
+    }
+
+    public void importCrawlerSourceList(CrawlArgs args) throws IOException {
+
+        SourceList sourceList = args.sourceList;
+        String name = sourceList.get(SourceList.LIST_NAME);
+
+        checkListService.importCrawlerSourcesFromCSV(args.workingDir.resolve(name+".csv"), EntityVersions.get(Source.class).current());
+    }
+
+
     public void checkSourceList(CrawlArgs args) {
 
         SourceList sourceList = args.sourceList;
@@ -224,7 +246,9 @@ public class CheckListRunner implements CommandLineRunner {
 
         crawlArgs.init();
 
-        checkSourceList(crawlArgs);
+//        checkSourceList(crawlArgs);
+//        outputCrawlerSourceList(crawlArgs);
+        importCrawlerSourceList(crawlArgs);
 
         reporter.getRunReports().stream().forEach(r -> logger.info(r.toString()));
 

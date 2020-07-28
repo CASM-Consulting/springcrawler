@@ -151,8 +151,13 @@ public class CrawlArgs {
         skipKeywords = raw.skipKeywords;
         if(raw.workingDir != null) {
             workingDir = Paths.get(raw.workingDir);
+            workingDir.toFile().mkdirs();
         }
-        scrapersDir = Paths.get(raw.scrapersDir);
+        if(raw.scrapersDir != null) {
+            scrapersDir = Paths.get(raw.scrapersDir);
+            scrapersDir.toFile().mkdirs();
+        }
+
 
 
         if(raw.program != null ) {
