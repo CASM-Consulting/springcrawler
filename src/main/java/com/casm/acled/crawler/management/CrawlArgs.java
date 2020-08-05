@@ -52,6 +52,9 @@ public class CrawlArgs {
         @Parameter(names = "-ism", description = "Ignore site maps")
         public Boolean ignoreSiteMap = false;
 
+        @Parameter(names = "-osm", description = "Only Site maps")
+        public Boolean onlySiteMap = false;
+
         @Parameter(names = "-sk", description = "Skip keyword matching")
         public Boolean skipKeywords = false;
 
@@ -90,6 +93,9 @@ public class CrawlArgs {
 
     public Boolean ignoreSiteMap;
     public static final String IGNORE_SITE_MAP = "IGNORE_SITE_MAP";
+
+    public Boolean onlySiteMap;
+    public static final String ONLY_SITE_MAP = "ONLY_SITE_MAP";
 
     public Boolean skipKeywords;
     public static final String SKIP_KEYWORDS = "SKIP_KEYWORDS";
@@ -148,6 +154,7 @@ public class CrawlArgs {
         depth = raw.depth;
         politeness = raw.politeness;
         ignoreSiteMap = raw.ignoreSiteMap;
+        onlySiteMap = raw.onlySiteMap;
         skipKeywords = raw.skipKeywords;
         if(raw.workingDir != null) {
             workingDir = Paths.get(raw.workingDir);
@@ -160,14 +167,16 @@ public class CrawlArgs {
 
 
 
-        if(raw.program != null ) {
-            switch (raw.program) {
-                default:
-                case "crawl":
-                    program = CrawlerSweepRunner.JQMSpringCollectorV1;
-                    break;
-            }
-        }
+        program = raw.program;
+
+//        if(raw.program != null ) {
+//            switch (raw.program) {
+//                default:
+//                case "crawl":
+//                    program = CrawlerSweepRunner.JQMSpringCollectorV1;
+//                    break;
+//            }
+//        }
 
     }
 
@@ -190,6 +199,7 @@ public class CrawlArgs {
         jobRequest.addParameter( SOURCE_LIST_ID, Integer.toString( sourceList.id() ) );
         jobRequest.addParameter( SKIP_KEYWORDS, skipKeywords.toString() );
         jobRequest.addParameter( IGNORE_SITE_MAP, ignoreSiteMap.toString() );
+        jobRequest.addParameter( ONLY_SITE_MAP, onlySiteMap.toString() );
         jobRequest.addParameter( DEPTH, Integer.toString( depth ) );
         jobRequest.addParameter( MAX_ARTICLES, Integer.toString( maxArticle ) );
         jobRequest.addParameter( POLITENESS, Integer.toString( politeness ) );
@@ -221,6 +231,7 @@ public class CrawlArgs {
         raw.politeness = Integer.parseInt(runtimeParameters.get(POLITENESS));
         raw.skipKeywords = Boolean.parseBoolean(runtimeParameters.get(SKIP_KEYWORDS));
         raw.ignoreSiteMap = Boolean.parseBoolean(runtimeParameters.get(IGNORE_SITE_MAP));
+        raw.onlySiteMap = Boolean.parseBoolean(runtimeParameters.get(ONLY_SITE_MAP));
         raw.from = runtimeParameters.get(FROM);
         raw.to = runtimeParameters.get(TO);
         raw.workingDir = runtimeParameters.get(WORKING_DIR);

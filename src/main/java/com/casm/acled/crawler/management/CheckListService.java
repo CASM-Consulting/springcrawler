@@ -1,10 +1,27 @@
 package com.casm.acled.crawler.management;
 
+import com.casm.acled.crawler.reporting.Event;
+import com.casm.acled.crawler.reporting.Report;
+import com.casm.acled.crawler.reporting.Reporter;
+import com.casm.acled.crawler.scraper.ACLEDScraper;
+import com.casm.acled.crawler.scraper.ScraperFields;
+import com.casm.acled.crawler.scraper.ScraperService;
+import com.casm.acled.crawler.scraper.dates.DateParser;
+import com.casm.acled.crawler.scraper.dates.DateParsers;
+import com.casm.acled.crawler.scraper.dates.DateTimeService;
+import com.casm.acled.crawler.spring.CrawlService;
+import com.casm.acled.crawler.util.Util;
+import com.casm.acled.dao.entities.ArticleDAO;
 import com.casm.acled.dao.entities.SourceDAO;
+import com.casm.acled.dao.entities.SourceListDAO;
+import com.casm.acled.entities.EntityVersions;
+import com.casm.acled.entities.article.Article;
 import com.casm.acled.entities.source.Source;
 import com.casm.acled.entities.sourcelist.SourceList;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.norconex.collector.http.doc.HttpDocument;
 import com.opencsv.CSVReader;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
@@ -17,8 +34,10 @@ import org.springframework.stereotype.Service;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -27,18 +46,190 @@ public class CheckListService {
     protected static final Logger logger = LoggerFactory.getLogger(CheckListService.class);
 
     @Autowired
+    private CheckListService checkListService;
+
+    @Autowired
+    private DateTimeService dateTimeService;
+
+    @Autowired
+    private ScraperService scraperService;
+
+    @Autowired
+    private CrawlService crawlService;
+
+    @Autowired
+    private Reporter reporter;
+
+    @Autowired
     private SourceDAO sourceDAO;
+
+    @Autowired
+    private SourceListDAO sourceListDAO;
+
+    @Autowired
+    private ArticleDAO articleDAO;
+
+
+    private void attemptAllScrapers() {
+        dateTimeService.setScrapersPath(Paths.get("allscrapers"));
+
+        dateTimeService.attemptAllDateTimeParsers(DateParsers.ALL, DateTimeService.lastScrapeExampleGetter(Paths.get("/home/sw206/git/acled-scrapers")));
+
+//        System.out.println(reporter.reports(r->r.event().equals(Event.DATE_PARSE_SUCCESS.name())));
+//        System.out.println(reporter.reports(r->r.event().equals(Event.DATE_PARSE_FAILED.name())));
+    }
+
+    private Function<Source, List<String>> getFromArticles = s -> {
+        List<Article> articles = articleDAO.bySource(s);
+        return articles.stream()
+                .filter(a -> a.hasValue(Article.SCRAPE_DATE))
+                .map(a -> (String)a.get(Article.SCRAPE_DATE))
+                .collect(Collectors.toList());
+    };
+
+
+    private void attemptSourceListExistingArticles(String name) {
+        SourceList sourceList = sourceListDAO.getByUnique(SourceList.LIST_NAME, name).get();
+        dateTimeService.attemptSourceListDateTimeParsers(sourceList, DateParsers.ALL, getFromArticles);
+
+        for(Report report : reporter.reports()) {
+            logger.info(report.toString());
+        }
+
+//        System.out.println(reporter.reports(r->r.event().equals(Event.DATE_PARSE_SUCCESS.name())));
+//        System.out.println(reporter.reports(r->r.event().equals(Event.DATE_PARSE_FAILED.name())));
+    }
+
+
+    public void attemptSource(int id, DateParser dateParser) {
+
+        Source source = sourceDAO.getById(id).get();
+        dateTimeService.attemptDateTimeParse(source, ImmutableList.of(dateParser), getFromArticles);
+    }
+
+
+    public boolean scraperExists(CrawlArgs args, Source source) {
+        if(Util.scraperExists(args.scrapersDir, source)) {
+            return true;
+        } else {
+            reporter.report(Report.of(Event.SCRAPER_NOT_FOUND).id(source.id()).message(source.get(Source.STANDARD_NAME)));
+            return false;
+        }
+    }
+
+    public boolean hasExamples(Source source) {
+        List<String> exampleURLs = source.get(Source.EXAMPLE_URLS);
+
+        if(exampleURLs == null || exampleURLs.isEmpty()) {
+            reporter.report(Report.of(Event.NO_EXAMPLES).id(source.id()).message(source.get(Source.STANDARD_NAME)));
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    public boolean hasDateFormat(Source source) {
+        List<String> formats = source.get(Source.DATE_FORMAT);
+
+        if(formats == null || formats.isEmpty()) {
+            reporter.report(Report.of(Event.DATE_PARSER_NOT_FOUND).id(source.id()).message(source.get(Source.STANDARD_NAME)));
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    public final Function<Source, List<String>> exampleGetter (ACLEDScraper scraper) {
+        return (s) -> {
+
+            List<HttpDocument> docs = scraperService.checkExampleURLs(scraper, s);
+            List<String> dateExamples = docs.stream()
+                    .filter(doc -> doc.getMetadata().containsKey(ScraperFields.SCRAPED_DATE) &&
+                            !doc.getMetadata().getString(ScraperFields.SCRAPED_DATE).isEmpty())
+                    .map(doc -> doc.getMetadata().getString(ScraperFields.SCRAPED_DATE))
+                    .collect(Collectors.toList());
+
+            return dateExamples;
+        };
+    }
+
+    public boolean datesParse(CrawlArgs args, Source source) {
+        ACLEDScraper scraper = ACLEDScraper.load(args.scrapersDir, source, reporter);
+
+        return dateTimeService.checkExistingPasses(source, exampleGetter(scraper));
+    }
+
+    public boolean hasSiteMaps(Source source) {
+        List<String> siteMaps = crawlService.getSitemaps(source);
+
+        if(siteMaps.isEmpty()) {
+            reporter.report(Report.of(Event.NO_SITE_MAPS).id(source.id()).message(source.get(Source.STANDARD_NAME)));
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    public void checkSource(CrawlArgs args, Source source, SourceList sourceList)  {
+
+        boolean scraperExists = scraperExists(args, source);
+        boolean hasExamples = hasExamples(source);
+        boolean hasDateFormat = hasDateFormat(source);
+        boolean hasSiteMaps = hasSiteMaps(source);
+
+        if(hasSiteMaps) {
+            reporter.report(Report.of(Event.HAS_SITE_MAPS).id(source.id()).message(source.get(Source.STANDARD_NAME)));
+        }
+
+        if(hasDateFormat && hasExamples && scraperExists) {
+
+            boolean datesParsed = datesParse(args, source);
+
+            if(datesParsed) {
+                reporter.report(Report.of(Event.SCRAPE_PASS).id(source.id()).message(source.get(Source.STANDARD_NAME)));
+            }
+        }
+    }
+
+    public void outputCrawlerSourceList(CrawlArgs args) throws IOException {
+
+        SourceList sourceList = args.sourceList;
+        String name = sourceList.get(SourceList.LIST_NAME);
+
+        exportCrawlerSourcesToCSV(args.workingDir, name+".csv", sourceList);
+    }
+
+    public void importCrawlerSourceList(CrawlArgs args) throws IOException {
+
+        SourceList sourceList = args.sourceList;
+        String name = sourceList.get(SourceList.LIST_NAME);
+
+        importCrawlerSourcesFromCSV(args.workingDir.resolve(name+".csv"), EntityVersions.get(Source.class).current());
+    }
+
+    public void checkSourceList(CrawlArgs args) {
+
+        SourceList sourceList = args.sourceList;
+        List<Source> sources = sourceDAO.byList(sourceList);
+
+        for(Source source : sources) {
+
+            checkSource(args, source, sourceList);
+        }
+    }
+
     public void exportCrawlerSourcesToCSV(Path outputDir, String fileName, SourceList sourceList) throws IOException {
         List<Source> sources = sourceDAO.byList(sourceList);
         exportCrawlerSourcesToCSV(outputDir, fileName, sources);
     }
+
     public void exportCrawlerSourcesToCSV(Path outputDir, String fileName, List<Source> sources) throws IOException {
 
         List<String> headers = ImmutableList.of("id", "field", "value");
         Set<String> fields = ImmutableSet.of(Source.EXAMPLE_URLS, Source.DATE_FORMAT, Source.LOCALES);
 
         try (
-                final OutputStream outputStream = java.nio.file.Files.newOutputStream(outputDir.resolve(fileName), StandardOpenOption.CREATE_NEW);
+                final OutputStream outputStream = java.nio.file.Files.newOutputStream(outputDir.resolve(fileName), StandardOpenOption.CREATE);
                 final PrintWriter writer = new PrintWriter(new BufferedWriter(new OutputStreamWriter(outputStream, StandardCharsets.UTF_8)), false);
                 final CSVPrinter csv = new CSVPrinter(writer, CSVFormat.EXCEL.withQuoteMode(QuoteMode.NON_NUMERIC))
         ) {
@@ -141,4 +332,73 @@ public class CheckListService {
             sourceDAO.create(sources);
         }
     }
+
+    public void outputExampleURLCheck(CrawlArgs args) throws IOException {
+
+        String TITLE = "title";
+        String ARTICLE = "article";
+        String DATE = "date";
+        String ID = "id";
+        String URL = "url";
+        String SOURCE = "source";
+
+        List<Source> sources;
+
+        if(args.sourceList == null) {
+
+            sources = args.sources;
+        } else {
+
+            sources = sourceDAO.byList(args.sourceList);
+        }
+
+        Map<Source, List<List<String>>> data = new HashMap<>();
+
+        for(Source source : sources) {
+
+            if(scraperExists(args, source)) {
+
+                if(args.ignoreSiteMap || hasSiteMaps(source)) {
+
+                    List<HttpDocument> docs = scraperService.checkExampleURLs(args.scrapersDir, source);
+
+                    List<List<String>> lines = docs.stream().map(d -> ImmutableList.of(
+                            d.getMetadata().getString(ScraperFields.SCRAPED_TITLE, ""),
+                            d.getMetadata().getString(ScraperFields.SCRAPED_ARTICLE, ""),
+                            d.getMetadata().getString(ScraperFields.SCRAPED_DATE, ""),
+                            d.getMetadata().getString("collector.url", "")
+                    )).collect(Collectors.toList());
+
+                    data.put(source, lines);
+                }
+            }
+        }
+
+        String[] headers = {ID, TITLE, ARTICLE, DATE, URL, SOURCE};
+
+        try (
+                final OutputStream outputStream = java.nio.file.Files.newOutputStream(args.workingDir.resolve("example-urls.csv"), StandardOpenOption.CREATE);
+                final PrintWriter writer = new PrintWriter(new BufferedWriter(new OutputStreamWriter(outputStream, StandardCharsets.UTF_8)), false);
+                final CSVPrinter csv = new CSVPrinter(writer, CSVFormat.EXCEL.withQuoteMode(QuoteMode.NON_NUMERIC))
+        ) {
+
+            csv.printRecord(headers);
+
+            for (Map.Entry<Source, List<List<String>>> entry : data.entrySet()) {
+
+                Source source = entry.getKey();
+
+                for(List<String> values : entry.getValue()) {
+
+                    List<String> row = ImmutableList.of(Integer.toString(
+                            source.id()), values.get(0), values.get(1), values.get(2), values.get(3), source.get(Source.STANDARD_NAME));
+
+                    csv.printRecord( row );
+                }
+            }
+        }
+
+    }
+
+
 }

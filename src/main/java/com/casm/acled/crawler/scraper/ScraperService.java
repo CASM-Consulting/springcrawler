@@ -122,11 +122,13 @@ public class ScraperService {
         return article;
     }
 
-    public void checkExampleURLs(Path scraperDir, Source source) {
-        String id = Util.getID(source);
+    public List<HttpDocument> checkExampleURLs(Path scraperDir, Source source) {
+//        String id = Util.getID(source);
 
-        ACLEDScraper scraper = ACLEDScraper.load(scraperDir.resolve(id), source, reporter);
-        checkExampleURLs(scraper, source);
+        ACLEDScraper scraper = ACLEDScraper.load(scraperDir, source, reporter);
+        List<HttpDocument> docs = checkExampleURLs(scraper, source);
+
+        return docs;
     }
 
     public HttpDocument scrapeURL(ACLEDScraper scraper, String url, Source source) {

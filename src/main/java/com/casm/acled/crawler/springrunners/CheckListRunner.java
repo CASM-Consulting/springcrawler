@@ -60,184 +60,15 @@ public class CheckListRunner implements CommandLineRunner {
     private CheckListService checkListService;
 
     @Autowired
-    private DateTimeService dateTimeService;
-
-    @Autowired
-    private ScraperService scraperService;
-
-    @Autowired
-    private CrawlService crawlService;
-
-    @Autowired
     private Reporter reporter;
-
-    @Autowired
-    private SourceDAO sourceDAO;
-
-    @Autowired
-    private SourceListDAO sourceListDAO;
-
-    @Autowired
-    private ArticleDAO articleDAO;
 
     @Autowired
     private CrawlArgs crawlArgs;
 
-    private void attemptAllScrapers() {
-        dateTimeService.setScrapersPath(Paths.get("allscrapers"));
-
-        dateTimeService.attemptAllDateTimeParsers(DateParsers.ALL, DateTimeService.lastScrapeExampleGetter(Paths.get("/home/sw206/git/acled-scrapers")));
-
-//        System.out.println(reporter.reports(r->r.event().equals(Event.DATE_PARSE_SUCCESS.name())));
-//        System.out.println(reporter.reports(r->r.event().equals(Event.DATE_PARSE_FAILED.name())));
-    }
-
-    private Function<Source, List<String>> getFromArticles = s -> {
-        List<Article> articles = articleDAO.bySource(s);
-        return articles.stream()
-                .filter(a -> a.hasValue(Article.SCRAPE_DATE))
-                .map(a -> (String)a.get(Article.SCRAPE_DATE))
-                .collect(Collectors.toList());
-    };
-
-
-    private void attemptSourceListExistingArticles(String name) {
-        SourceList sourceList = sourceListDAO.getByUnique(SourceList.LIST_NAME, name).get();
-        dateTimeService.attemptSourceListDateTimeParsers(sourceList, DateParsers.ALL, getFromArticles);
-
-        for(Report report : reporter.reports()) {
-            logger.info(report.toString());
-        }
-
-//        System.out.println(reporter.reports(r->r.event().equals(Event.DATE_PARSE_SUCCESS.name())));
-//        System.out.println(reporter.reports(r->r.event().equals(Event.DATE_PARSE_FAILED.name())));
-    }
-
-
-    public void attemptSource(int id, DateParser dateParser) {
-
-        Source source = sourceDAO.getById(id).get();
-        dateTimeService.attemptDateTimeParse(source, ImmutableList.of(dateParser), getFromArticles);
-    }
-
-
-    public boolean scraperExists(CrawlArgs args, Source source) {
-        if(Util.scraperExists(args.scrapersDir, source)) {
-            return true;
-        } else {
-            reporter.report(Report.of(Event.SCRAPER_NOT_FOUND).id(source.id()).message(source.get(Source.STANDARD_NAME)));
-            return false;
-        }
-    }
-
-    public boolean hasExamples(Source source) {
-        List<String> exampleURLs = source.get(Source.EXAMPLE_URLS);
-
-        if(exampleURLs == null || exampleURLs.isEmpty()) {
-            reporter.report(Report.of(Event.NO_EXAMPLES).id(source.id()).message(source.get(Source.STANDARD_NAME)));
-            return false;
-        } else {
-            return true;
-        }
-    }
-
-    public boolean hasDateFormat(Source source) {
-        List<String> formats = source.get(Source.DATE_FORMAT);
-
-        if(formats == null || formats.isEmpty()) {
-            reporter.report(Report.of(Event.DATE_PARSER_NOT_FOUND).id(source.id()).message(source.get(Source.STANDARD_NAME)));
-            return false;
-        } else {
-            return true;
-        }
-    }
-
-    public boolean datesParse(CrawlArgs args, Source source) {
-        ACLEDScraper scraper = ACLEDScraper.load(args.scrapersDir, source, reporter);
-
-        return dateTimeService.checkExistingPasses(source, (s) -> {
-
-            List<HttpDocument> docs = scraperService.checkExampleURLs(scraper, s);
-            List<String> dateExamples = docs.stream()
-                    .filter(doc -> doc.getMetadata().containsKey(ScraperFields.SCRAPED_DATE) &&
-                            !doc.getMetadata().getString(ScraperFields.SCRAPED_DATE).isEmpty())
-                    .map(doc -> doc.getMetadata().getString(ScraperFields.SCRAPED_DATE))
-                    .collect(Collectors.toList());
-
-            return dateExamples;
-        });
-    }
-
-    public boolean hasSiteMaps(Source source) {
-        List<String> siteMaps = crawlService.getSitemaps(source);
-
-        if(siteMaps.isEmpty()) {
-            reporter.report(Report.of(Event.NO_SITE_MAPS).id(source.id()).message(source.get(Source.STANDARD_NAME)));
-            return false;
-        } else {
-            return true;
-        }
-    }
-
-    public void checkSource(CrawlArgs args, Source source, SourceList sourceList)  {
-
-        boolean scraperExists = scraperExists(args, source);
-        boolean hasExamples = hasExamples(source);
-        boolean hasDateFormat = hasDateFormat(source);
-        boolean hasSiteMaps = hasSiteMaps(source);
-
-        if(hasSiteMaps) {
-            reporter.report(Report.of(Event.HAS_SITE_MAPS).id(source.id()).message(source.get(Source.STANDARD_NAME)));
-        }
-
-        if(hasDateFormat && hasExamples && scraperExists) {
-
-            boolean datesParsed = datesParse(args, source);
-
-
-            if(datesParsed) {
-                reporter.report(Report.of(Event.SCRAPE_PASS).id(source.id()).message(source.get(Source.STANDARD_NAME)));
-            }
-
-
-        }
-
-    }
-
-    public void outputCrawlerSourceList(CrawlArgs args) throws IOException {
-
-        SourceList sourceList = args.sourceList;
-        String name = sourceList.get(SourceList.LIST_NAME);
-
-        checkListService.exportCrawlerSourcesToCSV(args.workingDir, name+".csv", sourceList);
-    }
-
-    public void importCrawlerSourceList(CrawlArgs args) throws IOException {
-
-        SourceList sourceList = args.sourceList;
-        String name = sourceList.get(SourceList.LIST_NAME);
-
-        checkListService.importCrawlerSourcesFromCSV(args.workingDir.resolve(name+".csv"), EntityVersions.get(Source.class).current());
-    }
-
-
-    public void checkSourceList(CrawlArgs args) {
-
-        SourceList sourceList = args.sourceList;
-        List<Source> sources = sourceDAO.byList(sourceList);
-
-        for(Source source : sources) {
-
-            checkSource(args, source, sourceList);
-        }
-
-
-    }
 
     @Override
     public void run(String... args) throws Exception {
         reporter.randomRunId();
-
 
         JCommander.newBuilder()
                 .addObject(crawlArgs.raw)
@@ -246,12 +77,25 @@ public class CheckListRunner implements CommandLineRunner {
 
         crawlArgs.init();
 
-//        checkSourceList(crawlArgs);
-        outputCrawlerSourceList(crawlArgs);
-//        importCrawlerSourceList(crawlArgs);
+        switch(crawlArgs.program) {
+            case "import":
+                checkListService.importCrawlerSourceList(crawlArgs);
+                break;
+            case "export":
+                checkListService.outputCrawlerSourceList(crawlArgs);
+                break;
+            case "check":
+                checkListService.checkSourceList(crawlArgs);
+                break;
+            case "example-urls":
+                checkListService.outputExampleURLCheck(crawlArgs);
+                break;
+            default:
+                logger.error("program {} not recognised", crawlArgs.program);
+                break;
+        }
 
         reporter.getRunReports().stream().forEach(r -> logger.info(r.toString()));
-
     }
 
     public static void main(String[] args) {

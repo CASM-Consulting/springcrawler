@@ -1,6 +1,10 @@
 package com.casm.acled.crawler.spring;
 
+import bithazard.sitemap.parser.SitemapParser;
+import bithazard.sitemap.parser.model.InvalidSitemapUrlException;
+import bithazard.sitemap.parser.model.UrlConnectionException;
 import com.casm.acled.crawler.Crawl;
+import com.casm.acled.crawler.management.CheckListService;
 import com.casm.acled.crawler.management.CrawlArgs;
 import com.casm.acled.crawler.scraper.ACLEDImporter;
 import com.casm.acled.crawler.reporting.Reporter;
@@ -48,6 +52,9 @@ public class CrawlService {
 
     @Autowired
     private CrawlArgs args;
+
+    @Autowired
+    private CheckListService checkListService;
 
     public CrawlService() {
 
@@ -102,40 +109,47 @@ public class CrawlService {
 
         Source source = args.sources.get(0);
 
-        int sourceId = source.id();
+        if(args.onlySiteMap && ! checkListService.hasSiteMaps(source)) {
 
-        //ThreadGroup required for logger context, see CustomLoggerRepository
-        ThreadGroup tg = new ThreadGroup(Integer.toString(sourceId));
+            logger.info("Quitting: only site maps requested - {} has no sitemap", (String) source.get(Source.STANDARD_NAME));
+
+        } else {
+
+            int sourceId = source.id();
+
+            //ThreadGroup required for logger context, see CustomLoggerRepository
+            ThreadGroup tg = new ThreadGroup(Integer.toString(sourceId));
 
 //            ExecutorService executor = Executors.newSingleThreadExecutor();
 //            Future<Void> future = executor.submit()
 
-        Thread thread = new Thread(tg, () -> {
+            Thread thread = new Thread(tg, () -> {
 
-            List<String> sitemaps = getSitemaps(source);
+                List<String> sitemaps = getSitemaps(source);
 
-            ACLEDImporter importer = new ACLEDImporter(articleDAO, source, sourceListDAO, true);
+                ACLEDImporter importer = new ACLEDImporter(articleDAO, source, sourceListDAO, true);
 
-            Crawl crawl = new Crawl(args, importer, reporter, sitemaps);
+                Crawl crawl = new Crawl(args, importer, reporter, sitemaps);
 
-            crawl.run();
-        });
+                crawl.run();
+            });
 
-        AtomicReference<Throwable> thrown = new AtomicReference<>();
+            AtomicReference<Throwable> thrown = new AtomicReference<>();
 
-        thread.setUncaughtExceptionHandler((Thread th, Throwable ex)->{
-            thrown.set(ex);
-        });
+            thread.setUncaughtExceptionHandler((Thread th, Throwable ex)->{
+                thrown.set(ex);
+            });
 
-        thread.start();
+            thread.start();
 
-        try {
-            thread.join();
-        } catch (InterruptedException e){
-            throw new RuntimeException(e);
-        }
-        if(thrown.get()!=null) {
-            throw new RuntimeException(thrown.get());
+            try {
+                thread.join();
+            } catch (InterruptedException e){
+                throw new RuntimeException(e);
+            }
+            if(thrown.get()!=null) {
+                throw new RuntimeException(thrown.get());
+            }
         }
 
     }
@@ -228,8 +242,45 @@ public class CrawlService {
     }
 
     public List<String> getSitemaps(Source source) {
+
         String url = source.get(Source.LINK);
 
+        List<String> sitemaps;
+
+        if(url == null || url.isEmpty()) {
+
+            logger.warn("empty URL {}", (String)source.get(Source.STANDARD_NAME));
+            sitemaps = new ArrayList<>();
+        } else {
+
+            SitemapParser sitemapParser = new SitemapParser();
+            try {
+
+                Set<String> sitemapLocations = sitemapParser.getSitemapLocations(url);
+                sitemaps = new ArrayList<>(sitemapLocations);
+            } catch (InvalidSitemapUrlException e) {
+
+                try {
+
+                    url = followRedirects(url);
+                    Set<String> sitemapLocations = sitemapParser.getSitemapLocations(url);
+
+                    sitemaps = new ArrayList<>(sitemapLocations);
+                } catch (InvalidSitemapUrlException | UrlConnectionException ee) {
+
+                    sitemaps = new ArrayList<>();
+                }
+            } catch (UrlConnectionException e) {
+
+                sitemaps = new ArrayList<>();
+            }
+        }
+
+        return sitemaps;
+    }
+
+    public List<String> getSitemaps2(Source source) {
+        String url = source.get(Source.LINK);
 
         if(url == null || url.isEmpty()) {
             logger.warn("empty URL {}", (String)source.get(Source.STANDARD_NAME));
