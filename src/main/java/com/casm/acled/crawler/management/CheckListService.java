@@ -170,7 +170,9 @@ public class CheckListService {
         }
     }
 
-    public void checkSource(CrawlArgs args, Source source, SourceList sourceList)  {
+    public void checkSource(CrawlArgs args, Source source)  {
+
+        boolean passed = false;
 
         boolean scraperExists = scraperExists(args, source);
         boolean hasExamples = hasExamples(source);
@@ -186,12 +188,23 @@ public class CheckListService {
             boolean datesParsed = datesParse(args, source);
 
             if(datesParsed) {
+                passed = true;
                 reporter.report(Report.of(Event.SCRAPE_PASS).id(source.id()).message(source.get(Source.STANDARD_NAME)));
             }
         }
+
+        if(args.flagSet.contains(CrawlArgs.Flags.DISABLE_ON_FAIL) ) {
+            if(passed) {
+                source = source.put(Source.CRAWL_DISABLED, false);
+            } else {
+                source = source.put(Source.CRAWL_DISABLED, true);
+            }
+            sourceDAO.upsert(source);
+        }
+
     }
 
-    public void outputCrawlerSourceList(CrawlArgs args) throws IOException {
+    public void exportCrawlerSourceList(CrawlArgs args) throws IOException {
 
         SourceList sourceList = args.sourceList;
         String name = sourceList.get(SourceList.LIST_NAME);
@@ -214,7 +227,7 @@ public class CheckListService {
 
         for(Source source : sources) {
 
-            checkSource(args, source, sourceList);
+            checkSource(args, source);
         }
     }
 

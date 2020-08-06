@@ -291,14 +291,14 @@ public class LocaleService {
 
         if(maybeTimeZone.isPresent()) {
             source = source.put(Source.TIMEZONE, maybeTimeZone.get().getID());
-            sourceDAO.update(source);
+            sourceDAO.upsert(source);
         } else {
             reporting.report(Report.of(Event.TIMEZONE_NOT_FOUND, source.id(), Source.class.getName()).message(getCountry(source)));
         }
 
         if(!locales.isEmpty()) {
             source = source.put(Source.LOCALES, locales.stream().map(ULocale::getName).collect(Collectors.toList()));
-            sourceDAO.update(source);
+            sourceDAO.upsert(source);
 //                System.out.println(source);
         } else {
             reporting.report(Report.of(Event.LOCALE_NOT_FOUND, source.id(), Source.class.getName()).message(getCountry(source)));
@@ -308,13 +308,13 @@ public class LocaleService {
 
     public void assignLocale(Source source, ULocale locale) {
         source = source.put(Source.LOCALES, Lists.newArrayList(locale.getName()));
-        sourceDAO.update(source);
+        sourceDAO.upsert(source);
     }
 
 
     public void assignTimezone(Source source, ZoneId zoneId) {
         source = source.put(Source.TIMEZONE, zoneId.getId());
-        sourceDAO.update(source);
+        sourceDAO.upsert(source);
     }
 
     public void autoAssignLocalesAndTimeZones(List<Source> sources) {

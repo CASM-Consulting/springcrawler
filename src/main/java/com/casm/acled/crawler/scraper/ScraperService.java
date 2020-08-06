@@ -570,7 +570,7 @@ public class ScraperService {
 
         if(scraped.hasValue(Article.SCRAPE_DATE)) {
             article = article.put(Article.SCRAPE_DATE, scraped.get(Article.SCRAPE_DATE));
-            articleDAO.update(article);
+            articleDAO.upsert(article);
         }
 
         return scraped;

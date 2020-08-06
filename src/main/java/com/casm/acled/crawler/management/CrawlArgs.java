@@ -9,6 +9,8 @@ import com.casm.acled.entities.source.Source;
 import com.casm.acled.entities.sourcelist.SourceList;
 import com.enioka.jqm.api.JobRequest;
 import com.google.common.collect.ImmutableList;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -16,13 +18,14 @@ import org.springframework.stereotype.Component;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @Component
 public class CrawlArgs {
+
+    public static class Flags {
+        public static final String DISABLE_ON_FAIL = "DISABLE_ON_FAIL";
+    }
 
     @Autowired
     private SourceDAO sourceDAO;
@@ -69,6 +72,9 @@ public class CrawlArgs {
 
         @Parameter(names = "-sd", description = "Scrapers directory")
         public String scrapersDir = null;
+
+        @Parameter(names = "-f", description = "Flags")
+        public List<String> flags;
     }
 
 
@@ -111,6 +117,10 @@ public class CrawlArgs {
 
     public Path scrapersDir;
     public static final String SCRAPERS_DIR = "SCRAPERS_DIR";
+
+    public List<String> flags;
+    public Set<String> flagSet;
+    public static final String FLAGS = "FLAGS";
 
 
     public CrawlArgs() {
@@ -165,6 +175,12 @@ public class CrawlArgs {
             scrapersDir.toFile().mkdirs();
         }
 
+        if(raw.flags == null) {
+            flags = new ArrayList<>();
+        } else {
+            flags = raw.flags;
+        }
+        flagSet = new HashSet<>(flags);
 
 
         program = raw.program;
@@ -206,6 +222,12 @@ public class CrawlArgs {
         jobRequest.addParameter( WORKING_DIR, workingDir.toString() );
         jobRequest.addParameter( SCRAPERS_DIR, scrapersDir.toString() );
 
+        if( flags != null ) {
+            Gson gson = new Gson();
+            String encoded = gson.toJson(flags);
+            jobRequest.addParameter( FLAGS, encoded );
+        }
+
         if( from != null ) {
             jobRequest.addParameter( Crawl.FROM, from.toString() );
         }
@@ -236,6 +258,11 @@ public class CrawlArgs {
         raw.to = runtimeParameters.get(TO);
         raw.workingDir = runtimeParameters.get(WORKING_DIR);
         raw.scrapersDir = runtimeParameters.get(SCRAPERS_DIR);
+
+        if(runtimeParameters.containsKey(FLAGS)) {
+            Gson gson = new Gson();
+            raw.flags = gson.fromJson(runtimeParameters.get(FLAGS), new TypeToken<List<String>>(){}.getType());
+        }
 
         init();
     }

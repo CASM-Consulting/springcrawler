@@ -282,7 +282,7 @@ public class Util implements CommandLineRunner {
                 }
             }
 
-            articleDAO.update(article);
+            articleDAO.upsert(article);
         }
     }
 
@@ -325,7 +325,7 @@ public class Util implements CommandLineRunner {
                         article = article.businessKey(BusinessKeys.generate(sourceList.get(SourceList.LIST_NAME), localDate));
                     }
 
-                    articleDAO.update(article);
+                    articleDAO.upsert(article);
 //                    System.out.println("updating " + article.get(Article.URL));
                     break;
                 }
@@ -361,7 +361,7 @@ public class Util implements CommandLineRunner {
 
         source = source.put(Source.DATE_FORMAT, ImmutableList.of("ISO:/yyyy-MM-dd/en_GB"));
 
-        sourceDAO.update(source);
+        sourceDAO.upsert(source);
     }
 
 

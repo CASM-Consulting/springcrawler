@@ -169,7 +169,7 @@ public class KeywordsService {
     public SourceList assignKeywords(SourceList sourceList, String query) {
 
         sourceList = sourceList.put(SourceList.KEYWORDS, query);
-        sourceListDAO.update(sourceList);
+        sourceListDAO.upsert(sourceList);
         return sourceList;
     }
 }

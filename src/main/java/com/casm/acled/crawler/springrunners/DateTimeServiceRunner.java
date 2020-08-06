@@ -114,7 +114,7 @@ public class DateTimeServiceRunner implements CommandLineRunner {
 
                 spec.addAll(existing);
                 source = source.put(Source.DATE_FORMAT, spec);
-                sourceDAO.update(source);
+                sourceDAO.upsert(source);
 
                 logger.error("updating date format {}", sourceName);
             } else {
@@ -122,7 +122,7 @@ public class DateTimeServiceRunner implements CommandLineRunner {
                 List<String> spec = parser.getFormatSpec();
                 source = source.put(Source.DATE_FORMAT, spec);
                 logger.error("adding date format {}", sourceName);
-                sourceDAO.update(source);
+                sourceDAO.upsert(source);
             }
         } else {
             logger.error("source not found {}", sourceName);

@@ -188,7 +188,7 @@ public class DateTimeService {
                 CompositeDateParser passingParser = new CompositeDateParser(new ArrayList<>(passingParsers));
                 List<String> spec = passingParser.getFormatSpec();
                 source = source.put(Source.DATE_FORMAT, spec);
-                sourceDAO.update(source);
+                sourceDAO.upsert(source);
             }
         }
     }

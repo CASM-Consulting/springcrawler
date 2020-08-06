@@ -4,26 +4,7 @@ import com.beust.jcommander.JCommander;
 import com.casm.acled.configuration.ObjectMapperConfiguration;
 import com.casm.acled.crawler.management.CheckListService;
 import com.casm.acled.crawler.management.CrawlArgs;
-import com.casm.acled.crawler.reporting.Event;
-import com.casm.acled.crawler.reporting.Report;
 import com.casm.acled.crawler.reporting.Reporter;
-import com.casm.acled.crawler.scraper.ACLEDScraper;
-import com.casm.acled.crawler.scraper.ScraperFields;
-import com.casm.acled.crawler.scraper.ScraperService;
-import com.casm.acled.crawler.scraper.dates.DateParser;
-import com.casm.acled.crawler.scraper.dates.DateParsers;
-import com.casm.acled.crawler.scraper.dates.DateTimeService;
-import com.casm.acled.crawler.spring.CrawlService;
-import com.casm.acled.crawler.util.Util;
-import com.casm.acled.dao.entities.ArticleDAO;
-import com.casm.acled.dao.entities.SourceDAO;
-import com.casm.acled.dao.entities.SourceListDAO;
-import com.casm.acled.entities.EntityVersions;
-import com.casm.acled.entities.article.Article;
-import com.casm.acled.entities.source.Source;
-import com.casm.acled.entities.sourcelist.SourceList;
-import com.google.common.collect.ImmutableList;
-import com.norconex.collector.http.doc.HttpDocument;
 import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
 import org.camunda.bpm.spring.boot.starter.rest.CamundaBpmRestJerseyAutoConfiguration;
 import org.slf4j.Logger;
@@ -39,12 +20,6 @@ import org.springframework.boot.autoconfigure.validation.ValidationAutoConfigura
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
-
-import java.io.IOException;
-import java.nio.file.Paths;
-import java.util.List;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @EnableAutoConfiguration(exclude={HibernateJpaAutoConfiguration.class, CamundaBpmAutoConfiguration.class, CamundaBpmRestJerseyAutoConfiguration.class, ValidationAutoConfiguration.class})
 // We need the special object mapper, though.
@@ -82,7 +57,7 @@ public class CheckListRunner implements CommandLineRunner {
                 checkListService.importCrawlerSourceList(crawlArgs);
                 break;
             case "export":
-                checkListService.outputCrawlerSourceList(crawlArgs);
+                checkListService.exportCrawlerSourceList(crawlArgs);
                 break;
             case "check":
                 checkListService.checkSourceList(crawlArgs);
