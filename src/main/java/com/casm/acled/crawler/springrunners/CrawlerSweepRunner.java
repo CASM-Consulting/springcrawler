@@ -85,6 +85,7 @@ public class CrawlerSweepRunner implements CommandLineRunner {
 
         sweepSourceList(JQMSpringCollectorV1, "mexico-back-code-2018", LocalDate.of(2018, 1,1), LocalDate.of(2018, 12,31), Boolean.FALSE);
 //        sweepSourceList(JQMSpringCollectorV1, "fake-net", LocalDate.now().minusDays(10), LocalDate.now(), Boolean.TRUE);
+        sweepSourceList(JQMSpringCollectorV1, "fake-net", LocalDate.of(2020, 8,21), LocalDate.of(2020, 8,28), Boolean.TRUE);
 
         //        sweepSourceCollectExamples("HRW", "Balkans");
 

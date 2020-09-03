@@ -73,7 +73,7 @@ public class CrawlArgs {
         @Parameter(names = "-sd", description = "Scrapers directory")
         public String scrapersDir = null;
 
-        @Parameter(names = "-f", description = "Flags")
+        @Parameter(names = "-fl", description = "Flags")
         public List<String> flags;
     }
 

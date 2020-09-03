@@ -760,13 +760,13 @@ public class Util implements CommandLineRunner {
 //        recoverArticleDates();
 //        linkExisting();
 
-//        createFakeNetSourceList();
+        createFakeNetSourceList();
 
 //        exportSourceDataCSV(Paths.get("all-source-data"));
 
 //        exportSourceDataJSON(Paths.get("all-source-data"));
 //
-        importSourceDataJSON(Paths.get("all-source-data"));
+//        importSourceDataJSON(Paths.get("all-source-data"));
 
 //        exportSourceDataJSON(Paths.get("all-source-data-2"));
 
