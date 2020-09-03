@@ -16,7 +16,7 @@
         <version.spring.boot>2.1.5.RELEASE</version.spring.boot>
         <jqm.version>2.2.1</jqm.version>
         <m52norconex.version>1.5.14-SNAPSHOT</m52norconex.version>
-        <casm.acled.version>1.5.2</casm.acled.version>
+        <casm.acled.version>1.5.3</casm.acled.version>
         <lucene.version>8.5.1</lucene.version>
     </properties>
 
