@@ -57,6 +57,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+//import org.springframework.shell.standard.ShellMethod;
+//import org.springframework.shell.standard.ShellComponent;
 
 // We have to exclude these classes, because they only work in a web context.
 @EnableAutoConfiguration(exclude={CamundaBpmAutoConfiguration.class, CamundaBpmRestJerseyAutoConfiguration.class})
@@ -737,14 +739,17 @@ public class Util implements CommandLineRunner {
             String url = "http://www."+i+".com:5000";
             Source source = base.put(Source.LINK, url)
                     .put(Source.STANDARD_NAME, Integer.toString(i))
-                    .put(Source.CRAWL_SCRAPER_PATH, "/home/sw206/git/springcrawler/testscrapers/generic")
+                    .put(Source.CRAWL_SCRAPER_PATH, "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/springcrawler/testscrapers/generic")
                     .put(Source.TIMEZONE, "Europe/London")
                     .put(Source.LOCALES, ImmutableList.of("en"))
                     .put(Source.DATE_FORMAT, ImmutableList.of("ISO:/yyyy-MM-dd"))
+                    .put(Source.CRAWL_SCHEDULE, "0 0 20 ? * TUE,FRI *")
                     ;
             sources.add(source);
         }
-        sources = sourceDAO.create(sources);
+//        sources = sourceDAO.create(sources); // do upsert to overwrite
+        sources = sourceDAO.upsert(sources); // do upsert to overwrite
+
 
         SourceList list = EntityVersions.get(SourceList.class).current()
                 .put(SourceList.LIST_NAME, "fake-net");
@@ -755,18 +760,19 @@ public class Util implements CommandLineRunner {
 
     }
 
+//    @Override
     public void run(String... args) throws Exception {
 //        deleteNonMatchingArticles();
 //        recoverArticleDates();
 //        linkExisting();
 
-//        createFakeNetSourceList();
+        createFakeNetSourceList();
 
 //        exportSourceDataCSV(Paths.get("all-source-data"));
 
 //        exportSourceDataJSON(Paths.get("all-source-data"));
 //
-        importSourceDataJSON(Paths.get("all-source-data"));
+//        importSourceDataJSON(Paths.get("all-source-data"));
 
 //        exportSourceDataJSON(Paths.get("all-source-data-2"));
 

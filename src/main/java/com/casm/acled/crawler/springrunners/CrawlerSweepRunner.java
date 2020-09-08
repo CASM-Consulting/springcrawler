@@ -31,10 +31,12 @@ import org.springframework.context.annotation.Import;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
-import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
+import java.util.*;
 import java.util.stream.Collectors;
+
+import org.springframework.shell.standard.ShellMethod;
+import org.springframework.shell.standard.ShellComponent;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 @EnableAutoConfiguration(exclude={HibernateJpaAutoConfiguration.class, CamundaBpmAutoConfiguration.class, CamundaBpmRestJerseyAutoConfiguration.class, ValidationAutoConfiguration.class})
 // We need the special object mapper, though.
@@ -42,6 +44,8 @@ import java.util.stream.Collectors;
 @Import({ObjectMapperConfiguration.class})
 // And we also need the DAOs.
 @ComponentScan(basePackages={"com.casm.acled.dao", "com.casm.acled.crawler"})
+
+@ShellComponent
 public class CrawlerSweepRunner implements CommandLineRunner {
 
     protected static final Logger logger = LoggerFactory.getLogger(CrawlerSweepRunner.class);
@@ -70,6 +74,16 @@ public class CrawlerSweepRunner implements CommandLineRunner {
         Path scraperDir = Paths.get("/Users/pengqiwei/Downloads/My/PhDs/acled_thing/acled-scrapers");
         SourceList sourceList = sourceListDAO.getByUnique(SourceList.LIST_NAME, name).get();
         List<Source> sources = sourceDAO.byList(sourceList);
+
+//        Set<Source> globalActiveSources = new HashSet<>();
+//        globalActiveSources.addAll(sources);
+//        Boolean a = sourceList.get(SourceList.CRAWL_ACTIVE);
+//        for(Source source : globalActiveSources) {
+//            System.out.println(source);
+//        }
+
+        Boolean b = sources.get(0).hasValue(Source.CRAWL_SCHEDULE);
+
         List<Source> sourcesWithScrapers = sources.stream()
                 .filter(s-> Util.isScrapable(scraperDir, s))
                 .collect(Collectors.toList());
@@ -124,6 +138,7 @@ public class CrawlerSweepRunner implements CommandLineRunner {
     }
 
     @Override
+    @ShellMethod("Translate text from one language to another.")
     public void run(String... args) throws Exception {
 
 //        crawlerSweep.sweepAvailableScrapers(Paths.get("allscrapers"));

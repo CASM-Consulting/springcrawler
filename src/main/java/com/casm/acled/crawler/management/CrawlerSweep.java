@@ -64,7 +64,6 @@ public class CrawlerSweep {
         List<JobRequest> jobs = args.toJobRequests();
 
         for(JobRequest job : jobs) {
-            System.out.println(ImmutableMap.copyOf(job.getParameters()).toString());
             client.enqueue(job);
             try {
                 Thread.sleep(1*1000);
