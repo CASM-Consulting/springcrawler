@@ -7,10 +7,12 @@ import com.casm.acled.crawler.reporting.Reporter;
 import com.casm.acled.crawler.scraper.dates.CompositeDateParser;
 import com.casm.acled.crawler.scraper.dates.ExcludingCustomDateMetadataFilter;
 import com.casm.acled.crawler.scraper.dates.DateParser;
+import com.casm.acled.crawler.scraper.dates.SiteMapLastModifiedMetadataFilter;
 import com.casm.acled.crawler.scraper.keywords.ExcludingKeywordFilter;
 import com.casm.acled.crawler.util.CustomLoggerRepository;
 import com.casm.acled.entities.source.Source;
 import com.casm.acled.entities.sourcelist.SourceList;
+import com.norconex.collector.core.filter.impl.RegexReferenceFilter;
 import com.norconex.collector.http.HttpCollector;
 import com.norconex.collector.http.url.IURLNormalizer;
 import com.norconex.collector.http.url.impl.GenericURLNormalizer;
@@ -81,7 +83,7 @@ public class Crawl {
         this.to = args.to;
         this.reporter = reporter;
 
-        String id = id();
+        String id = id(false);
         Path scraperCachePath = Paths.get(id);
 
         importer.setCollectorSupplier(collectorSupplier);
@@ -139,6 +141,16 @@ public class Crawl {
         ACLEDScraper scraper = ACLEDScraper.load(args.scrapersDir, source, reporter);
         ACLEDMetadataPreProcessor metadata = new ACLEDMetadataPreProcessor(startURL[0]);
 
+        if(source.hasValue(Source.CRAWL_EXCLUDE_PATTERN)) {
+            String pattern = source.get(Source.CRAWL_EXCLUDE_PATTERN);
+            RegexReferenceFilter filter = new RegexReferenceFilter(pattern, OnMatch.EXCLUDE);
+            config.crawler().setReferenceFilters(filter);
+        }
+
+        if(!sitemaps.isEmpty() && from != null) {
+            config.crawler().setMetadataFilters(new SiteMapLastModifiedMetadataFilter(from));
+        }
+
         applySourceIdiosyncrasies(source, config);
 
         config.setScraper(scraper, metadata);
@@ -166,7 +178,7 @@ public class Crawl {
         ThreadGroup threadGroup = Thread.currentThread().getThreadGroup();
         String name = threadGroup.getName();
 
-        CustomLoggerRepository.register(name, id());
+        CustomLoggerRepository.register(name, id(false));
 
     }
 
@@ -202,15 +214,17 @@ public class Crawl {
 //        if(source.get(Source.))
     }
 
-    public String id() {
+    public String id(boolean withDates) {
         StringBuilder sb = new StringBuilder();
         String standardName = source.get(Source.STANDARD_NAME);
         standardName = standardName.toLowerCase().replaceAll(" ", "-");
-        sb.append(standardName)
-                .append("-")
+        sb.append(standardName);
+        if(withDates) {
+            sb.append("-")
                 .append(from == null ? "" : from.toString())
                 .append("-")
                 .append(to == null ? "" : to.toString());
+        }
         return sb.toString();
     }
 

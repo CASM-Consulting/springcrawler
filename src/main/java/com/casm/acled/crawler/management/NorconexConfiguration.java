@@ -9,6 +9,7 @@ import com.norconex.collector.http.HttpCollectorConfig;
 import com.norconex.collector.http.crawler.HttpCrawlerConfig;
 import com.norconex.collector.http.crawler.URLCrawlScopeStrategy;
 import com.norconex.collector.http.delay.impl.GenericDelayResolver;
+import com.norconex.collector.http.sitemap.impl.StandardSitemapResolverFactory;
 import com.norconex.collector.http.url.impl.GenericLinkExtractor;
 import com.norconex.importer.ImporterConfig;
 import com.norconex.importer.handler.IImporterHandler;
@@ -149,6 +150,10 @@ public class NorconexConfiguration {
 //            crawler.setStartSitemapURLs(seeds);
 //        crawler.setStartURLs(seeds);
 
+        StandardSitemapResolverFactory ssrf = new StandardSitemapResolverFactory();
+        ssrf.setLenient(true);
+
+        crawler.setSitemapResolverFactory(ssrf);
 
         // Used to set the politeness delay for consecutive post calls to the site (helps prevent being blocked)
         GenericDelayResolver gdr = new GenericDelayResolver();

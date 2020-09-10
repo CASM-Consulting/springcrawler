@@ -15,11 +15,11 @@ import com.casm.acled.dao.entities.ArticleDAO;
 import com.casm.acled.dao.entities.SourceDAO;
 import com.casm.acled.dao.entities.SourceListDAO;
 import com.casm.acled.entities.EntityVersions;
+import com.casm.acled.entities.VersionedEntity;
 import com.casm.acled.entities.article.Article;
 import com.casm.acled.entities.source.Source;
 import com.casm.acled.entities.sourcelist.SourceList;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.norconex.collector.http.doc.HttpDocument;
 import com.opencsv.CSVReader;
@@ -31,6 +31,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.ws.rs.ProcessingException;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Invocation;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.MediaType;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -108,6 +115,39 @@ public class CheckListService {
     }
 
 
+    public boolean checkConnection(Source source) {
+        String url = source.get(Source.LINK);
+        Client client = ClientBuilder.newClient();
+
+        boolean pass = true;
+
+//        target.property(ClientProperties.FOLLOW_REDIRECTS, Boolean.TRUE);
+        try {
+
+            WebTarget target = client.target(url);
+
+            Invocation.Builder invocationBuilder = target.request(MediaType.TEXT_HTML);
+
+            invocationBuilder.get(String.class);
+        } catch ( WebApplicationException e) {
+            if(e.getResponse().getStatus() >= 300 && e.getResponse().getStatus() < 400) {
+                String redirect = (String)e.getResponse().getHeaders().getFirst("Location");
+
+                reporter.report(Report.of(Event.SOURCE_LINK_REDIRECT).id(source.id()).message(url + " -> " + redirect));
+            } else {
+
+                reporter.report(Report.of(Event.SOURCE_LINK_INVALID).id(source.id()).message(url + " : " + e.getResponse().getStatus()));
+            }
+//            logger.warn(url + " : " + e.getMessage());
+            pass = false;
+        } catch ( IllegalArgumentException | ProcessingException e ) {
+
+            reporter.report(Report.of(Event.SOURCE_LINK_INVALID).id(source.id()).message(url + " : " + e.getMessage()));
+            pass = false;
+        }
+        return pass;
+    }
+
     public boolean scraperExists(CrawlArgs args, Source source) {
         if(Util.scraperExists(args.scrapersDir, source)) {
             return true;
@@ -174,10 +214,12 @@ public class CheckListService {
 
         boolean passed = false;
 
+        boolean connection = checkConnection(source);
         boolean scraperExists = scraperExists(args, source);
         boolean hasExamples = hasExamples(source);
         boolean hasDateFormat = hasDateFormat(source);
         boolean hasSiteMaps = hasSiteMaps(source);
+
 
         if(hasSiteMaps) {
             reporter.report(Report.of(Event.HAS_SITE_MAPS).id(source.id()).message(source.get(Source.STANDARD_NAME)));
@@ -191,6 +233,10 @@ public class CheckListService {
                 passed = true;
                 reporter.report(Report.of(Event.SCRAPE_PASS).id(source.id()).message(source.get(Source.STANDARD_NAME)));
             }
+        }
+
+        if(!connection) {
+            passed = false;
         }
 
         if(args.flagSet.contains(CrawlArgs.Flags.DISABLE_ON_FAIL) ) {
@@ -236,10 +282,19 @@ public class CheckListService {
         exportCrawlerSourcesToCSV(outputDir, fileName, sources);
     }
 
+
+    private <V extends VersionedEntity<V>> boolean isList(V entity, String field) {
+        if(entity.spec().get(field).getKlass().isAssignableFrom(List.class)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     public void exportCrawlerSourcesToCSV(Path outputDir, String fileName, List<Source> sources) throws IOException {
 
         List<String> headers = ImmutableList.of("id", "field", "value");
-        Set<String> fields = ImmutableSet.of(Source.EXAMPLE_URLS, Source.DATE_FORMAT, Source.LOCALES);
+        Set<String> fields = ImmutableSet.of(Source.LINK, Source.EXAMPLE_URLS, Source.DATE_FORMAT, Source.LOCALES);
 
         try (
                 final OutputStream outputStream = java.nio.file.Files.newOutputStream(outputDir.resolve(fileName), StandardOpenOption.CREATE);
@@ -257,9 +312,19 @@ public class CheckListService {
 
                     List<String> values;
 
-                    if(source.hasValue(field) && !((List)source.get(field)).isEmpty()) {
+                    if(source.hasValue(field) ) {
+                        if(isList(source, field) ) {
+                            if(((List)source.get(field)).isEmpty()) {
 
-                        values = source.get(field);
+                                values = ImmutableList.of("");
+                            } else {
+
+                                values = source.get(field);
+                            }
+                        } else {
+
+                            values = ImmutableList.of(source.get(field));
+                        }
                     } else {
 
                         values = ImmutableList.of("");
@@ -284,7 +349,7 @@ public class CheckListService {
         String FIELD = "field";
         String VALUE = "value";
 
-        Set<String> allowedFields = ImmutableSet.of(Source.EXAMPLE_URLS, Source.DATE_FORMAT, Source.LOCALES);
+        Set<String> allowedFields = ImmutableSet.of(Source.LINK, Source.EXAMPLE_URLS, Source.DATE_FORMAT, Source.LOCALES);
 
         try (
                 Reader reader = java.nio.file.Files.newBufferedReader(seedsPath);
@@ -317,18 +382,24 @@ public class CheckListService {
                         source = defaultSource.put(Source.STANDARD_NAME, id);
                     }
 
-                    List<String> values;
+                    if(isList(source, field)) {
 
-                    if(source.hasValue(field)) {
-                        values = source.get(field);
+                        List<String> values;
+
+                        if(source.hasValue(field)) {
+                            values = source.get(field);
+                        } else {
+                            values = new ArrayList<>();
+                        }
+                        if(!value.isEmpty()) {
+                            values.add(value);
+                        }
+
+                        return source.put(field, values);
                     } else {
-                        values = new ArrayList<>();
-                    }
-                    if(!value.isEmpty()) {
-                        values.add(value);
-                    }
 
-                    return source.put(field, values);
+                        return source.put(field, value);
+                    }
                 });
             }
 
