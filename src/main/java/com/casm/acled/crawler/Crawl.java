@@ -156,7 +156,11 @@ public class Crawl {
         config.setScraper(scraper, metadata);
         config.crawler().setStartURLs(startURL);
 //        config.collector();
-        config.setId(id);
+        if(args.crawlId != null && !args.crawlId.isEmpty()) {
+            config.setId(args.crawlId);
+        } else {
+            config.setId(id);
+        }
         config.crawler().setPostImportProcessors(importer);
     }
 
