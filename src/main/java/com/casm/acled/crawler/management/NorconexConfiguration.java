@@ -22,6 +22,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -151,6 +152,11 @@ public class NorconexConfiguration {
 //        crawler.setStartURLs(seeds);
 
         StandardSitemapResolverFactory ssrf = new StandardSitemapResolverFactory();
+        if(args.from != null) {
+            long from = args.from.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli() - (24 * 60 * 60 * 1000);
+            ssrf.setFrom(from);
+        }
+
         ssrf.setLenient(true);
 
         crawler.setSitemapResolverFactory(ssrf);
