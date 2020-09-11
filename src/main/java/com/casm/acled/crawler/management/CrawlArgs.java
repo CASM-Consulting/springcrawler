@@ -37,6 +37,9 @@ public class CrawlArgs {
         @Parameter(description = "Program")
         public String program;
 
+        @Parameter(names = "-jqm", description = "JQM Program")
+        public String jqmProgram = "JQMSpringCollectorV1";
+
         @Parameter(names = "-s", description = "Source")
         public List<String> sources;
 
@@ -73,7 +76,7 @@ public class CrawlArgs {
         @Parameter(names = "-sd", description = "Scrapers directory")
         public String scrapersDir = null;
 
-        @Parameter(names = "-f", description = "Flags")
+        @Parameter(names = "-fl", description = "Flags")
         public List<String> flags;
     }
 
@@ -81,6 +84,8 @@ public class CrawlArgs {
     public final Raw raw;
 
     public String program;
+
+    public String jqmProgram;
 
     public List<Source> sources;
     public static final String SOURCE_ID = "SOURCE_ID";
@@ -184,6 +189,7 @@ public class CrawlArgs {
 
 
         program = raw.program;
+        jqmProgram = raw.jqmProgram;
 
 //        if(raw.program != null ) {
 //            switch (raw.program) {
@@ -209,7 +215,7 @@ public class CrawlArgs {
     }
 
     private JobRequest toJobRequest(Source source) {
-        JobRequest jobRequest = JobRequest.create(program, CrawlerSweep.JQM_USER);
+        JobRequest jobRequest = JobRequest.create(jqmProgram, CrawlerSweep.JQM_USER);
 
         jobRequest.addParameter( SOURCE_ID, Integer.toString( source.id() ) );
         jobRequest.addParameter( SOURCE_LIST_ID, Integer.toString( sourceList.id() ) );

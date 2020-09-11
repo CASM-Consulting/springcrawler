@@ -6,6 +6,7 @@ import com.casm.acled.crawler.management.CrawlerSweep;
 import com.casm.acled.crawler.reporting.Reporter;
 import com.casm.acled.crawler.spring.CrawlService;
 import com.casm.acled.dao.entities.SourceListDAO;
+import com.google.common.collect.ImmutableList;
 import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
 import org.camunda.bpm.spring.boot.starter.rest.CamundaBpmRestJerseyAutoConfiguration;
 import org.slf4j.Logger;
@@ -93,10 +94,12 @@ public class CrawlerServiceRunner implements CommandLineRunner {
 
         crawlArgs.raw.skipKeywords = true;
         crawlArgs.raw.program = "crawl";
-        crawlArgs.raw.sourceList = "fake-net";
-        crawlArgs.raw.from = "2020-07-10";
-        crawlArgs.raw.to = "2020-07-15";
+        crawlArgs.raw.sources = ImmutableList.of("Milenio");
+        crawlArgs.raw.sourceList = "mexico-1";
+        crawlArgs.raw.from = "2020-08-31";
+        crawlArgs.raw.to = "2020-09-06";
         crawlArgs.raw.workingDir = "test";
+        crawlArgs.raw.scrapersDir = "/home/sw206/git/acled-scrapers/";
 
         crawlArgs.init();
 
