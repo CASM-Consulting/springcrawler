@@ -84,6 +84,8 @@ public class CrawlerSweepRunner implements CommandLineRunner {
         crawlArgs.raw.skipKeywords = skipKeywords;
         crawlArgs.raw.program = app;
 
+        crawlArgs.raw.crawlId = "123";
+
         crawlArgs.init();
 //
 //        crawlArgs.sources = sourcesWithScrapers;

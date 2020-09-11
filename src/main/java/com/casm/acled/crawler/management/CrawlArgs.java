@@ -2,7 +2,6 @@ package com.casm.acled.crawler.management;
 
 import com.beust.jcommander.Parameter;
 import com.casm.acled.crawler.Crawl;
-import com.casm.acled.crawler.springrunners.CrawlerSweepRunner;
 import com.casm.acled.dao.entities.SourceDAO;
 import com.casm.acled.dao.entities.SourceListDAO;
 import com.casm.acled.entities.source.Source;
@@ -45,6 +44,9 @@ public class CrawlArgs {
 
         @Parameter(names = "-sl", description = "Source list")
         public String sourceList;
+
+        @Parameter(names = "-cid", description = "Crawl ID override")
+        public String crawlId;
 
         @Parameter(names = "-n", description = "Quit after this many")
         public Integer maxArticles = -1;
@@ -92,6 +94,9 @@ public class CrawlArgs {
 
     public SourceList sourceList;
     public static final String SOURCE_LIST_ID = "SOURCE_LIST_ID";
+
+    public String crawlId;
+    public static final String CRAWL_ID = "CRAWL_ID";
 
     public Integer maxArticle;
     public static final String MAX_ARTICLES = "MAX_ARTICLES";
@@ -157,6 +162,8 @@ public class CrawlArgs {
             }
         }
 
+        crawlId = raw.crawlId;
+
         if(raw.from != null) {
             from = LocalDate.parse(raw.from);
         }
@@ -219,6 +226,9 @@ public class CrawlArgs {
 
         jobRequest.addParameter( SOURCE_ID, Integer.toString( source.id() ) );
         jobRequest.addParameter( SOURCE_LIST_ID, Integer.toString( sourceList.id() ) );
+        if(crawlId != null) {
+            jobRequest.addParameter( CRAWL_ID, crawlId );
+        }
         jobRequest.addParameter( SKIP_KEYWORDS, skipKeywords.toString() );
         jobRequest.addParameter( IGNORE_SITE_MAP, ignoreSiteMap.toString() );
         jobRequest.addParameter( ONLY_SITE_MAP, onlySiteMap.toString() );
@@ -254,6 +264,7 @@ public class CrawlArgs {
         sources = ImmutableList.of(sourceDAO.getById(sourceId).get());
         sourceList = sourceListDAO.getById(sourceListId).get();
 
+        raw.crawlId = runtimeParameters.get(CRAWL_ID);
         raw.depth = Integer.parseInt(runtimeParameters.get(DEPTH));
         raw.maxArticles = Integer.parseInt(runtimeParameters.get(MAX_ARTICLES));
         raw.politeness = Integer.parseInt(runtimeParameters.get(POLITENESS));
