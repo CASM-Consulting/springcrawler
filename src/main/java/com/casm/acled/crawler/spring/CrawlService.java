@@ -245,6 +245,8 @@ public class CrawlService {
 
         String url = source.get(Source.LINK);
 
+        url = Util.ensureHTTP(url, false);
+
         List<String> sitemaps;
 
         if(url == null || url.isEmpty()) {

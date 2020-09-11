@@ -66,13 +66,14 @@ public class CrawlerSweepRunner implements CommandLineRunner {
     public static String JQMSpringCollectorV1 = "JQMSpringCollectorV1";
     public static String JQMSpringExampleCollectorV1 = "JQMSpringExampleCollectorV1";
 
-    public void setCrawlArgs(String app, String name, LocalDate from, LocalDate to, Path workingDir, Boolean skipKeywords) {
-        Path scraperDir = Paths.get("/Users/pengqiwei/Downloads/My/PhDs/acled_thing/acled-scrapers");
-        SourceList sourceList = sourceListDAO.getByUnique(SourceList.LIST_NAME, name).get();
-        List<Source> sources = sourceDAO.byList(sourceList);
-        List<Source> sourcesWithScrapers = sources.stream()
-                .filter(s-> Util.isScrapable(scraperDir, s))
-                .collect(Collectors.toList());
+    public void setCrawlArgs(String app, String listName, LocalDate from, LocalDate to, Path workingDir, Boolean skipKeywords) {
+        Path scraperDir = Paths.get("/home/sw206/git/acled-scrapers");
+//        SourceList sourceList = sourceListDAO.getByUnique(SourceList.LIST_NAME, listName).get();
+        crawlArgs.raw.sourceList = listName;
+//        List<Source> sources = sourceDAO.byList(sourceList);
+//        List<Source> sourcesWithScrapers = sources.stream()
+//                .filter(s-> Util.isScrapable(scraperDir, s))
+//                .collect(Collectors.toList());
 
         if (from!=null) {
             crawlArgs.raw.from = from.toString();
@@ -84,14 +85,14 @@ public class CrawlerSweepRunner implements CommandLineRunner {
         crawlArgs.raw.program = app;
 
         crawlArgs.init();
-
-        crawlArgs.sources = sourcesWithScrapers;
-        crawlArgs.sourceList = sourceList;
+//
+//        crawlArgs.sources = sourcesWithScrapers;
+//        crawlArgs.sourceList = sourceList;
 
         crawlArgs.scrapersDir = scraperDir;
 
         if (workingDir == null) {
-            crawlArgs.workingDir = Paths.get("none");
+            crawlArgs.workingDir = Paths.get(".");
         }
         else {
             crawlArgs.workingDir = workingDir;
@@ -134,9 +135,10 @@ public class CrawlerSweepRunner implements CommandLineRunner {
 
 //        sweepSourceList(JQMSpringCollectorV1, "mexico-back-code-2018", LocalDate.of(2018, 1,1), LocalDate.of(2018, 12,31), Boolean.FALSE);
 //        sweepSourceList(JQMSpringCollectorV1, "fake-net", LocalDate.now().minusDays(10), LocalDate.now(), Boolean.TRUE);
-        sweepSourceList(JQMSpringCollectorV1, "fake-net", LocalDate.of(2020, 8,21), LocalDate.of(2020, 8,28), Boolean.TRUE);
+//        sweepSourceList(JQMSpringCollectorV1, "fake-net", LocalDate.of(2020, 8,21), LocalDate.of(2020, 8,28), Boolean.TRUE);
 
-        setCrawlArgs(JQMSpringCollectorV1, "fake-net", LocalDate.of(2020, 8,21), LocalDate.of(2020, 8,28), null, Boolean.TRUE);
+        setCrawlArgs(JQMSpringCollectorV1, "mexico-1", LocalDate.of(2020, 8,31), LocalDate.of(2020, 9,6), Paths.get("mexico-1"), Boolean.TRUE);
+
         crawlerSweep.sweep(crawlArgs);
 
 //        sweepSourceList(JQMSpringCollectorV1, "fake-net", LocalDate.of(2020, 8,21), LocalDate.of(2020, 8,28), Boolean.TRUE);

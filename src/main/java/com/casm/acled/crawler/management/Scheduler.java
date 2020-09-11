@@ -195,6 +195,8 @@ public class Scheduler implements Runnable {
 
         source.put(Source.CRAWL_JOB_ID, id);
 
+        sourceDAO.upsert(source);
+
         return job;
     }
 
