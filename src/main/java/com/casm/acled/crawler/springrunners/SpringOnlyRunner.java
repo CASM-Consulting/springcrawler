@@ -19,14 +19,13 @@ import org.springframework.context.annotation.Import;
 @ComponentScan(
         basePackages = {"com.casm.acled.dao", "com.casm.acled.crawler"}
 )
-public class SpringOnlyRunner implements CommandLineRunner {
+public class SpringOnlyRunner {
 
     public static Object none = new Object();
 
     public SpringOnlyRunner() {
     }
 
-    @Override
     public void run(String... args) {
 
 

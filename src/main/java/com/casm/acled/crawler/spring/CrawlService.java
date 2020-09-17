@@ -6,6 +6,7 @@ import bithazard.sitemap.parser.model.UrlConnectionException;
 import com.casm.acled.crawler.Crawl;
 import com.casm.acled.crawler.management.CheckListService;
 import com.casm.acled.crawler.management.CrawlArgs;
+import com.casm.acled.crawler.management.CrawlArgsService;
 import com.casm.acled.crawler.scraper.ACLEDImporter;
 import com.casm.acled.crawler.reporting.Reporter;
 import com.casm.acled.crawler.util.Util;
@@ -50,14 +51,15 @@ public class CrawlService {
     @Autowired
     private Reporter reporter;
 
+//    private CrawlArgs args;
     @Autowired
-    private CrawlArgs args;
+    private CrawlArgsService argsService;
 
     @Autowired
     private CheckListService checkListService;
 
     public CrawlService() {
-
+//        args = argsService.get();
     }
 
     public void run(int sourceListId, int sourceId, boolean skipKeywords) {
@@ -78,6 +80,8 @@ public class CrawlService {
             ACLEDImporter importer = new ACLEDImporter(articleDAO, maybeSource.get(), sourceListDAO, true);
             importer.setMaxArticles(10);
 
+            CrawlArgs args = argsService.get();
+
             args.sources = ImmutableList.of(maybeSource.get());
             args.sourceList = maybesSourceList.get();
             args.depth = 3;
@@ -95,6 +99,8 @@ public class CrawlService {
 
         Optional<SourceList> maybesSourceList = sourceListDAO.getById(sourceListId);
         Optional<Source> maybeSource = sourceDAO.getById(sourceId);
+
+        CrawlArgs args = argsService.get();
 
         args.sources = ImmutableList.of(maybeSource.get());
         args.sourceList = maybesSourceList.get();

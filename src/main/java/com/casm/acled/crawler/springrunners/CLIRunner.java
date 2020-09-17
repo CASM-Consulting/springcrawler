@@ -9,6 +9,7 @@ import com.casm.acled.configuration.ObjectMapperConfiguration;
 
 //camunda
 import com.casm.acled.crawler.management.CrawlArgs;
+import com.casm.acled.crawler.management.CrawlArgsService;
 import com.casm.acled.crawler.management.CrawlerSweep;
 import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
 import org.camunda.bpm.spring.boot.starter.rest.CamundaBpmRestJerseyAutoConfiguration;
@@ -46,6 +47,8 @@ public class CLIRunner implements CommandLineRunner {
     private CrawlerSweep crawlerSweep;
 
     @Autowired
+    private CrawlArgsService argsService;
+
     private CrawlArgs crawlArgs;
 
     public static void main(String[] args) {
@@ -60,6 +63,8 @@ public class CLIRunner implements CommandLineRunner {
 
     @Override
     public void run(String[] args) throws Exception {
+
+        crawlArgs = argsService.get();
 
         JCommander.newBuilder()
                 .addObject(crawlArgs.raw)

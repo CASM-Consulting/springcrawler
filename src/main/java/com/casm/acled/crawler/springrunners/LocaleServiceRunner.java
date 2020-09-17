@@ -29,7 +29,7 @@ import org.springframework.context.annotation.Import;
 @Import({ObjectMapperConfiguration.class})
 // And we also need the DAOs.
 @ComponentScan(basePackages={"com.casm.acled.dao", "com.casm.acled.crawler"})
-public class LocaleServiceRunner implements CommandLineRunner {
+public class LocaleServiceRunner {
 
     protected static final Logger logger = LoggerFactory.getLogger(LocaleServiceRunner.class);
 
@@ -58,7 +58,6 @@ public class LocaleServiceRunner implements CommandLineRunner {
 
 
 
-    @Override
     public void run(String[] args) throws Exception {
         reporter.randomRunId();
 

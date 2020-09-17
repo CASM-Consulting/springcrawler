@@ -2,6 +2,7 @@ package com.casm.acled.crawler.springjqm;
 
 import com.casm.acled.crawler.Crawl;
 import com.casm.acled.crawler.management.CrawlArgs;
+import com.casm.acled.crawler.management.CrawlArgsService;
 import com.casm.acled.crawler.spring.CrawlService;
 import com.enioka.jqm.handler.JobManagerProvider;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,10 +24,14 @@ public class JQMRunner implements Runnable {
     private JobManagerProvider jmp;
 
     @Autowired
+    private CrawlArgsService argsService;
+
     private CrawlArgs args;
 
     @Override
     public void run() {
+
+        args = argsService.get();
 
         runtimeParameters = jmp.getObject().parameters();
 
