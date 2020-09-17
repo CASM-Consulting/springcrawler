@@ -5,7 +5,6 @@ import com.casm.acled.crawler.reporting.Event;
 import com.casm.acled.crawler.reporting.Report;
 import com.casm.acled.crawler.reporting.Reporter;
 
-import com.casm.acled.entities.source.Source;
 import com.enioka.jqm.api.*;
 
 import org.quartz.CronExpression;
@@ -20,6 +19,7 @@ import java.util.*;
 
 @Service
 public class SchedulerService {
+    //TODO
     // to ask, the project sometimes will run several applications for instance, when I only execute the SchedulerRunner, it sometimes run Crawler.. and ...;
     // the idea is that, we load all possible job requests from source, and compare them with current running/created job instances, then
     // about the crawl_JOB_ID, if it doesnt have one, then it doesnt run, just run it.
@@ -30,16 +30,11 @@ public class SchedulerService {
 
     protected static final Logger logger = LoggerFactory.getLogger(SchedulerService.class);
 
-
     private final CronExpression defaultCronSchedule;
 
-
-    private final JobRunner jobRunner; // to run job;
-
-    private final JobProvider jobProvider; // what's the effect of this in here.
-
+    private final JobRunner jobRunner;
+    private final JobProvider jobProvider;
     private final Reporter reporter;
-
     private final TimeProvider timeProvider;
 
     private enum Action {
@@ -132,7 +127,7 @@ public class SchedulerService {
 
     // to be implemented, running so slowly and should report to admin. could involve cronexpression comparison
     private Action checkStillRunningFromLastTime(Job job, Event e) {
-        // emm, not sure if need to compare anything, since it is still running then it surely runs so slow and just need to report directly.
+        // TODO: does comparison even need to be made at this stage?
         reporter.report(Report.of(e).id(job.id()).message(job.name()));
 
         return Action.PASS;
@@ -164,8 +159,8 @@ public class SchedulerService {
     // to be implemented, how long between enquequed and current state; report to admin about this.
     private void checkTimeSinceSubmitted(Job job, LocalDateTime timeNow) {
         LocalDateTime jobStartTime = job.getStarted();
-        String msg = String.format("The job is still under attributing, it starts from %s and current time is %s", jobStartTime.toString(), timeNow.toString());
-        reporter.report(Report.of(Event.JOB_STILL_ATTRIBUTED).id(job.id()).message(job.name()+"||"+msg));
+        String msg = String.format("The job is still starting; it started at %s and current time is %s", jobStartTime.toString(), timeNow.toString());
+        reporter.report(Report.of(Event.JOB_STILL_STARTING).id(job.id()).message(job.name()+"||"+msg));
     }
 
     private Optional<Job> checkJobStatus(int jobPID) {

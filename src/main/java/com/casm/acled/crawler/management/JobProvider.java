@@ -1,9 +1,12 @@
 package com.casm.acled.crawler.management;
 
-import java.lang.reflect.Method;
-import java.time.*;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 
+/**
+ * Manages the instantiation of potential Jobs from Sources.
+ * Can record the PID of a Source's Job.
+ */
 public interface JobProvider {
 
     List<Job> getJobs(Map<String, String> params);

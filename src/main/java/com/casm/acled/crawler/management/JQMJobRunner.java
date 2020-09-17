@@ -28,7 +28,7 @@ public class JQMJobRunner implements JobRunner {
 
         client = JqmClientFactory.getClient();
 
-        jobs = new ArrayList();
+        jobs = new ArrayList<>();
     }
 
 
@@ -45,7 +45,6 @@ public class JQMJobRunner implements JobRunner {
 
     @Override
     public Job getJob(int jobPID) {
-        // get jobinstance by ID;
         JobInstance job = client.getJob(jobPID);
         return new JQMJob(job);
     }
@@ -53,8 +52,8 @@ public class JQMJobRunner implements JobRunner {
     @Override
     public void runJob(Job job) {
         JQMJob j = (JQMJob)job;
-        Source source = j.getSource();
 
+        // TODO
         // need to decide, if job instance exist, should we run this new job request again using the same parameters???,
         // the following commented block show the functionality, assign jobinstance's parameters to jobrequest;
 //        if (j.getJobInstance()!=null) {
@@ -65,8 +64,8 @@ public class JQMJobRunner implements JobRunner {
 
         int pid = client.enqueue(j.getJobRequest());
 
-        jobProvider.setPID(job.id(), pid); // should also save it;
-
+        // Save job PID
+        jobProvider.setPID(job.id(), pid);
     }
 
 }
