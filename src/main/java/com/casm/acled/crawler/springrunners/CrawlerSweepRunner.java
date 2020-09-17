@@ -2,6 +2,7 @@ package com.casm.acled.crawler.springrunners;
 
 import com.casm.acled.configuration.ObjectMapperConfiguration;
 import com.casm.acled.crawler.management.CrawlArgs;
+import com.casm.acled.crawler.management.CrawlArgsService;
 import com.casm.acled.crawler.management.CrawlerSweep;
 import com.casm.acled.crawler.reporting.Reporter;
 import com.casm.acled.crawler.util.Util;
@@ -60,6 +61,8 @@ public class CrawlerSweepRunner implements CommandLineRunner {
 
 
     @Autowired
+    private CrawlArgsService argsService;
+
     private CrawlArgs crawlArgs;
 
 
@@ -68,6 +71,9 @@ public class CrawlerSweepRunner implements CommandLineRunner {
 
     public void setCrawlArgs(String app, String listName, LocalDate from, LocalDate to, Path workingDir, Boolean skipKeywords) {
         Path scraperDir = Paths.get("/home/sw206/git/acled-scrapers");
+
+        crawlArgs = argsService.get();
+
 //        SourceList sourceList = sourceListDAO.getByUnique(SourceList.LIST_NAME, listName).get();
         crawlArgs.raw.sourceList = listName;
 //        List<Source> sources = sourceDAO.byList(sourceList);
@@ -84,7 +90,7 @@ public class CrawlerSweepRunner implements CommandLineRunner {
         crawlArgs.raw.skipKeywords = skipKeywords;
         crawlArgs.raw.program = app;
 
-        crawlArgs.raw.crawlId = "123";
+//        crawlArgs.raw.crawlId = "123";
 
         crawlArgs.init();
 //
@@ -139,7 +145,7 @@ public class CrawlerSweepRunner implements CommandLineRunner {
 //        sweepSourceList(JQMSpringCollectorV1, "fake-net", LocalDate.now().minusDays(10), LocalDate.now(), Boolean.TRUE);
 //        sweepSourceList(JQMSpringCollectorV1, "fake-net", LocalDate.of(2020, 8,21), LocalDate.of(2020, 8,28), Boolean.TRUE);
 
-        setCrawlArgs(JQMSpringCollectorV1, "mexico-1", LocalDate.of(2020, 8,31), LocalDate.of(2020, 9,6), Paths.get("mexico-1"), Boolean.TRUE);
+        setCrawlArgs(JQMSpringCollectorV1, "fake-net", LocalDate.of(2020, 9,14), LocalDate.of(2020, 9,17), Paths.get("text"), Boolean.TRUE);
 
         crawlerSweep.sweep(crawlArgs);
 

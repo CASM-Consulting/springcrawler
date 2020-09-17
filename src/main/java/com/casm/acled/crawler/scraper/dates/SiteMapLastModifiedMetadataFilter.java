@@ -18,7 +18,7 @@ public class SiteMapLastModifiedMetadataFilter implements IMetadataFilter {
 
     @Override
     public boolean acceptMetadata(String reference, Properties metadata) {
-        if(metadata.get(HttpMetadata.COLLECTOR_SM_LASTMOD).isEmpty()) {
+        if(metadata.get(HttpMetadata.COLLECTOR_SM_LASTMOD) != null && metadata.get(HttpMetadata.COLLECTOR_SM_LASTMOD).isEmpty()) {
             return true;
         } else {
             //milliseconds

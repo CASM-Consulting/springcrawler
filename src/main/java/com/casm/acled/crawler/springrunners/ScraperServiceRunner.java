@@ -39,7 +39,7 @@ import java.util.*;
 @Import({ObjectMapperConfiguration.class})
 // And we also need the DAOs.
 @ComponentScan(basePackages={"com.casm.acled.dao", "com.casm.acled.crawler"})
-public class ScraperServiceRunner implements CommandLineRunner {
+public class ScraperServiceRunner {
 
     protected static final Logger logger = LoggerFactory.getLogger(ScraperServiceRunner.class);
 
@@ -118,7 +118,6 @@ public class ScraperServiceRunner implements CommandLineRunner {
         scraperService.outputResults(Paths.get("mexico-bc-2018-gt-content-analysis.csv"), explained);
     }
 
-    @Override
     public void run(String... args) {
 
         String runId = reporter.randomRunId();

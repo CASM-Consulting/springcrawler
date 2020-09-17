@@ -4,6 +4,7 @@ import com.beust.jcommander.JCommander;
 import com.casm.acled.configuration.ObjectMapperConfiguration;
 import com.casm.acled.crawler.management.CheckListService;
 import com.casm.acled.crawler.management.CrawlArgs;
+import com.casm.acled.crawler.management.CrawlArgsService;
 import com.casm.acled.crawler.reporting.Reporter;
 import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
 import org.camunda.bpm.spring.boot.starter.rest.CamundaBpmRestJerseyAutoConfiguration;
@@ -27,7 +28,7 @@ import org.springframework.context.annotation.Import;
 @Import({ObjectMapperConfiguration.class})
 // And we also need the DAOs.
 @ComponentScan(basePackages={"com.casm.acled.dao", "com.casm.acled.crawler"})
-public class CheckListRunner implements CommandLineRunner {
+public class CheckListRunner {
 
     protected static final Logger logger = LoggerFactory.getLogger(CheckListRunner.class);
 
@@ -38,10 +39,12 @@ public class CheckListRunner implements CommandLineRunner {
     private Reporter reporter;
 
     @Autowired
+    private CrawlArgsService argsService;
+
     private CrawlArgs crawlArgs;
 
 
-    @Override
+
     public void run(String... args) throws Exception {
         reporter.randomRunId();
 

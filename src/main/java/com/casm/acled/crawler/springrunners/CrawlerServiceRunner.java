@@ -2,6 +2,7 @@ package com.casm.acled.crawler.springrunners;
 
 import com.casm.acled.configuration.ObjectMapperConfiguration;
 import com.casm.acled.crawler.management.CrawlArgs;
+import com.casm.acled.crawler.management.CrawlArgsService;
 import com.casm.acled.crawler.management.CrawlerSweep;
 import com.casm.acled.crawler.reporting.Reporter;
 import com.casm.acled.crawler.spring.CrawlService;
@@ -51,6 +52,8 @@ public class CrawlerServiceRunner implements CommandLineRunner {
     private Reporter reporter;
 
     @Autowired
+    private CrawlArgsService argsService;
+
     private CrawlArgs crawlArgs;
 
     public void crawl(String[] args) {
@@ -92,14 +95,17 @@ public class CrawlerServiceRunner implements CommandLineRunner {
 
         reporter.randomRunId();
 
+        crawlArgs = argsService.get();
+
         crawlArgs.raw.skipKeywords = true;
         crawlArgs.raw.program = "crawl";
         crawlArgs.raw.sources = ImmutableList.of("Milenio");
         crawlArgs.raw.sourceList = "mexico-1";
-        crawlArgs.raw.from = "2020-08-31";
-        crawlArgs.raw.to = "2020-09-06";
+        crawlArgs.raw.from = "2020-09-07";
+        crawlArgs.raw.to = "2020-10-13";
         crawlArgs.raw.workingDir = "test";
         crawlArgs.raw.scrapersDir = "/home/sw206/git/acled-scrapers/";
+        crawlArgs.raw.depth = 0;
 
         crawlArgs.init();
 

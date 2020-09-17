@@ -19,18 +19,15 @@ import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.*;
 
-@Component
 public class CrawlArgs {
 
     public static class Flags {
         public static final String DISABLE_ON_FAIL = "DISABLE_ON_FAIL";
     }
 
-    @Autowired
-    private SourceDAO sourceDAO;
+    private final SourceDAO sourceDAO;
 
-    @Autowired
-    private SourceListDAO sourceListDAO;
+    private final SourceListDAO sourceListDAO;
 
     public class Raw {
         @Parameter(description = "Program")
@@ -133,8 +130,10 @@ public class CrawlArgs {
     public static final String FLAGS = "FLAGS";
 
 
-    public CrawlArgs() {
+    public CrawlArgs(SourceDAO sourceDAO, SourceListDAO sourceListDAO) {
         raw = new Raw();
+        this.sourceDAO = sourceDAO;
+        this.sourceListDAO = sourceListDAO;
     }
     
     public void init() {
