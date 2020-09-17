@@ -11,14 +11,14 @@ import java.lang.reflect.Method;
 import java.time.*;
 import java.util.*;
 
-public interface JobRunner <T extends Job>{
+public interface JobRunner {
 
     // return something implements Job
-    public abstract List<T> getJobs();
+    List<Job> getJobs();
 
     // return something implements Job
-    public abstract T getJob(int jobId);
+    Job getJob(int jobPID);
 
-    public void runJob(T j);
+    void runJob(Job j);
 
 }

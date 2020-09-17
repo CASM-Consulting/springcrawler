@@ -16,7 +16,7 @@ import java.time.*;
 import java.util.*;
 
 @Component
-public class JQMJobProvider implements JobProvider <JQMJob>{
+public class JQMJobProvider implements JobProvider {
 
     @Autowired
     private SourceDAO sourceDAO;
@@ -49,11 +49,23 @@ public class JQMJobProvider implements JobProvider <JQMJob>{
             }
         }
 
-        return new JQMJob(source, jobRequest);
+        return new JQMJob(jobRequest);
 
     }
 
-    public List<JQMJob> getJobs(Map<String, String> params) {
+    @Override
+    public Job getJob(int id) {
+        return new JQMJob(sourceDAO.getById(id).get());
+    }
+
+    @Override
+    public void setPID(int id, int pid) {
+        Source source = sourceDAO.getById(id).get().put(Source.CRAWL_JOB_ID, pid);
+        sourceDAO.upsert(source);
+    }
+
+    @Override
+    public List<Job> getJobs(Map<String, String> params) {
         // a little bit confused about the difference between JobProvider's getJobs and JobRunner's getJobs;
         // get all jobs by providing corresponding resources;
         // in order to set more parameters, this method should have more parameters like from, to and etc. passing a map paramter, add all elements of that map into our job request;
@@ -62,7 +74,7 @@ public class JQMJobProvider implements JobProvider <JQMJob>{
         //if want all sources
 //        Set<Source> allSources = new HashSet<>();
         Set<Source> globalActiveSources = new HashSet<>();
-        List<JQMJob> allJobs = new ArrayList();
+        List<Job> allJobs = new ArrayList();
 
         for(SourceList list : lists) {
             List<Source> listSources = sourceDAO.byList(list);

@@ -1,27 +1,22 @@
 package com.casm.acled.crawler.management;
 
-import com.casm.acled.configuration.ObjectMapperConfiguration;
-import com.casm.acled.dao.entities.SourceDAO;
-import com.casm.acled.dao.entities.SourceListDAO;
 import com.casm.acled.entities.source.Source;
-import com.casm.acled.entities.sourcelist.SourceList;
 import com.enioka.jqm.api.*;
 import com.google.common.collect.ImmutableMap;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 
-import java.time.*;
 import java.util.*;
 
 @Component
-public class JQMJobRunner implements JobRunner<JQMJob>{
+public class JQMJobRunner implements JobRunner {
 
     private final JqmClient client;
-    private final List<JQMJob> jobs;
+    private final List<Job> jobs;
 
     @Autowired
-    private SourceDAO sourceDAO;
+    private JobProvider jobProvider;
 
     public JQMJobRunner () {
 
@@ -36,11 +31,9 @@ public class JQMJobRunner implements JobRunner<JQMJob>{
         jobs = new ArrayList();
     }
 
-    public void setSourceDAO(SourceDAO sourceDAO) {
-        this.sourceDAO = sourceDAO;
-    }
 
-    public List<JQMJob> getJobs() {
+    @Override
+    public List<Job> getJobs() {
         // it returns JobInstance but we need to wrap it into a JQMJob object.
         List<JobInstance> allJobs = client.getJobs();
         for (JobInstance j: allJobs) {
@@ -49,14 +42,17 @@ public class JQMJobRunner implements JobRunner<JQMJob>{
         return jobs;
     }
 
-    public JQMJob getJob(int jobId) {
+
+    @Override
+    public Job getJob(int jobPID) {
         // get jobinstance by ID;
-        JobInstance job = client.getJob(jobId);
+        JobInstance job = client.getJob(jobPID);
         return new JQMJob(job);
     }
 
-    public void runJob(JQMJob j) {
-
+    @Override
+    public void runJob(Job job) {
+        JQMJob j = (JQMJob)job;
         Source source = j.getSource();
 
         // need to decide, if job instance exist, should we run this new job request again using the same parameters???,
@@ -67,12 +63,9 @@ public class JQMJobRunner implements JobRunner<JQMJob>{
 
         System.out.println(ImmutableMap.copyOf(j.getJobRequest().getParameters()).toString());
 
-        int id = client.enqueue(j.getJobRequest());
-        JobInstance job = client.getJob(id); // do i need to get the job?
+        int pid = client.enqueue(j.getJobRequest());
 
-        source = source.put(Source.CRAWL_JOB_ID, id);
-
-        sourceDAO.upsert(source); // should also save it;
+        jobProvider.setPID(job.id(), pid); // should also save it;
 
     }
 

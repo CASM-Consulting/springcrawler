@@ -6,6 +6,9 @@ import com.enioka.jqm.api.JobRequest;
 
 import com.casm.acled.entities.source.Source;
 import com.casm.acled.entities.sourcelist.SourceList;
+import org.quartz.CronExpression;
+
+import java.time.LocalDateTime;
 
 
 // talking about the jobInsance, does it stands for jobrequest or simply a jobInsance instance?
@@ -16,9 +19,23 @@ public interface Job {
     // probably only should have jobrequest object and delete jobInstance object.
     // only source;
 
-    // get id in the database;
-    public abstract int getId();
+    String RUNNING = "RUNNING";
+    String STOPPED = "STOPPED";
+    String STARTING = "STARTING";
+    String FAILED = "FAILED";
+    String CANCELLED = "CANCELLED";
 
-    public abstract String getSchedule();
+    String name();
+
+    int id();
+
+    int pid();
+
+    CronExpression getSchedule();
+
+    String state();
+
+    LocalDateTime getStarted();
+    LocalDateTime getStopped();
 
 }

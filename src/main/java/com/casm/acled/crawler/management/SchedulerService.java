@@ -5,8 +5,6 @@ import com.casm.acled.crawler.reporting.Event;
 import com.casm.acled.crawler.reporting.Report;
 import com.casm.acled.crawler.reporting.Reporter;
 
-import com.casm.acled.dao.entities.SourceDAO;
-import com.casm.acled.dao.entities.SourceListDAO;
 import com.casm.acled.entities.source.Source;
 import com.enioka.jqm.api.*;
 
@@ -14,19 +12,14 @@ import org.quartz.CronExpression;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.Banner;
-import org.springframework.boot.CommandLineRunner;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.WebApplicationType;
-import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.context.annotation.ComponentScan;
+import org.springframework.stereotype.Service;
 
 import java.text.ParseException;
 import java.time.*;
 import java.util.*;
 
-@ComponentScan(basePackages={"com.casm.acled.dao", "com.casm.acled.crawler"})
-public class SchedulerRunner implements CommandLineRunner {
+@Service
+public class SchedulerService {
     // to ask, the project sometimes will run several applications for instance, when I only execute the SchedulerRunner, it sometimes run Crawler.. and ...;
     // the idea is that, we load all possible job requests from source, and compare them with current running/created job instances, then
     // about the crawl_JOB_ID, if it doesnt have one, then it doesnt run, just run it.
@@ -35,34 +28,32 @@ public class SchedulerRunner implements CommandLineRunner {
     // if crawl_job_id does not exist, then run it;
     // jobprovider provides all potential jobs, jobrunner will check them onebyone by using getJob(), and run it by runJob(); Only a job request object (wrapped as Job object) is passed
 
-    protected static final Logger logger = LoggerFactory.getLogger(SchedulerRunner.class);
+    protected static final Logger logger = LoggerFactory.getLogger(SchedulerService.class);
 
-    @Autowired
-    private SourceListDAO sourceListDAO;
-
-    @Autowired
-    private SourceDAO sourceDAO;
-
-    @Autowired
-    private Reporter reporter;
 
     private final CronExpression defaultCronSchedule;
 
-    private final JQMJobRunner jobRunner; // to run job;
 
-//    private final JQMJob job;
+    private final JobRunner jobRunner; // to run job;
 
-    private final JQMJobProvider jobProvider; // what's the effect of this in here.
+    private final JobProvider jobProvider; // what's the effect of this in here.
+
+    private final Reporter reporter;
+
+    private final TimeProvider timeProvider;
 
     private enum Action {
         RUN,
         PASS
     }
 
-    public SchedulerRunner() {
+    public SchedulerService(@Autowired Reporter reporter, @Autowired TimeProvider timeProvider,
+                            @Autowired JobRunner jobRunner, @Autowired JobProvider jobProvider) {
 
-        jobProvider = new JQMJobProvider();
-        jobRunner = new JQMJobRunner();
+        this.reporter = reporter;
+        this.timeProvider = timeProvider;
+        this.jobProvider = jobProvider;
+        this.jobRunner = jobRunner;
 
 
         try {
@@ -121,7 +112,8 @@ public class SchedulerRunner implements CommandLineRunner {
 
 
     private Date getZonedNow(ZoneId zoneId) {
-        ZonedDateTime zonedNow = LocalDateTime.now().atZone(zoneId);
+
+        ZonedDateTime zonedNow = timeProvider.getTime().atZone(zoneId);
 
         Date date = Date.from(zonedNow.toInstant());
 
@@ -139,23 +131,23 @@ public class SchedulerRunner implements CommandLineRunner {
     }
 
     // to be implemented, running so slowly and should report to admin. could involve cronexpression comparison
-    private Action checkStillRunningFromLastTime(Source source, Event e) {
+    private Action checkStillRunningFromLastTime(Job job, Event e) {
         // emm, not sure if need to compare anything, since it is still running then it surely runs so slow and just need to report directly.
-        reporter.report(Report.of(e).id(source.id()).message(source.get(Source.STANDARD_NAME)));
+        reporter.report(Report.of(e).id(job.id()).message(job.name()));
 
         return Action.PASS;
     }
 
     // to be implemented, scheduled to run again. could involve cronexpression comparison
-    private Action checkShouldRunAgain(JobInstance job, CronExpression cron, Date nextRun, Date prevRun, Date timeNow) {
+    private Action checkShouldRunAgain(Job job, CronExpression cron, LocalDateTime nextRun, LocalDateTime prevRun, LocalDateTime timeNow) {
         // if need to run again, the ending time should be after
 
-        Date jobEndTime = job.getEndDate().getTime();
-        if (jobEndTime.before(prevRun)) {
+        LocalDateTime jobEndTime = job.getStopped();
+        if (jobEndTime.isBefore(prevRun)) {
             return Action.RUN;
         }
         else {
-            if (jobEndTime.after(prevRun) && jobEndTime.before(nextRun)) {
+            if (jobEndTime.isAfter(prevRun) && jobEndTime.isBefore(nextRun)) {
                 return Action.PASS;
             }
             else {
@@ -165,91 +157,76 @@ public class SchedulerRunner implements CommandLineRunner {
     }
 
     // to be implemented , send email to admin
-    private void reportJob(Source source, Event e) {
-        reporter.report(Report.of(e).id(source.id()).message(source.get(Source.STANDARD_NAME)));
+    private void reportJob(Job job, Event e) {
+        reporter.report(Report.of(e).id(job.id()).message(job.name()));
     }
 
     // to be implemented, how long between enquequed and current state; report to admin about this.
-    private void checkTimeSinceSubmitted(JobInstance job, Date timenow, Source source) {
-        Date jobStartTime = job.getBeganRunningDate().getTime();
-        String msg = String.format("The job is still under attributing, it starts from %s and current time is %s", jobStartTime.toString(), timenow.toString());
-        reporter.report(Report.of(Event.JOB_STILL_ATTRIBUTED).id(source.id()).message(source.get(Source.STANDARD_NAME)+"||"+msg));
+    private void checkTimeSinceSubmitted(Job job, LocalDateTime timeNow) {
+        LocalDateTime jobStartTime = job.getStarted();
+        String msg = String.format("The job is still under attributing, it starts from %s and current time is %s", jobStartTime.toString(), timeNow.toString());
+        reporter.report(Report.of(Event.JOB_STILL_ATTRIBUTED).id(job.id()).message(job.name()+"||"+msg));
     }
 
-    private Optional<JobInstance> checkJobStatus(Source source) {
-        Integer jobId = source.get(Source.CRAWL_JOB_ID);
-        Optional<JobInstance> maybeJob = Optional.empty();
-        if(jobId != null) {
-            try {
+    private Optional<Job> checkJobStatus(int jobPID) {
 
-                JobInstance curJob = jobRunner.getJob(jobId).getJobInstance();
+        Optional<Job> maybeJob = Optional.empty();
+        try {
 
-                maybeJob = Optional.of(curJob);
-            } catch (JqmInvalidRequestException e) {
-                logger.info(e.getMessage());
-                //job hasn't run;
-            }
+            Job curJob = jobRunner.getJob(jobPID);
+
+            maybeJob = Optional.of(curJob);
+        } catch (JqmInvalidRequestException e) {
+            logger.info(e.getMessage());
+            //job hasn't run;
         }
         return maybeJob;
     }
 
-    public void ensureSchedule(JQMJob job) {
+    public void ensureSchedule(Job job) {
 
-        // the incoming jobs are provided by JQMJobProvider, so it will have source parameter for sure.
-        Source source = job.getSource();
 
         CronExpression cron = new CronExpression(defaultCronSchedule);
 
-        // should also handle the getSchedule method in Job
-        if(job.getSchedule()!=null) {
-            try {
-                String expression = job.getSchedule();
-                cron = new CronExpression(expression);
-            } catch (ParseException e) {
-                //TODO: journal error and stick with default.
-//                throw new RuntimeException(e);
-            }
-        }
-        ZoneId zoneId = ZoneId.of(source.get(Source.TIMEZONE));
-        TimeZone timeZone = TimeZone.getTimeZone(zoneId);
-        cron.setTimeZone(timeZone);
+        cron = job.getSchedule();
 
-        Date zonedNow = getZonedNow(zoneId);
-        Date nextRun = cron.getTimeAfter(zonedNow);
-        Date prevRun = getTimeBefore(zonedNow, cron);
+//        ZoneId zoneId = ZoneId.of(source.get(Source.TIMEZONE));
+//        TimeZone timeZone = TimeZone.getTimeZone(zoneId);
+//        cron.setTimeZone(timeZone);
+
+//        Date zonedNow = getZonedNow(zoneId);
+        LocalDateTime now = timeProvider.getTime();
+        LocalDateTime nextRun = fromDate(cron.getTimeAfter(toDate(now)));
+        LocalDateTime prevRun = fromDate(getTimeBefore(toDate(now), cron));
 
         // check if it is a registered one;
-        Optional<JobInstance> maybeJob = checkJobStatus(source);
+        Optional<Job> maybeJob = checkJobStatus(job.pid());
 
         Action action;
 
         if(maybeJob.isPresent()) {
-            JobInstance curJob = maybeJob.get();
-            State jobState = curJob.getState();
+            Job curJob = maybeJob.get();
+            String jobState = curJob.state();
             switch (jobState) {
-                case RUNNING:
+                case Job.RUNNING:
                     // if it is still running, then it runs so slow and should directly report to admin;
-                    action = checkStillRunningFromLastTime(source, Event.JOB_STILL_RUNNING);
+                    action = checkStillRunningFromLastTime(job, Event.JOB_STILL_RUNNING);
                     break;
-                case ENDED:
+                case Job.STOPPED:
                     // to check if it is time to run the job again; modify code here if want to rerun job using the same parameters (assign curJob to job's jobinstance param);
-                    action = checkShouldRunAgain(curJob, cron, nextRun, prevRun, zonedNow);
+                    action = checkShouldRunAgain(curJob, cron, nextRun, prevRun, now);
                     break;
-                case HOLDED:
-                case KILLED:
-                case CRASHED:
+                case Job.FAILED:
                     // if job crashed, we should definitely report that and pass it or rerun it?? not sure;
-                    reportJob(source, Event.JOB_CRASHED);
+                    reportJob(job, Event.JOB_CRASHED);
                     action = Action.PASS;
                     break;
-                case CANCELLED:
-                    reportJob(source, Event.JOB_CANCELLED);
+                case Job.CANCELLED:
+                    reportJob(job, Event.JOB_CANCELLED);
                     action = Action.PASS;
                     break;
-                case SCHEDULED:
-                case SUBMITTED:
-                case ATTRIBUTED:
-                    checkTimeSinceSubmitted(curJob, zonedNow, source);
+                case Job.STARTING:
+                    checkTimeSinceSubmitted(job, now);
                     action = Action.PASS;
                     break;
                 default:
@@ -272,14 +249,15 @@ public class SchedulerRunner implements CommandLineRunner {
 
     }
 
-    @Override
-    public void run(String... args) throws Exception {
+    private Date toDate(LocalDateTime localDateTime) {
+        return Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
+    }
 
-        // tried to remove these three lines and add @Component to JQMJobRunner and JQMJobProvider classes,
-        // but their sourceDAO and sourceListDAO are still null, so I add them back here.
-        jobProvider.setSourceDAO(sourceDAO);
-        jobProvider.setSourceListDAO(sourceListDAO);
-        jobRunner.setSourceDAO(sourceDAO);
+    private LocalDateTime fromDate(Date date) {
+        return LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
+    }
+
+    public void schedule( ) throws Exception {
 
         // example parameters; probably we should decide if we should run job request using corresponding Jobinstance's parameters or using our own new parameters;
         Map<String, String> params = new HashMap<String, String>();
@@ -287,22 +265,12 @@ public class SchedulerRunner implements CommandLineRunner {
         params.put(Crawl.FROM, LocalDate.of(2020, 8,21).toString());
         params.put(Crawl.TO, LocalDate.of(2020, 8,28).toString());
 
-        List<JQMJob> allPossibleJobs = jobProvider.getJobs(params);
-        for (JQMJob possibleJob : allPossibleJobs) {
+        List<Job> allPossibleJobs = jobProvider.getJobs(params);
+        for (Job possibleJob : allPossibleJobs) {
 
             ensureSchedule(possibleJob);
 
         }
 
-    }
-
-    public static void main(String[] args) {
-
-        SpringApplication app = new SpringApplication(SchedulerRunner.class);
-        app.setBannerMode(Banner.Mode.OFF);
-        app.setWebApplicationType(WebApplicationType.NONE);
-        ConfigurableApplicationContext ctx = app.run(args);
-        logger.info("Spring Boot application started");
-        ctx.close();
     }
 }
