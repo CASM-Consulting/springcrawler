@@ -38,7 +38,7 @@ public class CrawlerSweep {
 
     private final JqmClient client;
 
-    public final static String JQM_APP_NAME = " ";
+    public final static String JQM_APP_NAME = "JQMSpringCollectorV1";
     public static final String JQM_USER = "crawler-submission-service";
 
     @Autowired

@@ -34,22 +34,7 @@ public class JQMJobProvider implements JobProvider {
         this.sourceListDAO = sourceListDAO;
     }
 
-    public JQMJob sourceToJob (Source source, Map<String,String> params) {
-        // TODO: is this all the required params?
 
-        JobRequest jobRequest = JobRequest.create(appName, JQM_USER)
-                                    .addParameter(Crawl.SOURCE_ID, Integer.toString(source.id()))
-                                    .addParameter(Source.CRAWL_SCHEDULE, source.get(Source.CRAWL_SCHEDULE)); // TODO: check that this is correct
-
-        if (params != null) {
-            for (Map.Entry<String, String> entry : params.entrySet()) {
-                jobRequest.addParameter(entry.getKey(), entry.getValue());
-            }
-        }
-
-        return new JQMJob(jobRequest);
-
-    }
 
     @Override
     public Job getJob(int id) {
@@ -79,7 +64,7 @@ public class JQMJobProvider implements JobProvider {
         }
 
         for (Source source: globalActiveSources) {
-            JQMJob job = sourceToJob(source, params);
+            JQMJob job = new JQMJob(source);
             allJobs.add(job);
         }
 

@@ -20,22 +20,17 @@ public class JQMJob implements Job {
 
     private Source source;
     private JobInstance jobInstance;
-    private JobRequest jobRequest;
 
     public JQMJob (JobInstance jobInstance) {
         this(null, null, jobInstance);
     }
 
-    public JQMJob (JobRequest jobRequest) {
-        this(null, jobRequest, null);
-    }
 
     public JQMJob (Source source) {
         this(source, null, null);
     }
 
     public JQMJob (Source source, JobRequest jobRequest, JobInstance jobInstance) {
-        this.jobRequest = jobRequest;
         this.jobInstance = jobInstance;
         this.source = source;
     }
@@ -46,7 +41,11 @@ public class JQMJob implements Job {
     }
 
     public JobRequest getJobRequest () {
-        return this.jobRequest;
+        JobRequest jobRequest = JobRequest.create(CrawlerSweep.JQM_APP_NAME, CrawlerSweep.JQM_USER)
+                .addParameter(Crawl.SOURCE_ID, Integer.toString(source.id()))
+                .addParameter(Source.CRAWL_SCHEDULE, source.get(Source.CRAWL_SCHEDULE)); // TODO: check that this is correct
+
+        return jobRequest;
     }
 
     public JobRequest getJobRequestFromJobInstance (JobInstance job) {
@@ -71,14 +70,14 @@ public class JQMJob implements Job {
     }
 
     public String getSourceListId() {
-        return this.jobRequest.getParameters().get(Crawl.SOURCE_LIST_ID);
+        return getJobRequest().getParameters().get(Crawl.SOURCE_LIST_ID);
     }
 
     public CronExpression getSchedule() {
         try {
             ZoneId zoneId = ZoneId.of(source.get(Source.TIMEZONE));
             TimeZone timeZone = TimeZone.getTimeZone(zoneId);
-            CronExpression cron = new CronExpression(this.jobRequest.getParameters().get(Source.CRAWL_SCHEDULE));
+            CronExpression cron = new CronExpression(getJobRequest().getParameters().get(Source.CRAWL_SCHEDULE));
             cron.setTimeZone(timeZone);
             return cron;
         } catch (ParseException e) {
@@ -138,7 +137,7 @@ public class JQMJob implements Job {
     }
 
     public void setJobRequestParameters(Map<String, String> params) {
-        this.jobRequest.setParameters(params);
+        getJobRequest().setParameters(params);
     }
 
 
