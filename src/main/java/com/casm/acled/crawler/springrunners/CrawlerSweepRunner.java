@@ -33,8 +33,8 @@ import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import org.springframework.shell.standard.ShellMethod;
-import org.springframework.shell.standard.ShellComponent;
+//import org.springframework.shell.standard.ShellMethod;
+//import org.springframework.shell.standard.ShellComponent;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 @EnableAutoConfiguration(exclude={HibernateJpaAutoConfiguration.class, CamundaBpmAutoConfiguration.class, CamundaBpmRestJerseyAutoConfiguration.class, ValidationAutoConfiguration.class})
@@ -44,8 +44,8 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 // And we also need the DAOs.
 @ComponentScan(basePackages={"com.casm.acled.dao", "com.casm.acled.crawler"})
 
-@ShellComponent
-public class CrawlerSweepRunner implements CommandLineRunner {
+//@ShellComponent
+public class CrawlerSweepRunner {//implements CommandLineRunner {
 
     protected static final Logger logger = LoggerFactory.getLogger(CrawlerSweepRunner.class);
 
@@ -76,14 +76,7 @@ public class CrawlerSweepRunner implements CommandLineRunner {
 
         crawlArgs = argsService.get();
 
-//        SourceList sourceList = sourceListDAO.getByUnique(SourceList.LIST_NAME, listName).get();
-//        List<Source> sources = sourceDAO.byList(sourceList);
-//        List<Source> sourcesWithScrapers = sources.stream()
-//                .filter(s-> Util.isScrapable(scraperDir, s))
-//                .collect(Collectors.toList());
-            crawlArgs.raw.sourceList = listName;
-
-//        Boolean b = sources.get(0).hasValue(Source.CRAWL_SCHEDULE);
+        crawlArgs.raw.sourceList = listName;
 
         if (from!=null) {
             crawlArgs.raw.from = from.toString();
@@ -94,12 +87,9 @@ public class CrawlerSweepRunner implements CommandLineRunner {
         crawlArgs.raw.skipKeywords = skipKeywords;
         crawlArgs.raw.program = app;
 
-//        crawlArgs.raw.crawlId = "123";
+        crawlArgs.depth = 1;
 
         crawlArgs.init();
-//
-//        crawlArgs.sources = sourcesWithScrapers;
-//        crawlArgs.sourceList = sourceList;
 
         crawlArgs.scrapersDir = scraperDir;
 
@@ -136,8 +126,8 @@ public class CrawlerSweepRunner implements CommandLineRunner {
         crawlerSweep.submitJob(JQMSpringExampleCollectorV1, source, sourceList.id(), null,null, Boolean.TRUE);
     }
 
-    @Override
-    @ShellMethod("Translate text from one language to another.")
+//    @Override
+//    @ShellMethod("Translate text from one language to another.")
     public void run(String... args) throws Exception {
 
 //        crawlerSweep.sweepAvailableScrapers(Paths.get("allscrapers"));
@@ -150,7 +140,7 @@ public class CrawlerSweepRunner implements CommandLineRunner {
 //        sweepSourceList(JQMSpringCollectorV1, "fake-net", LocalDate.now().minusDays(10), LocalDate.now(), Boolean.TRUE);
 //        sweepSourceList(JQMSpringCollectorV1, "fake-net", LocalDate.of(2020, 8,21), LocalDate.of(2020, 8,28), Boolean.TRUE);
 
-        setCrawlArgs(JQMSpringCollectorV1, "fake-net", LocalDate.of(2020, 9,14), LocalDate.of(2020, 9,17), Paths.get("text"), Boolean.TRUE);
+        setCrawlArgs(JQMSpringCollectorV1, "mexico-1", LocalDate.of(2020, 9,14), LocalDate.of(2020, 9,17), Paths.get("text"), Boolean.TRUE);
 
         crawlerSweep.sweep(crawlArgs);
 

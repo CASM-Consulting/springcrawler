@@ -153,6 +153,10 @@ public class Crawl {
 
         applySourceIdiosyncrasies(source, config);
 
+        config.crawler().setRecrawlableResolver(new DontRecrawlResolver());
+
+        config.crawler().setMaxDepth(args.depth);
+
         config.setScraper(scraper, metadata);
         config.crawler().setStartURLs(startURL);
 //        config.collector();

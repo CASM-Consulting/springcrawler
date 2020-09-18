@@ -28,7 +28,7 @@ import org.springframework.context.annotation.Import;
 @Import({ObjectMapperConfiguration.class})
 // And we also need the DAOs.
 @ComponentScan(basePackages={"com.casm.acled.dao", "com.casm.acled.crawler"})
-public class CheckListRunner {
+public class CheckListRunner implements CommandLineRunner {
 
     protected static final Logger logger = LoggerFactory.getLogger(CheckListRunner.class);
 
@@ -45,8 +45,11 @@ public class CheckListRunner {
 
 
 
+    @Override
     public void run(String... args) throws Exception {
         reporter.randomRunId();
+
+        crawlArgs = argsService.get();
 
         JCommander.newBuilder()
                 .addObject(crawlArgs.raw)
