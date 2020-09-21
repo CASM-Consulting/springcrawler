@@ -3,14 +3,10 @@ package com.casm.acled.crawler.scraper;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
 
-import com.norconex.commons.lang.config.XMLConfigurationUtil;
 import com.norconex.importer.doc.ImporterMetadata;
 import com.norconex.importer.handler.ImporterHandlerException;
 
@@ -31,25 +27,53 @@ public class ACLEDTransformer {
     // have a replacement string, convert xxx to xxx;
     public static ReplaceTransformer transformer;
 
-    private final String restrictionTestConfig = "<transformer>"
-            + "<replace><fromValue><script>.*?<\\/script></fromValue>"
-            + "<toValue></toValue></replace>"
-            + "<restrictTo caseSensitive=\"false\" "
-            + "field=\"document.reference\">.*test.*</restrictTo>"
-            + "</transformer>";
+    public ACLEDTransformer (Map<String, String> replaceMap) {
+//        Map<String, String> params = new HashMap<String, String>();
+//        params.put("<script.*?>.*?<\\/script>", "");
+        load(replaceMap);
 
-    public ACLEDTransformer () {}
+    }
 
     public void load(Map<String, String> replaceMap) {
+        ReplaceTransformer t = new ReplaceTransformer();
         for (Map.Entry<String, String> strMap: replaceMap.entrySet()) {
             String fromStr = strMap.getKey();
             String toStr = strMap.getValue();
-            transformer.addReplacement(fromStr, toStr);
+            t.addReplacement(fromStr, toStr);
         }
+        transformer = t;
     }
 
-    // test
-    public void run() {
-        transformer.addReplacement("<script>.*?<\\/script>", "");
+    // used for testing
+    public String transform(String content) throws ImporterHandlerException{
+        InputStream is = IOUtils.toInputStream(content, StandardCharsets.UTF_8);
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        ImporterMetadata metadata = new ImporterMetadata();
+        metadata.setString("document.reference", "N/A");
+        transformer.transformDocument("N/A", is, os, metadata, true);
+        String response = os.toString();
+        return response;
     }
-}
+
+    // used for testing;
+    public void test() throws ImporterHandlerException {
+        String content = "<p>waterloon</p><script>a=25+2</script><p>hello world<a>String (a)</a></p>";
+        InputStream is = IOUtils.toInputStream(content, StandardCharsets.UTF_8);
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        ImporterMetadata metadata = new ImporterMetadata();
+        metadata.setString("document.reference", "N/A");
+        transformer.transformDocument("N/A", is, os, metadata, true);
+        String response = os.toString();
+
+    }
+
+    public static void main(String[] args) throws ImporterHandlerException, IOException {
+        Map<String, String> params = new HashMap<String, String>();
+        params.put("<script.*?>.*?<\\/script>", "");
+
+        ACLEDTransformer a = new ACLEDTransformer(params);
+        a.test();
+
+    }
+
+    }

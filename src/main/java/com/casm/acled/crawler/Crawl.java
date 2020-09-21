@@ -16,10 +16,12 @@ import com.norconex.collector.core.filter.impl.RegexReferenceFilter;
 import com.norconex.collector.http.HttpCollector;
 import com.norconex.collector.http.url.IURLNormalizer;
 import com.norconex.collector.http.url.impl.GenericURLNormalizer;
+import com.norconex.importer.handler.IImporterHandler;
 import com.norconex.importer.handler.filter.AbstractDocumentFilter;
 import com.norconex.importer.handler.filter.OnMatch;
 import com.norconex.importer.handler.filter.impl.DateMetadataFilter;
 import com.norconex.importer.handler.filter.impl.EmptyMetadataFilter;
+import com.norconex.importer.handler.transformer.impl.ReplaceTransformer;
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.spi.DefaultRepositorySelector;
@@ -33,8 +35,13 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Supplier;
+
+import com.norconex.importer.handler.tagger.impl.*;
+
 
 public class Crawl {
 
@@ -141,6 +148,32 @@ public class Crawl {
         ACLEDScraper scraper = ACLEDScraper.load(args.scrapersDir, source, reporter);
         ACLEDMetadataPreProcessor metadata = new ACLEDMetadataPreProcessor(startURL[0]);
 
+        // below block added for using norconex pipeline;
+        // block start
+        // if want to use DOM tagger;
+        // code here;
+        DOMTagger documentTagger = ACLEDTagger.load(args.scrapersDir, source);
+        // if want to use replacement transformer;
+        //code here;
+        Map<String, String> replacementParams = new HashMap<String, String>();
+        replacementParams.put("<script.*?>.*?<\\/script>", "");
+        ACLEDTransformer tempTransformer = new ACLEDTransformer(replacementParams);
+        ReplaceTransformer documentTransfomer = tempTransformer.transformer;
+
+        // code to set postparsehandlers for the importer in config;
+        // need to find a place to add all filters as well;
+        List<IImporterHandler> handlers = new ArrayList<>();
+        handlers.add(documentTransfomer);
+        handlers.add(documentTagger);
+        // this line might not belong here, need to combine with all filters in the finalise() method;
+        // probably like this, and should remove the finalise() method in run();
+        handlers.addAll(filters);
+        // in the order of transformer, tagger, and filters;
+        config.importer().setPostParseHandlers(handlers.toArray(new IImporterHandler[handlers.size()]));
+        // block end;
+
+
+
         if(source.hasValue(Source.CRAWL_EXCLUDE_PATTERN)) {
             String pattern = source.get(Source.CRAWL_EXCLUDE_PATTERN);
             RegexReferenceFilter filter = new RegexReferenceFilter(pattern, OnMatch.EXCLUDE);
@@ -244,7 +277,8 @@ public class Crawl {
     }
 
     public void run() {
-        config.finalise();
+        // remove the finalise, but already added filters in previous step;s
+//        config.finalise();
         collector = new HttpCollector(config.collector());
         collector.start(true);
     }

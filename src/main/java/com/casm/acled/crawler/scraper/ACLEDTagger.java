@@ -198,6 +198,7 @@ public class ACLEDTagger {
     return t;
     }
 
+    // used for testing;
     public void testXMLParser(DOMTagger t)
             throws ImporterHandlerException, IOException {
 
@@ -229,6 +230,7 @@ public class ACLEDTagger {
 
     }
 
+    // used for testing;
     private void performTagging(
             ImporterMetadata metadata, DOMTagger tagger, String html)
             throws ImporterHandlerException, IOException {
@@ -239,9 +241,10 @@ public class ACLEDTagger {
         is.close();
     }
 
+    // used for testing: loading large html file;
     public void setXML() throws IOException {
 
-        String d = new String(Files.readAllBytes(Paths.get("/Users/pengqiwei/Downloads/My/PhDs/acled_thing/test_awe.html")));
+        String d = new String(Files.readAllBytes(Paths.get("/Users/pengqiwei/Downloads/My/PhDs/acled_thing/test.html")));
 
 
         this.xmlstr = d;
@@ -259,12 +262,18 @@ public class ACLEDTagger {
 
 //        DOMTagger t = ACLEDTagger.load(Paths.get("/Users/pengqiwei/Downloads/My/PhDs/acled_thing/acled-scrapers"), source);
 
-        ACLEDTagger a = new ACLEDTagger("/Users/pengqiwei/Downloads/My/PhDs/acled_thing/acled-scrapers/awe24com");
+        // here add a transformer:
+        Map<String, String> params = new HashMap<String, String>();
+        params.put("<script.*?>.*?<\\/script>", "");
+        ACLEDTransformer transformer = new ACLEDTransformer(params);
+
+        ACLEDTagger a = new ACLEDTagger("/Users/pengqiwei/Downloads/My/PhDs/acled_thing/acled-scrapers/24chasabg");
         a.load();
         DOMTagger t = a.tagger;
 
-
         a.setXML();
+        // test transformer here, replace all scripts in the source html and return the replaced string to tagger;
+        a.xmlstr = transformer.transform(a.xmlstr);
         a.testXMLParser(t);
 
         ImporterMetadata metadata = new ImporterMetadata();
@@ -278,8 +287,5 @@ public class ACLEDTagger {
         String title = metadata.getString(TITLE);
         String date = metadata.getString(DATE);
     }
-
-    // This is a test for: https://github.com/Norconex/importer/issues/39
-
 
 }
