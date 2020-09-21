@@ -48,6 +48,8 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static com.casm.acled.crawler.spring.CrawlService.STANDARD_SITEMAP_LOCS;
+
 @Service
 public class CheckListService {
 
@@ -202,6 +204,8 @@ public class CheckListService {
 
     public boolean hasSiteMaps(Source source) {
         List<String> siteMaps = crawlService.getSitemaps(source);
+
+        siteMaps.removeAll(STANDARD_SITEMAP_LOCS);
 
         if(siteMaps.isEmpty()) {
             reporter.report(Report.of(Event.NO_SITE_MAPS).id(source.id()).message(source.get(Source.STANDARD_NAME)));

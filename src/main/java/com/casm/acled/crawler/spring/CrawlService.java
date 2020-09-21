@@ -115,8 +115,7 @@ public class CrawlService {
 
         Source source = args.sources.get(0);
 
-        // TODO (andy) is this the right change without 'args.onlySiteMap'?
-        if(! checkListService.hasSiteMaps(source)) {
+        if(args.depth == 0 && ! checkListService.hasSiteMaps(source)) {
 
             logger.info("Quitting: only site maps requested - {} has no sitemap", (String) source.get(Source.STANDARD_NAME));
 
@@ -214,7 +213,7 @@ public class CrawlService {
     }
 
 
-    private static List<String> STANDARD_SITEMAP_LOCS = ImmutableList.of(
+    public static List<String> STANDARD_SITEMAP_LOCS = ImmutableList.of(
             "sitemap.xml",
             "sitemap_index.xml"
     );
@@ -267,6 +266,9 @@ public class CrawlService {
         } else {
 
             if (source.isFalse(Source.CRAWL_DISABLE_SITEMAP_DISCOVERY)) {
+
+                // Add standard ones
+                sitemaps.addAll(STANDARD_SITEMAP_LOCS);
 
                 // Attempt to discover sitemap location from robots.txt
 
