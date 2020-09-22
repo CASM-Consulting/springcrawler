@@ -7,8 +7,10 @@ import com.casm.acled.crawler.reporting.Report;
 import com.casm.acled.crawler.reporting.Reporter;
 import com.casm.acled.crawler.reporting.ReportingException;
 import com.casm.acled.crawler.scraper.keywords.KeywordsService;
+import com.casm.acled.dao.entities.ArticleDAO;
 import com.casm.acled.dao.entities.SourceDAO;
 import com.casm.acled.dao.entities.SourceListDAO;
+import com.casm.acled.entities.article.Article;
 import com.casm.acled.entities.source.Source;
 import com.casm.acled.entities.sourcelist.SourceList;
 import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
@@ -28,6 +30,7 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
 
 import java.nio.file.Paths;
+import java.util.List;
 
 @EnableAutoConfiguration(exclude={HibernateJpaAutoConfiguration.class, CamundaBpmAutoConfiguration.class, CamundaBpmRestJerseyAutoConfiguration.class, ValidationAutoConfiguration.class})
 // We need the special object mapper, though.
@@ -47,6 +50,9 @@ public class KeywordsServiceRunner implements CommandLineRunner {
 
     @Autowired
     private SourceDAO sourceDAO;
+
+    @Autowired
+    private ArticleDAO articleDAO;
 
     @Autowired
     private Reporter reporter;
@@ -71,16 +77,28 @@ public class KeywordsServiceRunner implements CommandLineRunner {
 
     }
 
+    public void postFilter() {
+        Source source = sourceDAO.byName("MiMorelia").get();
+        SourceList list = sourceListDAO.byName("mexico-1").get();
+        String query = list.get(SourceList.KEYWORDS);
+        List<Article> articles  = articleDAO.bySource(source);
+
+        keywordsService.filter(articles, query);
+    }
+
 
     @Override
     public void run(String... args) throws Exception {
         reporter.randomRunId();
 
-        testURL("mexico-1", "MiMorelia", "https://www.mimorelia.com/localizan-cuerpo-de-una-mujer-en-la-carretera-zamora-morelia/");
+//        testURL("mexico-1", "MiMorelia", "https://www.mimorelia.com/localizan-cuerpo-de-una-mujer-en-la-carretera-zamora-morelia/");
 //        testURL("balkans", "Politika", "http://www.politika.rs/sr/clanak/453708/Protest-ispred-Predsednistva");
 //        testURL("Balkans", "24sata.hr", "https://www.24sata.hr/news/mirni-prosvjed-s-300-autobusa-problemi-su-lizing-i-krediti-691882");
 //        testURL("Balkans", "24sata.hr", "https://www.24sata.hr/news/otkrivamo-misterij-stepinceva-dnevnika-koji-je-uzela-udba-690916");
 //        testURL("Balkans", "Glas Slavonije", "http://www.glas-slavonije.hr/431867/1/Turisticki-prijevoznici-traze-odgadjanje-placanja-leasinga");
+
+
+        postFilter();
 
 
 //        keywordsHelper.determineKeywordsList();

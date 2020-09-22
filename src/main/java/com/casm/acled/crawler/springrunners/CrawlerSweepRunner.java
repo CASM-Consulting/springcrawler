@@ -45,7 +45,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @ComponentScan(basePackages={"com.casm.acled.dao", "com.casm.acled.crawler"})
 
 //@ShellComponent
-public class CrawlerSweepRunner {//implements CommandLineRunner {
+public class CrawlerSweepRunner implements CommandLineRunner {
 
     protected static final Logger logger = LoggerFactory.getLogger(CrawlerSweepRunner.class);
 

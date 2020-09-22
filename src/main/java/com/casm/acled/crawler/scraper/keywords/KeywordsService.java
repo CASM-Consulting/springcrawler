@@ -2,10 +2,8 @@ package com.casm.acled.crawler.scraper.keywords;
 
 import com.casm.acled.crawler.reporting.Reporter;
 import com.casm.acled.crawler.scraper.ScraperService;
-import com.casm.acled.dao.entities.DeskDAO;
-import com.casm.acled.dao.entities.SourceDAO;
-import com.casm.acled.dao.entities.SourceListDAO;
-import com.casm.acled.dao.entities.SourceSourceListDAO;
+import com.casm.acled.dao.entities.*;
+import com.casm.acled.entities.article.Article;
 import com.casm.acled.entities.desk.Desk;
 import com.casm.acled.entities.source.Source;
 import com.casm.acled.entities.sourcelist.SourceList;
@@ -40,6 +38,8 @@ public class KeywordsService {
     private SourceListDAO sourceListDAO;
     @Autowired
     private SourceDAO sourceDAO;
+    @Autowired
+    private ArticleDAO articleDAO;
 
     @Autowired
     private ScraperService scraperService;
@@ -158,6 +158,20 @@ public class KeywordsService {
 
         String query = "(" + StringUtils.join(terms, " ") + ")";
         return query;
+    }
+
+    public void filter(List<Article> articles, String query) {
+        LuceneMatcher lm = new LuceneMatcher(query);
+
+        List<Article> remove = new ArrayList<>();
+
+        for(Article article : articles) {
+            if(!lm.isMatched(article.get(Article.TEXT))) {
+                remove.add(article);
+            }
+        }
+
+        articleDAO.delete(remove);
     }
 
     public boolean test(String query, String text) {
