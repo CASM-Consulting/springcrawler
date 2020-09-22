@@ -295,8 +295,10 @@ public class CrawlService {
             }
         }
 
-        // add in any locations that were pre-defined on the Source itself
-        sitemaps.addAll(predefinedSitemaps);
+        if (predefinedSitemaps != null) {
+            // add in any locations that were pre-defined on the Source itself
+            sitemaps.addAll(predefinedSitemaps);
+        }
 
         return sitemaps;
     }
