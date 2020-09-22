@@ -188,10 +188,14 @@ public class ACLEDTagger {
             }
             // separate them in case want to modify article's selector;
             if (field.equals(ARTICLE)) {
-                t.addDOMExtractDetails(new DOMExtractDetails(rootSelector + selector + "", field, true, "text"));
+                t.addDOMExtractDetails(new DOMExtractDetails(rootSelector + selector + "", ScraperFields.SCRAPED_ARTICLE, true, "text"));
             }
-            else {
-                t.addDOMExtractDetails(new DOMExtractDetails(rootSelector + selector, field, true, "text"));
+            else if (field.equals(TITLE)){
+                t.addDOMExtractDetails(new DOMExtractDetails(rootSelector + selector, ScraperFields.SCRAPED_TITLE, true, "text"));
+            }
+            else if (field.equals(DATE)) {
+                t.addDOMExtractDetails(new DOMExtractDetails(rootSelector + selector, ScraperFields.SCRAPED_DATE, true, "text"));
+
             }
         }
 
@@ -201,25 +205,6 @@ public class ACLEDTagger {
     // used for testing;
     public void testXMLParser(DOMTagger t)
             throws ImporterHandlerException, IOException {
-
-//        DOMTagger t = new DOMTagger();
-
-//        t.setParser(DOMUtil.PARSER_XML);
-
-//        t.addDOMExtractDetails(new DOMExtractDetails(
-//                "span[itemprop=articleBody]", ARTICLE, true, "<p>"));
-//        t.addDOMExtractDetails(new DOMExtractDetails(
-//                "span.article-date span:nth-child(1)", DATE, true, "ownText"));
-//        t.addDOMExtractDetails(new DOMExtractDetails(
-//                "h1 a", TITLE, true, "text"));
-
-//        String xml = "<tr>"
-//                + "<td><a href=\"http://example.org/doc.html\">"
-//                + "Sample Title</a></td>"
-//                + "<td>This is a description.</td>"
-//                + "</tr>";
-
-//        String xml = "<span itemprop=\"articleBody\" class=\"unselectable\"><p><a rel=\"nofollow\">water.</a>\"I have no water\"</p><p>\"I have something new\"</p></span>";
 
         ImporterMetadata metadata = new ImporterMetadata();
         performTagging(metadata, t, xmlstr);

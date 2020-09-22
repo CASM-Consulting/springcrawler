@@ -100,13 +100,15 @@ public class CrawlerServiceRunner implements CommandLineRunner {
         crawlArgs.raw.skipKeywords = false;
         crawlArgs.raw.program = "crawl";
 //        crawlArgs.raw.sources = ImmutableList.of("Milenio");
-        crawlArgs.raw.sources = ImmutableList.of("MiMorelia");
-        crawlArgs.raw.sourceList = "mexico-1";
+//        crawlArgs.raw.sources = ImmutableList.of("MiMorelia");
+//        crawlArgs.raw.sources = ImmutableList.of("fake-net");
+//        crawlArgs.raw.sourceList = "mexico-1";
+        crawlArgs.raw.sourceList = "fake-net";
         crawlArgs.raw.from = "2020-09-07";
         crawlArgs.raw.to = "2020-10-09";
         crawlArgs.raw.workingDir = "test";
-        crawlArgs.raw.scrapersDir = "/home/sw206/git/acled-scrapers/";
-        crawlArgs.raw.depth = 1;
+        crawlArgs.raw.scrapersDir = "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/springcrawler/testscrapers/generic";
+        crawlArgs.raw.depth = 5;
 
         crawlArgs.init();
 
@@ -132,3 +134,4 @@ public class CrawlerServiceRunner implements CommandLineRunner {
         ctx.close();
     }
 }
+

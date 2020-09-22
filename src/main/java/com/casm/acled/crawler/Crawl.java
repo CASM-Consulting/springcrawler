@@ -106,13 +106,16 @@ public class Crawl {
 
         configureLogging(workingDir);
 
+        // as Simon mentioned before, want two different pipelines exist at the same time; so added to switch between them;
+        // probably need to add a new parameter for it;
+        String processFlag = "scraper";
+
         List<AbstractDocumentFilter> filters = new ArrayList<>();
         filters.add(new AcceptFilter());
 
         EmptyMetadataFilter emptyArticle = new EmptyMetadataFilter(OnMatch.EXCLUDE,
                 ScraperFields.SCRAPED_ARTICLE,
                 ScraperFields.SCRAPED_DATE);
-
         filters.add(emptyArticle);
 
         if(from != null && to != null ) {
@@ -131,10 +134,10 @@ public class Crawl {
             );
 
             filters.add(dateFilter);
+
         }
 
         if(!args.skipKeywords) {
-
             ExcludingKeywordFilter keywordFilter = keywordFilter(args.sourceList, source);
             filters.add(keywordFilter);
         }
@@ -145,33 +148,26 @@ public class Crawl {
 
 //        String scraperName = Util.getID(startURL[0]);
 
-        ACLEDScraper scraper = ACLEDScraper.load(args.scrapersDir, source, reporter);
-        ACLEDMetadataPreProcessor metadata = new ACLEDMetadataPreProcessor(startURL[0]);
+        if (processFlag.equals("scraper")) {
+            ACLEDScraper scraper = ACLEDScraper.load(args.scrapersDir, source, reporter);
+            ACLEDMetadataPreProcessor metadata = new ACLEDMetadataPreProcessor(startURL[0]);
+            config.setScraper(scraper, metadata);
+            config.finalise();
+        }
 
-        // below block added for using norconex pipeline;
-        // block start
-        // if want to use DOM tagger;
-        // code here;
-        DOMTagger documentTagger = ACLEDTagger.load(args.scrapersDir, source);
-        // if want to use replacement transformer;
-        //code here;
-        Map<String, String> replacementParams = new HashMap<String, String>();
-        replacementParams.put("<script.*?>.*?<\\/script>", "");
-        ACLEDTransformer tempTransformer = new ACLEDTransformer(replacementParams);
-        ReplaceTransformer documentTransfomer = tempTransformer.transformer;
+        if (processFlag.equals("norconex")) {
+            DOMTagger documentTagger = ACLEDTagger.load(args.scrapersDir, source);
+            Map<String, String> replacementParams = new HashMap<String, String>();
+            replacementParams.put("<script.*?>.*?<\\/script>", "");
+            ACLEDTransformer tempTransformer = new ACLEDTransformer(replacementParams);
+            ReplaceTransformer documentTransfomer = tempTransformer.transformer;
 
-        // code to set postparsehandlers for the importer in config;
-        // need to find a place to add all filters as well;
-        List<IImporterHandler> handlers = new ArrayList<>();
-        handlers.add(documentTransfomer);
-        handlers.add(documentTagger);
-        // this line might not belong here, need to combine with all filters in the finalise() method;
-        // probably like this, and should remove the finalise() method in run();
-        handlers.addAll(filters);
-        // in the order of transformer, tagger, and filters;
-        config.importer().setPostParseHandlers(handlers.toArray(new IImporterHandler[handlers.size()]));
-        // block end;
-
+            List<IImporterHandler> handlers = new ArrayList<>();
+            handlers.add(documentTransfomer);
+            handlers.add(documentTagger);
+            handlers.addAll(filters);
+            config.importer().setPreParseHandlers(handlers.toArray(new IImporterHandler[handlers.size()]));
+        }
 
 
         if(source.hasValue(Source.CRAWL_EXCLUDE_PATTERN)) {
@@ -190,7 +186,7 @@ public class Crawl {
 
         config.crawler().setMaxDepth(args.depth);
 
-        config.setScraper(scraper, metadata);
+//        config.setScraper(scraper, metadata);
         config.crawler().setStartURLs(startURL);
 //        config.collector();
         if(args.crawlId != null && !args.crawlId.isEmpty()) {
@@ -277,7 +273,7 @@ public class Crawl {
     }
 
     public void run() {
-        // remove the finalise, but already added filters in previous step;s
+        // remove the finalise, already added filters in previous step;
 //        config.finalise();
         collector = new HttpCollector(config.collector());
         collector.start(true);

@@ -752,7 +752,8 @@ public class Util implements CommandLineRunner {
 
 
         SourceList list = EntityVersions.get(SourceList.class).current()
-                .put(SourceList.LIST_NAME, "fake-net");
+                .put(SourceList.LIST_NAME, "fake-net")
+                .put(SourceList.KEYWORDS, "attack");
 
         list = sourceListDAO.create(list);
 
@@ -788,90 +789,90 @@ public class Util implements CommandLineRunner {
 //        SourceList sourceList = createSourceList("mexico-back-code-2018", mexico2018Query);
 //        link(sources, sourceList);
 
-        Source source1 = sourceDAO.getByUnique(Source.STANDARD_NAME, "MiMorelia").get();
-        Source source2 = sourceDAO.getByUnique(Source.STANDARD_NAME, "Milenio").get();
+//        Source source1 = sourceDAO.getByUnique(Source.STANDARD_NAME, "MiMorelia").get();
+//        Source source2 = sourceDAO.getByUnique(Source.STANDARD_NAME, "Milenio").get();
 
-        List<Source> sources = ImmutableList.of(source1, source2);
+//        List<Source> sources = ImmutableList.of(source1, source2);
 
-        SourceList sourceList = createSourceList("mexico-1", "(activist activists ambush ambushed ambushes ambushing arso\n" +
-                "n assault assaulted attack attacked attacker attackers attacking attacks battle battled battles beaten be\n" +
-                "ating blast bomb bombed bomber bombers bombing bombs casualties casualty clash clashed clashes clashing d\n" +
-                "emonstrate demonstrated demonstraters demonstrates demonstrating demonstration demonstrations detonated e\n" +
-                "xplode exploded explodes exploding explosion explosions \"gun fire\" gunfire kidnapping killed killer kil\n" +
-                "lers killing knifed lynched lynching march marched marches marching \"mob justice\" molotov picket picket\n" +
-                "ers picketing protest protested protester protesters protesting protestor protestors protests raid raided\n" +
-                " raiding raids rallied rallies rallying rape raped rapes raping rapist revolt revolts riot rioted rioter \n" +
-                "rioters rioting riots \"set on fire\" shooter shooters shooting shoots shot stab stabbed stabbing strike \n" +
-                "striked strikes \"threw stones\" \"throwing stones\" \"to shoot\" turmoil unrest vigilante vigilantism vi\n" +
-                "olence wounded narco drugs cartel beheaded \"narco message\" \"public hanging of corpses\" \"burned body\n" +
-                "\" \"burned bodies\" tied gagged \"shot of grace\" \"body encased in cement\" \"hit by a wooden board\" mu\n" +
-                "tilated dismembered \"signs of torture\" \"human remains in plastic bags\" \"body wrapped in a blanket\" \n" +
-                "ransom kidnapper kidnapped hooded masked cocaine methamphetamine marijuana \"signs of violence\" \"advanc\n" +
-                "ed state of decomposition\" \"mass graves\" grave \"organized crime\" \"criminal band\" \"hunger strike\"\n" +
-                " arrests arrest \"to rescue\" migrant immigrant immigrants seizure seize extortion \"crystal meth\" \"thr\n" +
-                "oat slit\" abduction \"signs of restraint\" cardboard \"carboard message\" \"threatening message\" \"burn\n" +
-                "ed with acid\" corpse \"signs of sexual violence\" \"signs of rape\" handcuffs handcuffed \"feet tied\" t\n" +
-                "orso \"human head\" execute \"armed men\" criminals \"community police\" self-defense \"fuel theft\" \"bo\n" +
-                "dy found inside of a bin\" \"narco blockage\" \"blockage of roads\" \"fire weapon\" displaced body \"bone\n" +
-                " remains\" intercepted \"a chase\" captured \"drug dealing\" \"drug dealer\" \"poppy plants\" \"hands tie\n" +
-                "d\" bodies activista defensor defensora activistas defensores defensoras emboscada emboscó emboscaron emb\n" +
-                "oscados emboscando \"incendio provocado\" \"incendio malicioso\" \"incendio intencional\" agresión acoso \n" +
-                "asalto atacado atacada atacados agredido agredida agredidos acosado acosada acosados asaltado asaltada as\n" +
-                "altados agredieron acosaron asaltaron agredió acosó asaltó ataque \"ataque a balazos\" atacó atacaron ata\n" +
-                "cante aggresor perpetrador asaltante atacantes agresores perpetradores asaltantes atacando ataques batall\n" +
-                "a combate combatieron batallas combates golpeado sometido golpeada sometida golpeando sometiendo golperar\n" +
-                "on golpeó explosión ráfaga voladura bomba bombardeado bombardero bombarderos bombardeando bombas víctimas\n" +
-                " bajas muertos víctima baja muerto choque conflicto enfrentamiento chocó chocaron \"se enfrentó\" \"se en\n" +
-                "frentaron\" choques enfrentamientos chocando enfrentando demostrar manfiestar demostraron manifestaron ma\n" +
-                "nifestantes demuestra manifiesta demostrando manifestando demostración manifestación demostraciones manif\n" +
-                "estaciones detonó explotar explotó explotaba explotando estallido explosiones estallidos disparo tiro tir\n" +
-                "oteo disparos tiros tiroteos secuestro plagio rapto levantón asesinado asesinada ejecutado ejecutada ases\n" +
-                "inaron asesinan asesino asesinos asesinato ejecución homicidio puñalado puñalada linchado linchada lincha\n" +
-                "ndos lincharon ajusticiarion linchando ajusticiar marcha marchó marcharon marchas marchando \"justicia po\n" +
-                "pular\" \"justicia a mano propia\" piquete plantón piqueteros \"realizando un piquete\" \"montando un piq\n" +
-                "uete\" protesta protestó protestaron manifestante protestando protestas plantones incursión redada incurs\n" +
-                "ionó incursionando incursiones redadas movilizó movilizaron movilizan movilizando violación violado viola\n" +
-                "da viola violando violador violadora revuelta rebelión sublevación revueltas rebeliones sublevaciones dis\n" +
-                "turbio motín desorden \"riña prisión\" \"riña cárcel\" \"riña penitenciario\" peleaban amontinó amotinaba\n" +
-                "n \"causaban disturbios\" pelearon amontinaron \"causaron disturbios\" alborotador sublevado alborotadore\n" +
-                "s sublevados desordenando alborotando sublevando desordenes alborotos disturbios \"prender fuego\" incedi\n" +
-                "ar \"prendieron fuego\" incendiaron \"prendió fuego\" incendió tirador pistolero tiradores pistoleros bal\n" +
-                "azo balazos \"ráfaga de balas\" \"dar balas\" \"dar plomo\" tiró tiraba tiraron \"dieron balas\" \"dio ba\n" +
-                "las\" \"dieron plomo\" plomeó plomearlo acribillado acribilaron \"abrieron fuego\" \"abrió fuego\" ballea\n" +
-                "ron dispararon disparan disaparo disparado disparada disparar punzada estocada apuñalado apuñalada punzad\n" +
-                "o estocado apuñalar punzar estocar huelga golpe paro \"toma de\" \"toma del\" holgó golpearon tomaron tom\n" +
-                "an huelgas golpes paros tomas \"lanzó piedras\" \"tiró piedras\" \"lanzaron piedras\" \"tiraron piedras\"\n" +
-                " \"lanzando piedras\" balear balearon agitación crisis turbulencia malestar \"vigilante parapolicial\" co\n" +
-                "munitario comunitarios \"vigilancia parapolicial\" violencia herida herido heridos heridas baleado balead\n" +
-                "a baleadas baleados lesionado lesionados lesionada lesionadas narcos drogas estupefacientes narcóticos ca\n" +
-                "rteles decapitado decapitados decapitada decapitadas \"narco mensaje\" ahorcamiento ahorcado ahorcada \"c\n" +
-                "uerpo quemado\" \"cuerpo calcinado\" quemaduras \"cuerpos quemados\" \"cuerpos calcinados\" atado atada a\n" +
-                "tados atadas amarrado amarrada amordazado amordazada \"tiro de gracia\" \"cuerpo encajonado en cemento\" \n" +
-                "\"cuerpo encajonado en concreto\" \"cuerpo en concreto\" \"cuerpo en bloques de concreto\" tableado table\n" +
-                "ada tablear tablearon tableados mutilado multilada multilados multiladas desmembrado descuartizado desmem\n" +
-                "brados desmembrada desmembradas descuartizada descuartizados descuartizadas \"signos de tortura\" \"huell\n" +
-                "a de tortura\" \"huellas de tortura\" \"restos humanos\" embolzado embolzada embolzados embolzadas encobi\n" +
-                "jado encobijada encobijados encobijadas rescate rescates secuestrador plagiador secuestrado secuestrada s\n" +
-                "ecuestrados secuestradas secuestraron plagiado plagiada plagiados plagiadas plagiaron raptado raptada rap\n" +
-                "tados raptadas raptaron levantado levantada levantados levantadas levantaron \"privados de libertad\" \"p\n" +
-                "rivado de su libertad\" \"privada de su libertad\" encapuchado encapuchada paristas encapuchados enmascar\n" +
-                "ado enmascarada cocaina metanfetamina marihuana \"plantas de marihuana\" \"signos de violencia\" \"marcas\n" +
-                " de violencia\" \"estado de descomposición\" \"putrefacción avanzada\" \"fosas comunes\" \"fosas clandest\n" +
-                "inas\" fosa \"delincuencia organizada\" \"banda criminal\" pandillas \"grupo criminal\" \"huelga de hambr\n" +
-                "e\" arrestos detenciones arresto arrestado arrestada arrestados arrestadas arrestaron detienen arrestan d\n" +
-                "etener detuvieron rescatar rescantan rescataron rescatado rescatada rescatados rescatadas migrante migran\n" +
-                "tes caravana \"caravana de migrantes\" inmigrante inmigrantes \"inmigrantes indocumentados\" \"inmigrante\n" +
-                "s ilegales\" incautación decomiso incautar decomisar extorsión \"meta crystal\" crystal cristal degollado\n" +
-                " degollada degollados secuestros \"señales de restricción\" \"signos de restricción\" cartulina \"mensaje\n" +
-                " en cartulina\" \"mensaje amenazante\" \"quemado con ácido\" \"cadaver u occiso\" \"signos de violencia s\n" +
-                "exual\" \"señales de violencia sexual\" \"signos señales de violación\" \"señales de violación\" esposas \n" +
-                "esposado esposados \"atado de pies\" maniatado \"cabeza humana\" ejecutar ejecutaron ejecutan \"hombres a\n" +
-                "rmados\" pandilleros delincuentes \"policia comunitaria\" autodefensas huachicolero entambado \"narco blo\n" +
-                "queo\" bloqueo bloquean bloqueado bloqueada \"arma de fuego\" desplazado desplazada desplazados desplazad\n" +
-                "as cuerpo cuerpos cadáver \"restos óseos\" interceptaron interceptada interceptado persecución capturar c\n" +
-                "apturaron capturado capturada narcomenudeo narcomenudista narcomenudistas amapola \"plantas de amapola\"");
-
-        link(sources, sourceList);
+//        SourceList sourceList = createSourceList("mexico-1", "(activist activists ambush ambushed ambushes ambushing arso\n" +
+//                "n assault assaulted attack attacked attacker attackers attacking attacks battle battled battles beaten be\n" +
+//                "ating blast bomb bombed bomber bombers bombing bombs casualties casualty clash clashed clashes clashing d\n" +
+//                "emonstrate demonstrated demonstraters demonstrates demonstrating demonstration demonstrations detonated e\n" +
+//                "xplode exploded explodes exploding explosion explosions \"gun fire\" gunfire kidnapping killed killer kil\n" +
+//                "lers killing knifed lynched lynching march marched marches marching \"mob justice\" molotov picket picket\n" +
+//                "ers picketing protest protested protester protesters protesting protestor protestors protests raid raided\n" +
+//                " raiding raids rallied rallies rallying rape raped rapes raping rapist revolt revolts riot rioted rioter \n" +
+//                "rioters rioting riots \"set on fire\" shooter shooters shooting shoots shot stab stabbed stabbing strike \n" +
+//                "striked strikes \"threw stones\" \"throwing stones\" \"to shoot\" turmoil unrest vigilante vigilantism vi\n" +
+//                "olence wounded narco drugs cartel beheaded \"narco message\" \"public hanging of corpses\" \"burned body\n" +
+//                "\" \"burned bodies\" tied gagged \"shot of grace\" \"body encased in cement\" \"hit by a wooden board\" mu\n" +
+//                "tilated dismembered \"signs of torture\" \"human remains in plastic bags\" \"body wrapped in a blanket\" \n" +
+//                "ransom kidnapper kidnapped hooded masked cocaine methamphetamine marijuana \"signs of violence\" \"advanc\n" +
+//                "ed state of decomposition\" \"mass graves\" grave \"organized crime\" \"criminal band\" \"hunger strike\"\n" +
+//                " arrests arrest \"to rescue\" migrant immigrant immigrants seizure seize extortion \"crystal meth\" \"thr\n" +
+//                "oat slit\" abduction \"signs of restraint\" cardboard \"carboard message\" \"threatening message\" \"burn\n" +
+//                "ed with acid\" corpse \"signs of sexual violence\" \"signs of rape\" handcuffs handcuffed \"feet tied\" t\n" +
+//                "orso \"human head\" execute \"armed men\" criminals \"community police\" self-defense \"fuel theft\" \"bo\n" +
+//                "dy found inside of a bin\" \"narco blockage\" \"blockage of roads\" \"fire weapon\" displaced body \"bone\n" +
+//                " remains\" intercepted \"a chase\" captured \"drug dealing\" \"drug dealer\" \"poppy plants\" \"hands tie\n" +
+//                "d\" bodies activista defensor defensora activistas defensores defensoras emboscada emboscó emboscaron emb\n" +
+//                "oscados emboscando \"incendio provocado\" \"incendio malicioso\" \"incendio intencional\" agresión acoso \n" +
+//                "asalto atacado atacada atacados agredido agredida agredidos acosado acosada acosados asaltado asaltada as\n" +
+//                "altados agredieron acosaron asaltaron agredió acosó asaltó ataque \"ataque a balazos\" atacó atacaron ata\n" +
+//                "cante aggresor perpetrador asaltante atacantes agresores perpetradores asaltantes atacando ataques batall\n" +
+//                "a combate combatieron batallas combates golpeado sometido golpeada sometida golpeando sometiendo golperar\n" +
+//                "on golpeó explosión ráfaga voladura bomba bombardeado bombardero bombarderos bombardeando bombas víctimas\n" +
+//                " bajas muertos víctima baja muerto choque conflicto enfrentamiento chocó chocaron \"se enfrentó\" \"se en\n" +
+//                "frentaron\" choques enfrentamientos chocando enfrentando demostrar manfiestar demostraron manifestaron ma\n" +
+//                "nifestantes demuestra manifiesta demostrando manifestando demostración manifestación demostraciones manif\n" +
+//                "estaciones detonó explotar explotó explotaba explotando estallido explosiones estallidos disparo tiro tir\n" +
+//                "oteo disparos tiros tiroteos secuestro plagio rapto levantón asesinado asesinada ejecutado ejecutada ases\n" +
+//                "inaron asesinan asesino asesinos asesinato ejecución homicidio puñalado puñalada linchado linchada lincha\n" +
+//                "ndos lincharon ajusticiarion linchando ajusticiar marcha marchó marcharon marchas marchando \"justicia po\n" +
+//                "pular\" \"justicia a mano propia\" piquete plantón piqueteros \"realizando un piquete\" \"montando un piq\n" +
+//                "uete\" protesta protestó protestaron manifestante protestando protestas plantones incursión redada incurs\n" +
+//                "ionó incursionando incursiones redadas movilizó movilizaron movilizan movilizando violación violado viola\n" +
+//                "da viola violando violador violadora revuelta rebelión sublevación revueltas rebeliones sublevaciones dis\n" +
+//                "turbio motín desorden \"riña prisión\" \"riña cárcel\" \"riña penitenciario\" peleaban amontinó amotinaba\n" +
+//                "n \"causaban disturbios\" pelearon amontinaron \"causaron disturbios\" alborotador sublevado alborotadore\n" +
+//                "s sublevados desordenando alborotando sublevando desordenes alborotos disturbios \"prender fuego\" incedi\n" +
+//                "ar \"prendieron fuego\" incendiaron \"prendió fuego\" incendió tirador pistolero tiradores pistoleros bal\n" +
+//                "azo balazos \"ráfaga de balas\" \"dar balas\" \"dar plomo\" tiró tiraba tiraron \"dieron balas\" \"dio ba\n" +
+//                "las\" \"dieron plomo\" plomeó plomearlo acribillado acribilaron \"abrieron fuego\" \"abrió fuego\" ballea\n" +
+//                "ron dispararon disparan disaparo disparado disparada disparar punzada estocada apuñalado apuñalada punzad\n" +
+//                "o estocado apuñalar punzar estocar huelga golpe paro \"toma de\" \"toma del\" holgó golpearon tomaron tom\n" +
+//                "an huelgas golpes paros tomas \"lanzó piedras\" \"tiró piedras\" \"lanzaron piedras\" \"tiraron piedras\"\n" +
+//                " \"lanzando piedras\" balear balearon agitación crisis turbulencia malestar \"vigilante parapolicial\" co\n" +
+//                "munitario comunitarios \"vigilancia parapolicial\" violencia herida herido heridos heridas baleado balead\n" +
+//                "a baleadas baleados lesionado lesionados lesionada lesionadas narcos drogas estupefacientes narcóticos ca\n" +
+//                "rteles decapitado decapitados decapitada decapitadas \"narco mensaje\" ahorcamiento ahorcado ahorcada \"c\n" +
+//                "uerpo quemado\" \"cuerpo calcinado\" quemaduras \"cuerpos quemados\" \"cuerpos calcinados\" atado atada a\n" +
+//                "tados atadas amarrado amarrada amordazado amordazada \"tiro de gracia\" \"cuerpo encajonado en cemento\" \n" +
+//                "\"cuerpo encajonado en concreto\" \"cuerpo en concreto\" \"cuerpo en bloques de concreto\" tableado table\n" +
+//                "ada tablear tablearon tableados mutilado multilada multilados multiladas desmembrado descuartizado desmem\n" +
+//                "brados desmembrada desmembradas descuartizada descuartizados descuartizadas \"signos de tortura\" \"huell\n" +
+//                "a de tortura\" \"huellas de tortura\" \"restos humanos\" embolzado embolzada embolzados embolzadas encobi\n" +
+//                "jado encobijada encobijados encobijadas rescate rescates secuestrador plagiador secuestrado secuestrada s\n" +
+//                "ecuestrados secuestradas secuestraron plagiado plagiada plagiados plagiadas plagiaron raptado raptada rap\n" +
+//                "tados raptadas raptaron levantado levantada levantados levantadas levantaron \"privados de libertad\" \"p\n" +
+//                "rivado de su libertad\" \"privada de su libertad\" encapuchado encapuchada paristas encapuchados enmascar\n" +
+//                "ado enmascarada cocaina metanfetamina marihuana \"plantas de marihuana\" \"signos de violencia\" \"marcas\n" +
+//                " de violencia\" \"estado de descomposición\" \"putrefacción avanzada\" \"fosas comunes\" \"fosas clandest\n" +
+//                "inas\" fosa \"delincuencia organizada\" \"banda criminal\" pandillas \"grupo criminal\" \"huelga de hambr\n" +
+//                "e\" arrestos detenciones arresto arrestado arrestada arrestados arrestadas arrestaron detienen arrestan d\n" +
+//                "etener detuvieron rescatar rescantan rescataron rescatado rescatada rescatados rescatadas migrante migran\n" +
+//                "tes caravana \"caravana de migrantes\" inmigrante inmigrantes \"inmigrantes indocumentados\" \"inmigrante\n" +
+//                "s ilegales\" incautación decomiso incautar decomisar extorsión \"meta crystal\" crystal cristal degollado\n" +
+//                " degollada degollados secuestros \"señales de restricción\" \"signos de restricción\" cartulina \"mensaje\n" +
+//                " en cartulina\" \"mensaje amenazante\" \"quemado con ácido\" \"cadaver u occiso\" \"signos de violencia s\n" +
+//                "exual\" \"señales de violencia sexual\" \"signos señales de violación\" \"señales de violación\" esposas \n" +
+//                "esposado esposados \"atado de pies\" maniatado \"cabeza humana\" ejecutar ejecutaron ejecutan \"hombres a\n" +
+//                "rmados\" pandilleros delincuentes \"policia comunitaria\" autodefensas huachicolero entambado \"narco blo\n" +
+//                "queo\" bloqueo bloquean bloqueado bloqueada \"arma de fuego\" desplazado desplazada desplazados desplazad\n" +
+//                "as cuerpo cuerpos cadáver \"restos óseos\" interceptaron interceptada interceptado persecución capturar c\n" +
+//                "apturaron capturado capturada narcomenudeo narcomenudista narcomenudistas amapola \"plantas de amapola\"");
+//
+//        link(sources, sourceList);
     }
 
     public static void main(String[] args) {
