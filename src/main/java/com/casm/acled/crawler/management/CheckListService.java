@@ -26,6 +26,7 @@ import com.opencsv.CSVReader;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.QuoteMode;
+import org.apache.commons.lang3.BooleanUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,6 +47,8 @@ import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static com.casm.acled.crawler.spring.CrawlService.STANDARD_SITEMAP_LOCS;
 
 @Service
 public class CheckListService {
@@ -202,6 +205,8 @@ public class CheckListService {
     public boolean hasSiteMaps(Source source) {
         List<String> siteMaps = crawlService.getSitemaps(source);
 
+        siteMaps.removeAll(STANDARD_SITEMAP_LOCS);
+
         if(siteMaps.isEmpty()) {
             reporter.report(Report.of(Event.NO_SITE_MAPS).id(source.id()).message(source.get(Source.STANDARD_NAME)));
             return false;
@@ -291,10 +296,18 @@ public class CheckListService {
         }
     }
 
+    private <V extends VersionedEntity<V>> boolean isBoolean(V entity, String field){
+        if (entity.spec().get(field).getKlass().isAssignableFrom(Boolean.class)){
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     public void exportCrawlerSourcesToCSV(Path outputDir, String fileName, List<Source> sources) throws IOException {
 
         List<String> headers = ImmutableList.of("id", "field", "value");
-        Set<String> fields = ImmutableSet.of(Source.LINK, Source.EXAMPLE_URLS, Source.DATE_FORMAT, Source.LOCALES);
+        Set<String> fields = ImmutableSet.of(Source.LINK, Source.EXAMPLE_URLS, Source.DATE_FORMAT, Source.LOCALES, Source.CRAWL_DISABLE_SITEMAP_DISCOVERY, Source.CRAWL_SITEMAP_LOCATIONS);
 
         try (
                 final OutputStream outputStream = java.nio.file.Files.newOutputStream(outputDir.resolve(fileName), StandardOpenOption.CREATE);
@@ -349,7 +362,7 @@ public class CheckListService {
         String FIELD = "field";
         String VALUE = "value";
 
-        Set<String> allowedFields = ImmutableSet.of(Source.LINK, Source.EXAMPLE_URLS, Source.DATE_FORMAT, Source.LOCALES);
+        Set<String> allowedFields = ImmutableSet.of(Source.LINK, Source.EXAMPLE_URLS, Source.DATE_FORMAT, Source.LOCALES, Source.CRAWL_DISABLE_SITEMAP_DISCOVERY, Source.CRAWL_SITEMAP_LOCATIONS);
 
         try (
                 Reader reader = java.nio.file.Files.newBufferedReader(seedsPath);
@@ -396,6 +409,9 @@ public class CheckListService {
                         }
 
                         return source.put(field, values);
+                    } else if (isBoolean(source, field)){
+
+                        return source.put(field, BooleanUtils.toBoolean(value));
                     } else {
 
                         return source.put(field, value);

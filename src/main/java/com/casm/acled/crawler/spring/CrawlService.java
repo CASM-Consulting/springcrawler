@@ -115,7 +115,7 @@ public class CrawlService {
 
         Source source = args.sources.get(0);
 
-        if(args.onlySiteMap && ! checkListService.hasSiteMaps(source)) {
+        if(args.depth == 0 && ! checkListService.hasSiteMaps(source)) {
 
             logger.info("Quitting: only site maps requested - {} has no sitemap", (String) source.get(Source.STANDARD_NAME));
 
@@ -213,7 +213,7 @@ public class CrawlService {
     }
 
 
-    private static List<String> STANDARD_SITEMAP_LOCS = ImmutableList.of(
+    public static List<String> STANDARD_SITEMAP_LOCS = ImmutableList.of(
             "sitemap.xml",
             "sitemap_index.xml"
     );
@@ -247,42 +247,56 @@ public class CrawlService {
         return sitemaps;
     }
 
+    /**
+     * TODO(andy) how do we use STANDARD_SITEMAP_LOCS - won't this mess with "hasSiteMaps()"?
+     */
     public List<String> getSitemaps(Source source) {
 
         String url = source.get(Source.LINK);
+        List<String> predefinedSitemaps = source.get(Source.CRAWL_SITEMAP_LOCATIONS);
 
         url = Util.ensureHTTP(url, false);
 
-        List<String> sitemaps;
+        List<String> sitemaps = new ArrayList<>();
 
         if(url == null || url.isEmpty()) {
 
             logger.warn("empty URL {}", (String)source.get(Source.STANDARD_NAME));
-            sitemaps = new ArrayList<>();
+
         } else {
 
-            SitemapParser sitemapParser = new SitemapParser();
-            try {
+            if (source.isFalse(Source.CRAWL_DISABLE_SITEMAP_DISCOVERY)) {
 
-                Set<String> sitemapLocations = sitemapParser.getSitemapLocations(url);
-                sitemaps = new ArrayList<>(sitemapLocations);
-            } catch (InvalidSitemapUrlException e) {
+                // Add standard ones
+                sitemaps.addAll(STANDARD_SITEMAP_LOCS);
 
+                // Attempt to discover sitemap location from robots.txt
+
+                SitemapParser sitemapParser = new SitemapParser();
                 try {
 
-                    url = followRedirects(url);
                     Set<String> sitemapLocations = sitemapParser.getSitemapLocations(url);
-
                     sitemaps = new ArrayList<>(sitemapLocations);
-                } catch (InvalidSitemapUrlException | UrlConnectionException ee) {
+                } catch (InvalidSitemapUrlException e) {
 
-                    sitemaps = new ArrayList<>();
+                    // If this fails (connected but errored), ensure all redirects are followed, then try again
+                    try {
+
+                        url = followRedirects(url);
+                        Set<String> sitemapLocations = sitemapParser.getSitemapLocations(url);
+
+                        sitemaps = new ArrayList<>(sitemapLocations);
+                    } catch (InvalidSitemapUrlException | UrlConnectionException ee) {
+                        // give up
+                    }
+                } catch (UrlConnectionException e) {
+                    // give up
                 }
-            } catch (UrlConnectionException e) {
-
-                sitemaps = new ArrayList<>();
             }
         }
+
+        // add in any locations that were pre-defined on the Source itself
+        sitemaps.addAll(predefinedSitemaps);
 
         return sitemaps;
     }

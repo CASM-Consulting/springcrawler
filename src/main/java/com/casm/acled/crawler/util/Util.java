@@ -766,7 +766,7 @@ public class Util implements CommandLineRunner {
 //        recoverArticleDates();
 //        linkExisting();
 
-        createFakeNetSourceList();
+//        createFakeNetSourceList();
 
 //        exportSourceDataCSV(Paths.get("all-source-data"));
 
