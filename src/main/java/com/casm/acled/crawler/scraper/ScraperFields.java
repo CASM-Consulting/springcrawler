@@ -7,4 +7,7 @@ public class ScraperFields {
     public static final String SCRAPED_TITLE = "scraped.title";
     public static final String STANDARD_DATE = "STANDARD_DATE";
     public static final String KEYWORD_HIGHLIGHT = "KEYWORD_HIGHLIGHT";
+
+    public static final String DATE_PASSED = "DATE_PASSED";
+    public static final String KEYWORD_PASSED = "KEYWORD_PASSED";
 }

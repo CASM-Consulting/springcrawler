@@ -307,7 +307,8 @@ public class CheckListService {
     public void exportCrawlerSourcesToCSV(Path outputDir, String fileName, List<Source> sources) throws IOException {
 
         List<String> headers = ImmutableList.of("id", "field", "value");
-        Set<String> fields = ImmutableSet.of(Source.LINK, Source.EXAMPLE_URLS, Source.DATE_FORMAT, Source.LOCALES, Source.CRAWL_DISABLE_SITEMAP_DISCOVERY, Source.CRAWL_SITEMAP_LOCATIONS);
+        Set<String> fields = ImmutableSet.of(Source.LINK, Source.EXAMPLE_URLS, Source.DATE_FORMAT, Source.LOCALES,
+                Source.CRAWL_DISABLE_SITEMAP_DISCOVERY, Source.CRAWL_SITEMAP_LOCATIONS, Source.SEED_URLS, Source.CRAWL_RECRAWL_PATTERN);
 
         try (
                 final OutputStream outputStream = java.nio.file.Files.newOutputStream(outputDir.resolve(fileName), StandardOpenOption.CREATE);
@@ -362,7 +363,8 @@ public class CheckListService {
         String FIELD = "field";
         String VALUE = "value";
 
-        Set<String> allowedFields = ImmutableSet.of(Source.LINK, Source.EXAMPLE_URLS, Source.DATE_FORMAT, Source.LOCALES, Source.CRAWL_DISABLE_SITEMAP_DISCOVERY, Source.CRAWL_SITEMAP_LOCATIONS);
+        Set<String> allowedFields = ImmutableSet.of(Source.LINK, Source.EXAMPLE_URLS, Source.DATE_FORMAT, Source.LOCALES,
+                Source.CRAWL_DISABLE_SITEMAP_DISCOVERY, Source.CRAWL_SITEMAP_LOCATIONS, Source.SEED_URLS, Source.CRAWL_RECRAWL_PATTERN);
 
         try (
                 Reader reader = java.nio.file.Files.newBufferedReader(seedsPath);
