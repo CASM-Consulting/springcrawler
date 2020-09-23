@@ -21,31 +21,6 @@ import java.text.ParseException;
 import java.time.*;
 import java.util.*;
 
-// to ask, jqm properties not loaded properly. need to manually specify
-// a little bit confused about these different parameters that source and source list have. Sourcelist is a one website's resources, source is a single url crawl.
-// It seems that a lot of information that the crawlargs have does not have a record in the source and sourcelist;
-// and I notice that when need to run a job again, we run it by creating a job with a single source ID?
-
-// so for testing, what we could do is to let the test thing (schedulejobrunnerTest) pass a jqm client
-// so basically, *schedulejobrunner* pass a client to *scheduler* to examine all jobs and decide run again or not.
-// The *schedulejobrunnerTest* will manually create a client enqueued with jobs that have different states
-//what about *schedulejob* class?? not very clear about this bit.
-// we cannot get rid of JQM when testing cause that is what we are trying to test.
-
-// the main thing, get it running and tested;
-// one, decouple scheduler from spring-boot;
-// two, parameterize schedule in terms of classes; dealing with jobs and jqm client;
-// third,
-// interface class that scheduler accept; abstract things are running, accept a source;
-
-// two other classes to write: , schedule jobs, shedule job runner (run jobs and report which job is running); build interfaces;
-// so bascially three classes: scheduler, schedulejob, schedulejobrunner (run jobs and report which job is running);
-
-// for instance, if we dont touch current
-
-//errors: why it tries to connect to Caused by: java.net.ConnectException: ConnectException invoking http://localhost:1789/ws/client/ji: Connection refused (Connection refused)
-// jqm properties not loaded properly.
-
 @Service
 public class Scheduler implements Runnable {
 

@@ -24,13 +24,6 @@ public class JQMJobRunner implements JobRunner {
 
     public JQMJobRunner () {
 
-//        Properties p = new Properties();
-//        p.put("com.enioka.jqm.ws.url", "http://localhost:50682/ws/client");
-//        p.put("com.enioka.jqm.ws.login", "root");
-//        p.put("com.enioka.jqm.ws.password", "password");
-//        JqmClientFactory.setProperties(p);
-//        client = JqmClientFactory.getClient();
-
         try (
                 Reader reader = Files.newBufferedReader(Paths.get("jqm.properties"))
         ) {
