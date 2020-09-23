@@ -37,7 +37,7 @@ public class NorconexConfiguration {
     private String userAgent = "CASM Consulting LLP";
     private int numThreads = 3;
     private boolean ignoreRobots = false;
-    private boolean ignoreSiteMap = false;
+    private boolean ignoreSiteMap;
     private int depth = 5;
     private String urlRegex ;
     private long politeness = 100;
@@ -57,6 +57,8 @@ public class NorconexConfiguration {
 //        this.to = to;
 
         this.args = args;
+
+        ignoreSiteMap = args.ignoreSiteMap;
 
         filters = new ArrayList<>();
         importer = new ImporterConfig();

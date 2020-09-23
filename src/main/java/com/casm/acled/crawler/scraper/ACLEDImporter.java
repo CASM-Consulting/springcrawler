@@ -99,6 +99,10 @@ public class ACLEDImporter implements IHttpDocumentProcessor {
 
             HttpMetadata metadata = doc.getMetadata();
 
+            if(!metadata.getBoolean(ScraperFields.KEYWORD_PASSED) || !metadata.getBoolean(ScraperFields.DATE_PASSED) ) {
+                return;
+            }
+
             String articleText = metadata.getString( ScraperFields.SCRAPED_ARTICLE);
             String title = metadata.getString( ScraperFields.SCRAPED_TITLE);
             String date = metadata.getString( ScraperFields.SCRAPED_DATE);

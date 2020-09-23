@@ -99,6 +99,7 @@ public class CrawlerServiceRunner implements CommandLineRunner {
 
         crawlArgs.raw.skipKeywords = false;
         crawlArgs.raw.program = "crawl";
+
 //        crawlArgs.raw.sources = ImmutableList.of("Milenio");
 //        crawlArgs.raw.sources = ImmutableList.of("MiMorelia");
 //        crawlArgs.raw.sources = ImmutableList.of("fake-net");
@@ -134,4 +135,3 @@ public class CrawlerServiceRunner implements CommandLineRunner {
         ctx.close();
     }
 }
-

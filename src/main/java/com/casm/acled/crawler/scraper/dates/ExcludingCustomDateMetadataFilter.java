@@ -33,6 +33,8 @@ public class ExcludingCustomDateMetadataFilter extends DateMetadataFilter {
 
     private final Source source;
 
+    private static final boolean PASSING = false;
+
     public ExcludingCustomDateMetadataFilter(Source source, String field, DateParser dateParser, Reporter reporter) {
         super();
         setOnMatch(OnMatch.EXCLUDE);
@@ -64,16 +66,22 @@ public class ExcludingCustomDateMetadataFilter extends DateMetadataFilter {
         if (maybeDateTime.isPresent()) {
             LocalDateTime ldt = maybeDateTime.get();
             String standardDateString = ldt.format(dtf);
-            metadata.put(ScraperFields.STANDARD_DATE, ImmutableList.of(standardDateString));
+            metadata.addString(ScraperFields.STANDARD_DATE, standardDateString);
 
             if(super.isDocumentMatched(reference, input, metadata, parsed)) {
-                return false;
+                metadata.addBoolean(ScraperFields.DATE_PASSED, true);
+//                return false;
+                return PASSING;
             } else {
-                return true;
+                metadata.addBoolean(ScraperFields.DATE_PASSED, false);
+//                return true;
+                return PASSING;
             }
         } else {
             reporter.report(Report.of(Event.DATE_PARSE_FAILED, source.id(), metadata.getReference()));
-            return true;
+            metadata.addBoolean(ScraperFields.DATE_PASSED, false);
+//            return true;
+            return PASSING;
         }
 
     }

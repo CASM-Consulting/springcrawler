@@ -32,6 +32,8 @@ public class ExcludingKeywordFilter extends AbstractDocumentFilter {
 
     private final LuceneMatcher matcher;
 
+    private static final boolean PASSING = false;
+
     public ExcludingKeywordFilter(String field, String queryConfig) {
         setOnMatch(OnMatch.EXCLUDE);
 
@@ -54,9 +56,11 @@ public class ExcludingKeywordFilter extends AbstractDocumentFilter {
         if(matcher.isMatched(text)) {
             metadata.setString(ScraperFields.KEYWORD_HIGHLIGHT, matcher.getHighlights(text));
 
-            return false;
+            metadata.setBoolean(ScraperFields.KEYWORD_PASSED, true);
+            return PASSING;
         } else {
-            return true;
+            metadata.setBoolean(ScraperFields.KEYWORD_PASSED, false);
+            return PASSING;
         }
     }
 

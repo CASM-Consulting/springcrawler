@@ -39,6 +39,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
+import java.util.regex.Pattern;
 
 import com.norconex.importer.handler.tagger.impl.*;
 
@@ -78,7 +79,7 @@ public class Crawl {
         @Override
         public String normalizeURL(String url) {
 
-            LogManager.getRootLogger().removeAllAppenders();
+//            LogManager.getRootLogger().removeAllAppenders();
 
             return genericURLNormalizer.normalizeURL(url);
         }
@@ -102,7 +103,9 @@ public class Crawl {
         config = new NorconexConfiguration(workingDir.resolve(scraperCachePath), args);
         config.crawler().setUrlNormalizer(new RootLogAppenderClearingURLNormaliser());
 
-        config.crawler().setStartSitemapURLs(sitemaps.toArray(new String[]{}));
+        if(!args.ignoreSiteMap) {
+            config.crawler().setStartSitemapURLs(sitemaps.toArray(new String[]{}));
+        }
 
         configureLogging(workingDir);
 
@@ -144,13 +147,21 @@ public class Crawl {
 
         filters.forEach(config::addFilter);
 
-        String[] startURL =((String) source.get(Source.LINK)).split(",");
+        List<String> seedUrls = source.get(Source.SEED_URLS);
 
-//        String scraperName = Util.getID(startURL[0]);
+        String[] startURLs;
+
+        if(seedUrls != null && !seedUrls.isEmpty()) {
+            startURLs = seedUrls.toArray(new String[]{});
+        } else {
+            startURLs = ((String) source.get(Source.LINK)).split(",");
+        }
+
+//        String scraperName = Util.getID(startURLs[0]);
 
         if (processFlag.equals("scraper")) {
             ACLEDScraper scraper = ACLEDScraper.load(args.scrapersDir, source, reporter);
-            ACLEDMetadataPreProcessor metadata = new ACLEDMetadataPreProcessor(startURL[0]);
+            ACLEDMetadataPreProcessor metadata = new ACLEDMetadataPreProcessor(startURLs[0]);
             config.setScraper(scraper, metadata);
             config.finalise();
         }
@@ -182,12 +193,14 @@ public class Crawl {
 
         applySourceIdiosyncrasies(source, config);
 
-        config.crawler().setRecrawlableResolver(new DontRecrawlResolver());
+        config.crawler().setRecrawlableResolver(new DontRecrawlResolver(startURLs, Pattern.compile(source.get(Source.CRAWL_RECRAWL_PATTERN))));
 
         config.crawler().setMaxDepth(args.depth);
 
+        config.crawler().setStartURLs(startURLs);
 //        config.setScraper(scraper, metadata);
-        config.crawler().setStartURLs(startURL);
+
+
 //        config.collector();
         if(args.crawlId != null && !args.crawlId.isEmpty()) {
             config.setId(args.crawlId);
