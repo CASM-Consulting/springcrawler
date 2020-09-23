@@ -7,6 +7,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 
+import java.io.IOException;
+import java.io.Reader;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 
 @Component
@@ -20,13 +24,22 @@ public class JQMJobRunner implements JobRunner {
 
     public JQMJobRunner () {
 
-        Properties p = new Properties();
-        p.put("com.enioka.jqm.ws.url", "http://localhost:50682/ws/client");
-        p.put("com.enioka.jqm.ws.login", "root");
-        p.put("com.enioka.jqm.ws.password", "password");
-        JqmClientFactory.setProperties(p);
+//        Properties p = new Properties();
+//        p.put("com.enioka.jqm.ws.url", "http://localhost:50682/ws/client");
+//        p.put("com.enioka.jqm.ws.login", "root");
+//        p.put("com.enioka.jqm.ws.password", "password");
+//        JqmClientFactory.setProperties(p);
+//        client = JqmClientFactory.getClient();
 
-        client = JqmClientFactory.getClient();
+        try (
+                Reader reader = Files.newBufferedReader(Paths.get("jqm.properties"))
+        ) {
+            Properties properties = new Properties();
+            properties.load(reader);
+            client = JqmClientFactory.getClient("acled-spring-job-runner", properties, true);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
         jobs = new ArrayList<>();
     }

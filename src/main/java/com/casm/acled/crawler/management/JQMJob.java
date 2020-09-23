@@ -55,8 +55,8 @@ public class JQMJob implements Job {
     }
 
     @Override
-    public int pid() {
-        return source.get(Source.CRAWL_JOB_ID);
+    public Optional<Integer> pid() {
+        return Optional.ofNullable(source.get(Source.CRAWL_JOB_ID));
     }
 
     @Override

@@ -164,7 +164,7 @@ public class Crawl {
 
         applySourceIdiosyncrasies(source, config);
 
-        config.crawler().setRecrawlableResolver(new DontRecrawlResolver(startURLs, Pattern.compile(source.get(Source.CRAWL_RECRAWL_PATTERN))));
+        config.crawler().setRecrawlableResolver(new DontRecrawlResolver(startURLs, source.hasValue(Source.CRAWL_RECRAWL_PATTERN)? Pattern.compile(source.get(Source.CRAWL_RECRAWL_PATTERN)) : null));
 
         config.crawler().setMaxDepth(args.depth);
 

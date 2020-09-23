@@ -5,7 +5,6 @@ import com.casm.acled.crawler.management.CrawlArgs;
 import com.casm.acled.crawler.management.CrawlArgsService;
 import com.casm.acled.crawler.management.CrawlerSweep;
 import com.casm.acled.crawler.reporting.Reporter;
-import com.casm.acled.crawler.util.Util;
 import com.casm.acled.dao.entities.SourceDAO;
 import com.casm.acled.dao.entities.SourceListDAO;
 import com.casm.acled.entities.source.Source;
@@ -30,12 +29,10 @@ import org.springframework.context.annotation.Import;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
-import java.util.*;
-import java.util.stream.Collectors;
 
 //import org.springframework.shell.standard.ShellMethod;
 //import org.springframework.shell.standard.ShellComponent;
-import org.springframework.scheduling.annotation.EnableScheduling;
+
 
 @EnableAutoConfiguration(exclude={HibernateJpaAutoConfiguration.class, CamundaBpmAutoConfiguration.class, CamundaBpmRestJerseyAutoConfiguration.class, ValidationAutoConfiguration.class})
 // We need the special object mapper, though.
@@ -45,9 +42,9 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @ComponentScan(basePackages={"com.casm.acled.dao", "com.casm.acled.crawler"})
 
 //@ShellComponent
-public class CrawlerSweepRunner implements CommandLineRunner {
+public class CrawlerJQMRunner implements CommandLineRunner {
 
-    protected static final Logger logger = LoggerFactory.getLogger(CrawlerSweepRunner.class);
+    protected static final Logger logger = LoggerFactory.getLogger(CrawlerJQMRunner.class);
 
     @Autowired
     private CrawlerSweep crawlerSweep;
@@ -153,7 +150,7 @@ public class CrawlerSweepRunner implements CommandLineRunner {
 
     public static void main(String[] args) {
 
-        SpringApplication app = new SpringApplication(CrawlerSweepRunner.class);
+        SpringApplication app = new SpringApplication(CrawlerJQMRunner.class);
         app.setBannerMode(Banner.Mode.OFF);
         app.setWebApplicationType(WebApplicationType.NONE);
         ConfigurableApplicationContext ctx = app.run(args);

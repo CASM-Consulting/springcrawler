@@ -19,14 +19,6 @@ import java.util.*;
 
 @Service
 public class SchedulerService {
-    //TODO
-    // to ask, the project sometimes will run several applications for instance, when I only execute the SchedulerRunner, it sometimes run Crawler.. and ...;
-    // the idea is that, we load all possible job requests from source, and compare them with current running/created job instances, then
-    // about the crawl_JOB_ID, if it doesnt have one, then it doesnt run, just run it.
-
-    // the whole pipeline: get all possible jobs from jobprovider, check if job is valid/runnable by makeJob method and JobRunner's get JOB, then choose too run them or not;
-    // if crawl_job_id does not exist, then run it;
-    // jobprovider provides all potential jobs, jobrunner will check them onebyone by using getJob(), and run it by runJob(); Only a job request object (wrapped as Job object) is passed
 
     protected static final Logger logger = LoggerFactory.getLogger(SchedulerService.class);
 
@@ -125,7 +117,9 @@ public class SchedulerService {
         }
     }
 
-    // to be implemented, running so slowly and should report to admin. could involve cronexpression comparison
+    /**
+     * Did job fail to finish running before it must be run again?
+     */
     private Action checkStillRunningFromLastTime(Job job, Event e) {
         // TODO: does comparison even need to be made at this stage?
         reporter.report(Report.of(e).id(job.id()).message(job.name()));
@@ -140,23 +134,22 @@ public class SchedulerService {
         LocalDateTime jobEndTime = job.getStopped();
         if (jobEndTime.isBefore(prevRun)) {
             return Action.RUN;
-        }
-        else {
+        } else {
             if (jobEndTime.isAfter(prevRun) && jobEndTime.isBefore(nextRun)) {
                 return Action.PASS;
             }
             else {
-                return Action.PASS;
+                return Action.PASS; // TODO is this right?
             }
         }
     }
 
-    // to be implemented , send email to admin
+    // TODO send email to admin
     private void reportJob(Job job, Event e) {
         reporter.report(Report.of(e).id(job.id()).message(job.name()));
     }
 
-    // to be implemented, how long between enquequed and current state; report to admin about this.
+    // TODO how long between enquequed and current state; report to admin about this.
     private void checkTimeSinceSubmitted(Job job, LocalDateTime timeNow) {
         LocalDateTime jobStartTime = job.getStarted();
         String msg = String.format("The job is still starting; it started at %s and current time is %s", jobStartTime.toString(), timeNow.toString());
@@ -194,8 +187,11 @@ public class SchedulerService {
         LocalDateTime nextRun = fromDate(cron.getTimeAfter(toDate(now)));
         LocalDateTime prevRun = fromDate(getTimeBefore(toDate(now), cron));
 
+        // pid could be null
+        Optional<Integer> maybePid = job.pid();
+
         // check if it is a registered one;
-        Optional<Job> maybeJob = checkJobStatus(job.pid());
+        Optional<Job> maybeJob = maybePid.isPresent()? checkJobStatus(maybePid.get()) : Optional.empty();
 
         Action action;
 

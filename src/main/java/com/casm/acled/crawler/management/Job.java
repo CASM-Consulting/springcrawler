@@ -3,6 +3,7 @@ package com.casm.acled.crawler.management;
 import org.quartz.CronExpression;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 /**
  * Job's have conditional state (remains to be seen whether this is a good idea); the available state depends on how
@@ -25,7 +26,7 @@ public interface Job {
     int id();
 
     // PID of (maybe) running job
-    int pid();
+    Optional<Integer> pid();
 
     /**
      * Return Cron schedule, ensure that the Cron's timezone is appropriately contextualised to the Job's Source.
