@@ -42,14 +42,8 @@ public class JQMJob implements Job {
         return this.jobInstance;
     }
 
-    public JobRequest getJobRequest () {
-        JobRequest jobRequest = JobRequest.create(CrawlerSweep.JQM_APP_NAME, CrawlerSweep.JQM_USER)
-                .addParameter(Crawl.SOURCE_ID, Integer.toString(source.id()))
-                .addParameter(Source.CRAWL_SCHEDULE, source.get(Source.CRAWL_SCHEDULE)); // TODO: check that this is correct
-
-
-
-        return jobRequest;
+    public JobRequest getJobRequest() {
+        return args.toJobRequest(source);
     }
 
     public JobRequest getJobRequestFromJobInstance (JobInstance job) {
@@ -77,11 +71,12 @@ public class JQMJob implements Job {
         return getJobRequest().getParameters().get(Crawl.SOURCE_LIST_ID);
     }
 
+    @Override
     public CronExpression getSchedule() {
         try {
             ZoneId zoneId = ZoneId.of(source.get(Source.TIMEZONE));
             TimeZone timeZone = TimeZone.getTimeZone(zoneId);
-            CronExpression cron = new CronExpression(getJobRequest().getParameters().get(Source.CRAWL_SCHEDULE));
+            CronExpression cron = new CronExpression((String)source.get(Source.CRAWL_SCHEDULE));
             cron.setTimeZone(timeZone);
             return cron;
         } catch (ParseException e) {

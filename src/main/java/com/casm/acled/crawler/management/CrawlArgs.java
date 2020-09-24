@@ -136,7 +136,7 @@ public class CrawlArgs {
     
     public void init() {
 
-        if (sourceDAO == null || sourceListDAO == null) {
+        if (sourceDAO != null && sourceListDAO != null) {
 
             if (raw.source != null) {
                 source = sourceDAO.byName(raw.source).get();
