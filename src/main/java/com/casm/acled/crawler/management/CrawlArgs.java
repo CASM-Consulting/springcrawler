@@ -195,7 +195,11 @@ public class CrawlArgs {
 
     }
 
-    private JobRequest toJobRequest(Source source) {
+    public JobRequest toJobRequest() {
+        return toJobRequest(source);
+    }
+
+    public JobRequest toJobRequest(Source source) {
         JobRequest jobRequest = JobRequest.create(jqmProgram, CrawlerSweep.JQM_USER);
 
         jobRequest.addParameter(SOURCE, Integer.toString( source.id() ) );

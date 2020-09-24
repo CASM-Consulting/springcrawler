@@ -139,7 +139,7 @@ public class CrawlerJQMRunner implements CommandLineRunner {
 
         setCrawlArgs(JQMSpringCollectorV1, "mexico-1", LocalDate.of(2020, 9,14), LocalDate.of(2020, 9,17), Paths.get("text"), Boolean.TRUE);
 
-        crawlerSweep.sweep(crawlArgs);
+        crawlerSweep.sweep(ImmutableList.of(crawlArgs));
 
 //        sweepSourceList(JQMSpringCollectorV1, "fake-net", LocalDate.of(2020, 8,21), LocalDate.of(2020, 8,28), Boolean.TRUE);
 

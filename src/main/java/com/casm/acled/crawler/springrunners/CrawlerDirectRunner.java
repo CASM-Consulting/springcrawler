@@ -99,9 +99,9 @@ public class CrawlerDirectRunner implements CommandLineRunner {
         crawlArgs.raw.skipKeywords = false;
         crawlArgs.raw.program = "crawl";
 
-        crawlArgs.raw.source = ImmutableList.of("Milenio");
-//        crawlArgs.raw.sources = ImmutableList.of("MiMorelia");
-        crawlArgs.raw.sourceLists = "mexico-1";
+        crawlArgs.raw.source = "Milenio";
+//        crawlArgs.raw.sources = "MiMorelia";
+        crawlArgs.raw.sourceLists = ImmutableList.of("mexico-1");
 //        crawlArgs.raw.sourceList = "fake-net";
         crawlArgs.raw.from = "2020-09-18";
         crawlArgs.raw.to =  "2021-01-01";

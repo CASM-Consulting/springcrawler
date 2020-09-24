@@ -79,7 +79,7 @@ public class Crawl {
     }
 
     public Crawl(CrawlArgs args, ACLEDImporter importer, Reporter reporter, List<String> sitemaps) {
-        this.source = args.source.get(0);
+        this.source = args.source;
         this.from = args.from;
         this.to = args.to;
         this.reporter = reporter;
@@ -131,7 +131,7 @@ public class Crawl {
 
         if(!args.skipKeywords) {
 
-            ExcludingKeywordFilter keywordFilter = keywordFilter(args.sourceLists, source);
+            ExcludingKeywordFilter keywordFilter = keywordFilter(args.sourceLists.get(0), source);
             filters.add(keywordFilter);
         }
 
