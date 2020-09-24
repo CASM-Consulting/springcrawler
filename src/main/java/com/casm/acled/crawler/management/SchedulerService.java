@@ -144,12 +144,10 @@ public class SchedulerService {
         }
     }
 
-    // TODO send email to admin
     private void reportJob(Job job, Event e) {
         reporter.report(Report.of(e).id(job.id()).message(job.name()));
     }
 
-    // TODO how long between enquequed and current state; report to admin about this.
     private void checkTimeSinceSubmitted(Job job, LocalDateTime timeNow) {
         LocalDateTime jobStartTime = job.getStarted();
         String msg = String.format("The job is still starting; it started at %s and current time is %s", jobStartTime.toString(), timeNow.toString());
@@ -173,17 +171,17 @@ public class SchedulerService {
 
     public void ensureSchedule(Job job) {
 
-
         CronExpression cron = new CronExpression(defaultCronSchedule);
 
         cron = job.getSchedule();
 
-//        ZoneId zoneId = ZoneId.of(source.get(Source.TIMEZONE));
-//        TimeZone timeZone = TimeZone.getTimeZone(zoneId);
-//        cron.setTimeZone(timeZone);
-
-//        Date zonedNow = getZonedNow(zoneId);
         LocalDateTime now = timeProvider.getTime();
+
+        // A job that's never been run before will default to crawling from a week ago
+        LocalDate crawlFrom = now.minusDays(7).toLocalDate();
+        // The to date will always be a couple months ahead to ensure we don't discount any data that's too recent
+        LocalDate crawlTo = now.plusMonths(2).toLocalDate();
+
         LocalDateTime nextRun = fromDate(cron.getTimeAfter(toDate(now)));
         LocalDateTime prevRun = fromDate(getTimeBefore(toDate(now), cron));
 
@@ -197,6 +195,10 @@ public class SchedulerService {
 
         if(maybeJob.isPresent()) {
             Job curJob = maybeJob.get();
+
+            // Set the from date to when the job last started (minusing a day for safety)
+            crawlFrom = curJob.getStarted().minusDays(1).toLocalDate();
+
             String jobState = curJob.state();
             switch (jobState) {
                 case Job.RUNNING:
@@ -231,6 +233,7 @@ public class SchedulerService {
 
         switch (action) {
             case RUN:
+                job.setFromTo(crawlFrom, crawlTo);
                 jobRunner.runJob(job);
                 break;
             case PASS:

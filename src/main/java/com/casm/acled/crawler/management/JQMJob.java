@@ -11,6 +11,7 @@ import org.quartz.CronExpression;
 
 import java.text.ParseException;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
@@ -135,16 +136,26 @@ public class JQMJob implements Job {
         return LocalDateTime.ofInstant(calendar.toInstant(), calendar.getTimeZone().toZoneId());
     }
 
+    @Override
+    public void setFrom(LocalDate from) {
+        if (args != null){
+            args.from = from;
+        } else throw new RuntimeException("In order to reconfigure a job, the job must have been created from source - not JQM");
+    }
+
+    @Override
+    public void setTo(LocalDate to) {
+        if (args != null){
+            args.to = to;
+        } else throw new RuntimeException("In order to reconfigure a job, the job must have been created from source - not JQM");
+    }
+
     public void setSource(Source source) {
         this.source = source;
     }
 
     public Source getSource() {
         return this.source;
-    }
-
-    public void setJobRequestParameters(Map<String, String> params) {
-        getJobRequest().setParameters(params);
     }
 
 
