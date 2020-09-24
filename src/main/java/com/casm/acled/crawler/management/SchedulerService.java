@@ -251,10 +251,10 @@ public class SchedulerService {
     public void schedule( ) throws Exception {
 
         // example parameters; probably we should decide if we should run job request using corresponding Jobinstance's parameters or using our own new parameters;
-        Map<String, String> params = new HashMap<String, String>();
-        params.put(Crawl.SKIP_KEYWORD_FILTER, Boolean.TRUE.toString());
-        params.put(Crawl.FROM, LocalDate.of(2020, 8,21).toString());
-        params.put(Crawl.TO, LocalDate.of(2020, 8,28).toString());
+        Map<String, String> params = new HashMap<>();
+//        params.put(Crawl.SKIP_KEYWORD_FILTER, Boolean.TRUE.toString());
+//        params.put(Crawl.FROM, LocalDate.of(2020, 8,21).toString());
+//        params.put(Crawl.TO, LocalDate.of(2020, 8,28).toString());
 
         List<Job> allPossibleJobs = jobProvider.getJobs(params);
         for (Job possibleJob : allPossibleJobs) {
