@@ -61,7 +61,7 @@ public class CrawlerSweep {
 
     public void sweep(CrawlArgs args) {
 
-        List<JobRequest> jobs = args.toJobRequests();
+        List<JobRequest> jobs = args.toJobRequest();
 
         for(JobRequest job : jobs) {
             client.enqueue(job);

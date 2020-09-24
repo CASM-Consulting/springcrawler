@@ -82,8 +82,8 @@ public class CrawlService {
 
             CrawlArgs args = argsService.get();
 
-            args.sources = ImmutableList.of(maybeSource.get());
-            args.sourceList = maybesSourceList.get();
+            args.source = ImmutableList.of(maybeSource.get());
+            args.sourceLists = maybesSourceList.get();
             args.depth = 3;
 
             Crawl crawl = new Crawl(args, importer, reporter, ImmutableList.of() );
@@ -102,8 +102,8 @@ public class CrawlService {
 
         CrawlArgs args = argsService.get();
 
-        args.sources = ImmutableList.of(maybeSource.get());
-        args.sourceList = maybesSourceList.get();
+        args.source = ImmutableList.of(maybeSource.get());
+        args.sourceLists = maybesSourceList.get();
         args.from = from;
         args.to = to;
         args.skipKeywords = skipKeywords;
@@ -113,7 +113,7 @@ public class CrawlService {
 
     public void run(CrawlArgs args) {
 
-        Source source = args.sources.get(0);
+        Source source = args.source.get(0);
 
         if(args.depth == 0 && ! checkListService.hasSiteMaps(source)) {
 

@@ -73,7 +73,7 @@ public class CrawlerJQMRunner implements CommandLineRunner {
 
         crawlArgs = argsService.get();
 
-        crawlArgs.raw.sourceList = listName;
+//        crawlArgs.raw.sourceLists = listName;
 
         if (from!=null) {
             crawlArgs.raw.from = from.toString();

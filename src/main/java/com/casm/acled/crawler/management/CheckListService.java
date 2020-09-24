@@ -257,7 +257,7 @@ public class CheckListService {
 
     public void exportCrawlerSourceList(CrawlArgs args) throws IOException {
 
-        SourceList sourceList = args.sourceList;
+        SourceList sourceList = args.sourceLists;
         String name = sourceList.get(SourceList.LIST_NAME);
 
         exportCrawlerSourcesToCSV(args.workingDir, name+".csv", sourceList);
@@ -265,7 +265,7 @@ public class CheckListService {
 
     public void importCrawlerSourceList(CrawlArgs args) throws IOException {
 
-        SourceList sourceList = args.sourceList;
+        SourceList sourceList = args.sourceLists;
         String name = sourceList.get(SourceList.LIST_NAME);
 
         importCrawlerSourcesFromCSV(args.workingDir.resolve(name+".csv"), EntityVersions.get(Source.class).current());
@@ -273,7 +273,7 @@ public class CheckListService {
 
     public void checkSourceList(CrawlArgs args) {
 
-        SourceList sourceList = args.sourceList;
+        SourceList sourceList = args.sourceLists;
         List<Source> sources = sourceDAO.byList(sourceList);
 
         for(Source source : sources) {
@@ -446,12 +446,12 @@ public class CheckListService {
 
         List<Source> sources;
 
-        if(args.sourceList == null) {
+        if(args.sourceLists == null) {
 
-            sources = args.sources;
+            sources = args.source;
         } else {
 
-            sources = sourceDAO.byList(args.sourceList);
+            sources = sourceDAO.byList(args.sourceLists);
         }
 
         Map<Source, List<List<String>>> data = new HashMap<>();
