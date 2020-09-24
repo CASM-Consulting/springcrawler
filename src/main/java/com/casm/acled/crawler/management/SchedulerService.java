@@ -212,7 +212,7 @@ public class SchedulerService {
                 case Job.FAILED:
                     // if job crashed, we should definitely report that and pass it or rerun it?? not sure;
                     reportJob(job, Event.JOB_CRASHED);
-                    action = Action.RUN;
+                    action = Action.PASS;
                     break;
                 case Job.CANCELLED:
                     reportJob(job, Event.JOB_CANCELLED);
