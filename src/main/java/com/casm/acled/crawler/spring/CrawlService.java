@@ -7,6 +7,7 @@ import com.casm.acled.crawler.Crawl;
 import com.casm.acled.crawler.management.CheckListService;
 import com.casm.acled.crawler.management.CrawlArgs;
 import com.casm.acled.crawler.management.CrawlArgsService;
+import com.casm.acled.crawler.scraper.ACLEDCommitter;
 import com.casm.acled.crawler.scraper.ACLEDImporter;
 import com.casm.acled.crawler.reporting.Reporter;
 import com.casm.acled.crawler.util.Util;
@@ -32,7 +33,6 @@ import javax.ws.rs.core.MediaType;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
-
 
 @Component
 public class CrawlService {
@@ -77,8 +77,11 @@ public class CrawlService {
 
         if(maybesSourceList.isPresent() && maybeSource.isPresent()) {
 
-            ACLEDImporter importer = new ACLEDImporter(articleDAO, maybeSource.get(), sourceListDAO, true);
-            importer.setMaxArticles(10);
+//            ACLEDImporter importer = new ACLEDImporter(articleDAO, maybeSource.get(), sourceListDAO, true);
+//            importer.setMaxArticles(10);
+
+            ACLEDCommitter committer = new ACLEDCommitter(articleDAO, maybeSource.get(), sourceListDAO, true);
+            committer.setMaxArticles(10);
 
             CrawlArgs args = argsService.get();
 
@@ -86,7 +89,8 @@ public class CrawlService {
             args.sourceList = maybesSourceList.get();
             args.depth = 3;
 
-            Crawl crawl = new Crawl(args, importer, reporter, ImmutableList.of() );
+            Crawl crawl = new Crawl(args, committer, reporter, ImmutableList.of() );
+//            Crawl crawl = new Crawl(args, importer, reporter, ImmutableList.of() );
 //            crawl.getConfig().crawler().setIgnoreSitemap(false);
             crawl.run();
         } else {
@@ -133,9 +137,12 @@ public class CrawlService {
 
                 List<String> sitemaps = getSitemaps(source);
 
-                ACLEDImporter importer = new ACLEDImporter(articleDAO, source, sourceListDAO, true);
+//                ACLEDImporter importer = new ACLEDImporter(articleDAO, source, sourceListDAO, true);
+                ACLEDCommitter committer = new ACLEDCommitter(articleDAO, source, sourceListDAO, true);
 
-                Crawl crawl = new Crawl(args, importer, reporter, sitemaps);
+//                Crawl crawl = new Crawl(args, importer, reporter, sitemaps);
+                Crawl crawl = new Crawl(args, committer, reporter, sitemaps);
+
 
                 crawl.run();
             });

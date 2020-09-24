@@ -744,6 +744,7 @@ public class Util implements CommandLineRunner {
                     .put(Source.LOCALES, ImmutableList.of("en"))
                     .put(Source.DATE_FORMAT, ImmutableList.of("ISO:/yyyy-MM-dd"))
                     .put(Source.CRAWL_SCHEDULE, "0 0 20 ? * TUE,FRI *")
+                    .put(Source.CRAWL_RECRAWL_PATTERN, "")
                     ;
             sources.add(source);
         }
@@ -767,7 +768,7 @@ public class Util implements CommandLineRunner {
 //        recoverArticleDates();
 //        linkExisting();
 
-//        createFakeNetSourceList();
+        createFakeNetSourceList();
 
 //        exportSourceDataCSV(Paths.get("all-source-data"));
 

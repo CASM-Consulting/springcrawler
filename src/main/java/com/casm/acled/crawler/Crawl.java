@@ -4,11 +4,9 @@ import com.casm.acled.crawler.management.CrawlArgs;
 import com.casm.acled.crawler.management.NorconexConfiguration;
 import com.casm.acled.crawler.scraper.*;
 import com.casm.acled.crawler.reporting.Reporter;
-import com.casm.acled.crawler.scraper.dates.CompositeDateParser;
-import com.casm.acled.crawler.scraper.dates.ExcludingCustomDateMetadataFilter;
-import com.casm.acled.crawler.scraper.dates.DateParser;
-import com.casm.acled.crawler.scraper.dates.SiteMapLastModifiedMetadataFilter;
+import com.casm.acled.crawler.scraper.dates.*;
 import com.casm.acled.crawler.scraper.keywords.ExcludingKeywordFilter;
+import com.casm.acled.crawler.scraper.keywords.ExcludingKeywordTagger;
 import com.casm.acled.crawler.util.CustomLoggerRepository;
 import com.casm.acled.entities.source.Source;
 import com.casm.acled.entities.sourcelist.SourceList;
@@ -85,7 +83,7 @@ public class Crawl {
         }
     }
 
-    public Crawl(CrawlArgs args, ACLEDImporter importer, Reporter reporter, List<String> sitemaps) {
+    public Crawl(CrawlArgs args, ACLEDCommitter importer, Reporter reporter, List<String> sitemaps) {
         this.source = args.sources.get(0);
         this.from = args.from;
         this.to = args.to;
@@ -114,6 +112,8 @@ public class Crawl {
         String processFlag = "norconex";
 
         List<AbstractDocumentFilter> filters = new ArrayList<>();
+        List<IImporterHandler> handlers = new ArrayList<>();
+
         filters.add(new AcceptFilter());
 
         EmptyMetadataFilter emptyArticle = new EmptyMetadataFilter(OnMatch.EXCLUDE,
@@ -131,18 +131,30 @@ public class Crawl {
                 zoneId = ZoneId.of(zid);
             }
 
-            DateMetadataFilter dateFilter = dateFilter(source,
-                    ZonedDateTime.of(from.atTime(0,0,0), zoneId),
-                    ZonedDateTime.of(to.atTime(0,0,0), zoneId)
-            );
+//            DateMetadataFilter dateFilter = dateFilter(source,
+//                    ZonedDateTime.of(from.atTime(0,0,0), zoneId),
+//                    ZonedDateTime.of(to.atTime(0,0,0), zoneId)
+//            );
+//
+//            filters.add(dateFilter);
 
-            filters.add(dateFilter);
+
+            // here we use dateMetadataTagger
+            ExcludingCustomDateMetadataTagger dateTagger = dateTagger(source,
+                    ZonedDateTime.of(from.atTime(0,0,0), zoneId),
+                    ZonedDateTime.of(to.atTime(0,0,0), zoneId));
+            handlers.add(dateTagger);
 
         }
 
         if(!args.skipKeywords) {
-            ExcludingKeywordFilter keywordFilter = keywordFilter(args.sourceList, source);
-            filters.add(keywordFilter);
+//            ExcludingKeywordFilter keywordFilter = keywordFilter(args.sourceList, source);
+//            filters.add(keywordFilter);
+
+            // here use keywordTagger to write corresponding fields;
+            ExcludingKeywordTagger keywordTagger = keywordTagger(args.sourceList, source);
+            handlers.add(keywordTagger);
+
         }
 
         filters.forEach(config::addFilter);
@@ -163,7 +175,8 @@ public class Crawl {
             ACLEDScraper scraper = ACLEDScraper.load(args.scrapersDir, source, reporter);
             ACLEDMetadataPreProcessor metadata = new ACLEDMetadataPreProcessor(startURLs[0]);
             config.setScraper(scraper, metadata);
-            config.finalise();
+            handlers.addAll(filters);
+            config.importer().setPostParseHandlers(handlers.toArray(new IImporterHandler[handlers.size()]));
         }
 
         if (processFlag.equals("norconex")) {
@@ -173,11 +186,10 @@ public class Crawl {
             ACLEDTransformer tempTransformer = new ACLEDTransformer(replacementParams);
             ReplaceTransformer documentTransfomer = tempTransformer.transformer;
 
-            List<IImporterHandler> handlers = new ArrayList<>();
-            handlers.add(documentTransfomer);
-            handlers.add(documentTagger);
+            handlers.add(0,documentTransfomer);
+            handlers.add(1,documentTagger);
             handlers.addAll(filters);
-            config.importer().setPreParseHandlers(handlers.toArray(new IImporterHandler[handlers.size()]));
+            config.importer().setPostParseHandlers(handlers.toArray(new IImporterHandler[handlers.size()]));
         }
 
 
@@ -198,8 +210,6 @@ public class Crawl {
         config.crawler().setMaxDepth(args.depth);
 
         config.crawler().setStartURLs(startURLs);
-//        config.setScraper(scraper, metadata);
-
 
 //        config.collector();
         if(args.crawlId != null && !args.crawlId.isEmpty()) {
@@ -207,7 +217,9 @@ public class Crawl {
         } else {
             config.setId(id);
         }
-        config.crawler().setPostImportProcessors(importer);
+//        config.crawler().setPostImportProcessors(importer);
+        // use committer for testing
+        config.crawler().setCommitter(importer);
     }
 
     public NorconexConfiguration getConfig() {
@@ -241,6 +253,14 @@ public class Crawl {
         return keywordFilter;
     }
 
+    private ExcludingKeywordTagger keywordTagger(SourceList sourceList, Source source) {
+
+        String query = resolveQuery(sourceList, source);
+        ExcludingKeywordTagger keywordTagger = new ExcludingKeywordTagger(ScraperFields.SCRAPED_ARTICLE, query);
+
+        return keywordTagger;
+    }
+
     private DateMetadataFilter dateFilter(Source source, ZonedDateTime from, ZonedDateTime to) {
 
         List<String> dateFormatSpecs = source.get(Source.DATE_FORMAT);
@@ -255,6 +275,18 @@ public class Crawl {
         return dateMetadataFilter;
     }
 
+    private ExcludingCustomDateMetadataTagger dateTagger(Source source, ZonedDateTime from, ZonedDateTime to) {
+        List<String> dateFormatSpecs = source.get(Source.DATE_FORMAT);
+
+        DateParser dateParser = CompositeDateParser.of(dateFormatSpecs);
+
+        ExcludingCustomDateMetadataTagger dateMetadataTagger = new ExcludingCustomDateMetadataTagger(source, ScraperFields.SCRAPED_DATE, dateParser, reporter);
+        dateMetadataTagger.setFromTime(from);
+        dateMetadataTagger.setToTime(to);
+
+        return dateMetadataTagger;
+
+    }
 //    private ULocale getLocale(Source source) {
 //        ULocale locale = new ULocale(source.get(Source.LOCALE));
 //        return locale;
