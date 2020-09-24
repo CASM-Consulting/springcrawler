@@ -214,12 +214,12 @@ public class CrawlArgs {
     public JobRequest toJobRequest(Source source) {
         JobRequest jobRequest = JobRequest.create(jqmProgram, CrawlerSweep.JQM_USER);
 
-        jobRequest.addParameter(SOURCE, Integer.toString( source.id() ) );
+        jobRequest.addParameter(SOURCE, source.get(Source.STANDARD_NAME) );
 
         if(sourceLists != null && ! sourceLists.isEmpty()) {
             jobRequest.addParameter(SOURCE_LISTS, sourceLists
                     .stream()
-                    .map(sl -> Integer.toString( sl.id() ) )
+                    .map(sl -> (String)sl.get(SourceList.LIST_NAME) )
                     .collect(Collectors.joining(",")));
         }
 
@@ -258,6 +258,7 @@ public class CrawlArgs {
 
 
         raw.source = runtimeParameters.get(SOURCE);
+        
         if(runtimeParameters.get(SOURCE_LISTS) != null) {
             raw.sourceLists = Arrays.asList(runtimeParameters.get(SOURCE_LISTS).split(",").clone());
         }
