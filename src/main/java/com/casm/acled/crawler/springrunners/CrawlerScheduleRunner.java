@@ -1,9 +1,9 @@
 package com.casm.acled.crawler.springrunners;
 
+import com.beust.jcommander.JCommander;
+import com.beust.jcommander.Parameter;
 import com.casm.acled.configuration.ObjectMapperConfiguration;
-import com.casm.acled.crawler.management.Job;
-import com.casm.acled.crawler.management.JobProvider;
-import com.casm.acled.crawler.management.SchedulerService;
+import com.casm.acled.crawler.management.*;
 import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
 import org.camunda.bpm.spring.boot.starter.rest.CamundaBpmRestJerseyAutoConfiguration;
 import org.slf4j.Logger;
@@ -20,7 +20,7 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
 
-import java.util.List;
+import java.util.HashMap;
 
 /**
  * Created by Andrew D. Robertson on 23/09/2020.
@@ -38,10 +38,24 @@ public class CrawlerScheduleRunner implements CommandLineRunner {
     @Autowired
     private SchedulerService schedulerService;
 
+    @Autowired
+    private CrawlArgsService argsService;
+
+    private CrawlArgs crawlArgs;
+
     @Override
     public void run(String... args) throws Exception {
 
-        schedulerService.schedule();
+        crawlArgs = argsService.get();
+
+        JCommander.newBuilder()
+                .addObject(crawlArgs.raw)
+                .build()
+                .parse(args);
+
+        crawlArgs.init();
+
+        schedulerService.schedule(crawlArgs);
     }
 
     public static void main(String[] args){

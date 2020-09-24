@@ -48,7 +48,7 @@ public class JQMJobProvider implements JobProvider {
     }
 
     @Override
-    public List<Job> getJobs(Map<String, String> params) {
+    public List<Job> getJobs(CrawlArgs args) {
         List<SourceList> lists = sourceListDAO.getAll();
 
         Set<Source> globalActiveSources = new HashSet<>();

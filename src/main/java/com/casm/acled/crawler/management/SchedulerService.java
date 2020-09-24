@@ -248,20 +248,13 @@ public class SchedulerService {
         return LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
     }
 
-    public void schedule( ) throws Exception {
+    public void schedule(CrawlArgs args) throws Exception {
 
-        // example parameters; probably we should decide if we should run job request using corresponding Jobinstance's parameters or using our own new parameters;
-        Map<String, String> params = new HashMap<>();
-//        params.put(Crawl.SKIP_KEYWORD_FILTER, Boolean.TRUE.toString());
-//        params.put(Crawl.FROM, LocalDate.of(2020, 8,21).toString());
-//        params.put(Crawl.TO, LocalDate.of(2020, 8,28).toString());
+        List<Job> jobs = jobProvider.getJobs(args);
 
-        List<Job> allPossibleJobs = jobProvider.getJobs(params);
-        for (Job possibleJob : allPossibleJobs) {
+        for (Job job : jobs) {
 
-            ensureSchedule(possibleJob);
-
+            ensureSchedule(job);
         }
-
     }
 }

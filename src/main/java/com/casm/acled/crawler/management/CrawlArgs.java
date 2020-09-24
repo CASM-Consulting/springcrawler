@@ -138,28 +138,33 @@ public class CrawlArgs {
     
     public void init() {
 
-        if(raw.sources != null) {
-            sources = new ArrayList<>();
-            for(String sourceName : raw.sources) {
-                Optional<Source> maybeSource = sourceDAO.byName(sourceName);
-                if(maybeSource.isPresent()) {
-                    Source source = maybeSource.get();
-                    sources.add(source);
+        if (sourceDAO == null || sourceListDAO == null){
+
+        } else {
+            if(raw.sources != null) {
+                sources = new ArrayList<>();
+                for(String sourceName : raw.sources) {
+                    Optional<Source> maybeSource = sourceDAO.byName(sourceName);
+                    if(maybeSource.isPresent()) {
+                        Source source = maybeSource.get();
+                        sources.add(source);
+                    }
+                }
+            }
+
+            if(raw.sourceList != null) {
+                Optional<SourceList> maybeSourceList = sourceListDAO.byName(raw.sourceList);
+                if (maybeSourceList.isPresent()) {
+                    sourceList = maybeSourceList.get();
+                    if (sources == null) {
+                        sources = sourceDAO.byList(sourceList);
+                    }
+                } else {
+                    throw new RuntimeException("Source List is required");
                 }
             }
         }
 
-        if(raw.sourceList != null) {
-            Optional<SourceList> maybeSourceList = sourceListDAO.byName(raw.sourceList);
-            if(maybeSourceList.isPresent()) {
-                sourceList = maybeSourceList.get();
-                if(sources == null) {
-                    sources = sourceDAO.byList(sourceList);
-                }
-            } else {
-                throw new RuntimeException("Source List is required");
-            }
-        }
 
         crawlId = raw.crawlId;
 
@@ -224,7 +229,9 @@ public class CrawlArgs {
         JobRequest jobRequest = JobRequest.create(jqmProgram, CrawlerSweep.JQM_USER);
 
         jobRequest.addParameter( SOURCE_ID, Integer.toString( source.id() ) );
-        jobRequest.addParameter( SOURCE_LIST_ID, Integer.toString( sourceList.id() ) );
+        if (sourceList != null){
+            jobRequest.addParameter( SOURCE_LIST_ID, Integer.toString( sourceList.id() ) );
+        }
         if(crawlId != null) {
             jobRequest.addParameter( CRAWL_ID, crawlId );
         }
@@ -258,10 +265,12 @@ public class CrawlArgs {
     public void init(Map<String,String> runtimeParameters) {
 
         int sourceId = Integer.parseInt(runtimeParameters.get(SOURCE_ID));
-        int sourceListId = Integer.parseInt(runtimeParameters.get(SOURCE_LIST_ID));
+//        int sourceListId = Integer.parseInt(runtimeParameters.get(SOURCE_LIST_ID));
+
+        List<SourceList> sourceLists = sourceListDAO.bySource(sourceId);
 
         sources = ImmutableList.of(sourceDAO.getById(sourceId).get());
-        sourceList = sourceListDAO.getById(sourceListId).get();
+        sourceList = sourceLists.get(0);
 
         raw.crawlId = runtimeParameters.get(CRAWL_ID);
         raw.depth = Integer.parseInt(runtimeParameters.get(DEPTH));
