@@ -18,6 +18,7 @@ import java.util.*;
 
 public class JQMJob implements Job {
 
+    private CrawlArgs args;
     private Source source;
     private JobInstance jobInstance;
 
@@ -26,13 +27,14 @@ public class JQMJob implements Job {
     }
 
 
-    public JQMJob (Source source) {
-        this(source, null, null);
+    public JQMJob (Source source, CrawlArgs args) {
+        this(source, args,null);
     }
 
-    public JQMJob (Source source, JobRequest jobRequest, JobInstance jobInstance) {
+    public JQMJob (Source source, CrawlArgs args, JobInstance jobInstance) {
         this.jobInstance = jobInstance;
         this.source = source;
+        this.args = args;
     }
 
 
@@ -40,15 +42,19 @@ public class JQMJob implements Job {
         return this.jobInstance;
     }
 
-    public JobRequest getJobRequest () {
-        JobRequest jobRequest = JobRequest.create(CrawlerSweep.JQM_APP_NAME, CrawlerSweep.JQM_USER)
-                .addParameter(Crawl.SOURCE_ID, Integer.toString(source.id()))
-                .addParameter(Source.CRAWL_SCHEDULE, source.get(Source.CRAWL_SCHEDULE)); // TODO: check that this is correct
+    public JobRequest getJobRequest() {
 
-        return jobRequest;
+        // Args is null if this instance was created via JQMJob(JobInstance) instead of JQMJob(Source, CrawlArgs)
+        if (args != null){
+            return args.toJobRequest(source);
+        } else if (jobInstance != null){
+            return getJobRequestFromJobInstance(jobInstance);
+        } else {
+            throw new RuntimeException("Both CrawlArgs and JobInstance are null, so cannot build JobRequest");
+        }
     }
 
-    public JobRequest getJobRequestFromJobInstance (JobInstance job) {
+    public static JobRequest getJobRequestFromJobInstance (JobInstance job) {
         JobRequest j = JobRequest.create(job.getApplicationName(), job.getUser());
         j.setParameters(job.getParameters());
         return j;
@@ -73,11 +79,12 @@ public class JQMJob implements Job {
         return getJobRequest().getParameters().get(Crawl.SOURCE_LIST_ID);
     }
 
+    @Override
     public CronExpression getSchedule() {
         try {
             ZoneId zoneId = ZoneId.of(source.get(Source.TIMEZONE));
             TimeZone timeZone = TimeZone.getTimeZone(zoneId);
-            CronExpression cron = new CronExpression(getJobRequest().getParameters().get(Source.CRAWL_SCHEDULE));
+            CronExpression cron = new CronExpression((String)source.get(Source.CRAWL_SCHEDULE));
             cron.setTimeZone(timeZone);
             return cron;
         } catch (ParseException e) {
