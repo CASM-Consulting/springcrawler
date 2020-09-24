@@ -4,6 +4,7 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.casm.acled.configuration.ObjectMapperConfiguration;
 import com.casm.acled.crawler.management.*;
+import com.casm.acled.crawler.reporting.Reporter;
 import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
 import org.camunda.bpm.spring.boot.starter.rest.CamundaBpmRestJerseyAutoConfiguration;
 import org.slf4j.Logger;
@@ -39,12 +40,17 @@ public class CrawlerScheduleRunner implements CommandLineRunner {
     private SchedulerService schedulerService;
 
     @Autowired
+    private Reporter reporter;
+
+    @Autowired
     private CrawlArgsService argsService;
 
     private CrawlArgs crawlArgs;
 
     @Override
     public void run(String... args) throws Exception {
+
+        reporter.randomRunId();
 
         crawlArgs = argsService.get();
 
@@ -56,6 +62,8 @@ public class CrawlerScheduleRunner implements CommandLineRunner {
         crawlArgs.init();
 
         schedulerService.schedule(crawlArgs);
+
+        reporter.getRunReports().stream().forEach(r -> logger.info(r.toString()));
     }
 
     public static void main(String[] args){

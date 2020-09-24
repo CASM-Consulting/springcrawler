@@ -59,13 +59,6 @@ public class JQMJobRunner implements JobRunner {
     public void runJob(Job job) {
         JQMJob j = (JQMJob)job;
 
-        // TODO
-        // need to decide, if job instance exist, should we run this new job request again using the same parameters???,
-        // the following commented block show the functionality, assign jobinstance's parameters to jobrequest;
-//        if (j.getJobInstance()!=null) {
-//            j.setJobRequestParameters(j.getJobInstance().getParameters());
-//        }
-
         System.out.println(ImmutableMap.copyOf(j.getJobRequest().getParameters()).toString());
 
         int pid = client.enqueue(j.getJobRequest());

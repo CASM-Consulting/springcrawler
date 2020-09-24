@@ -43,10 +43,18 @@ public class JQMJob implements Job {
     }
 
     public JobRequest getJobRequest() {
-        return args.toJobRequest(source);
+
+        // Args is null if this instance was created via JQMJob(JobInstance) instead of JQMJob(Source, CrawlArgs)
+        if (args != null){
+            return args.toJobRequest(source);
+        } else if (jobInstance != null){
+            return getJobRequestFromJobInstance(jobInstance);
+        } else {
+            throw new RuntimeException("Both CrawlArgs and JobInstance are null, so cannot build JobRequest");
+        }
     }
 
-    public JobRequest getJobRequestFromJobInstance (JobInstance job) {
+    public static JobRequest getJobRequestFromJobInstance (JobInstance job) {
         JobRequest j = JobRequest.create(job.getApplicationName(), job.getUser());
         j.setParameters(job.getParameters());
         return j;
