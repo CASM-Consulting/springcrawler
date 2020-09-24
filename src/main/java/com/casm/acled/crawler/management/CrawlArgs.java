@@ -136,14 +136,26 @@ public class CrawlArgs {
     
     public void init() {
 
-        if (sourceDAO == null || sourceListDAO == null) {
+        if (sourceDAO != null && sourceListDAO != null) {
 
             if (raw.source != null) {
                 source = sourceDAO.byName(raw.source).get();
             }
 
-            if (raw.sourceLists != null && source != null) {
+            if (raw.sourceLists == null && source != null) {
                 sourceLists = sourceListDAO.bySource(source);
+            } else if(raw.sourceLists != null) {
+                sourceLists = raw.sourceLists.stream()
+                        .map(sl ->  {
+                            Optional<SourceList> maybeSourceList = sourceListDAO.byName(sl);
+                            if(maybeSourceList.isPresent()) {
+                                return maybeSourceList.get();
+                            } else {
+                                return null;
+                            }
+                        })
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toList());
             }
 
         }

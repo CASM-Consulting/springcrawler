@@ -99,16 +99,16 @@ public class CrawlerDirectRunner implements CommandLineRunner {
         crawlArgs.raw.skipKeywords = false;
         crawlArgs.raw.program = "crawl";
 
-        crawlArgs.raw.source = "Milenio";
-//        crawlArgs.raw.sources = "MiMorelia";
+//        crawlArgs.raw.source = "Milenio";
+        crawlArgs.raw.source = "MiMorelia";
         crawlArgs.raw.sourceLists = ImmutableList.of("mexico-1");
 //        crawlArgs.raw.sourceList = "fake-net";
-        crawlArgs.raw.from = "2020-09-18";
+        crawlArgs.raw.from = "2020-09-21";
         crawlArgs.raw.to =  "2021-01-01";
         crawlArgs.raw.workingDir = "test";
-//        crawlArgs.raw.scrapersDir = "/home/sw206/git/acled-scrapers/";
-        crawlArgs.raw.scrapersDir = "/Users/adr27/Documents/git/acled-scrapers/";
-        crawlArgs.raw.depth = 1;
+        crawlArgs.raw.scrapersDir = "/home/sw206/git/acled-scrapers/";
+//        crawlArgs.raw.scrapersDir = "/Users/adr27/Documents/git/acled-scrapers/";
+        crawlArgs.raw.depth = 0;
         crawlArgs.raw.ignoreSiteMap = true;
 
         crawlArgs.init();

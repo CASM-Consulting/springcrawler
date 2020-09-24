@@ -96,9 +96,9 @@ public class Crawl {
         config = new NorconexConfiguration(workingDir.resolve(scraperCachePath), args);
         config.crawler().setUrlNormalizer(new RootLogAppenderClearingURLNormaliser());
 
-        if(!args.ignoreSiteMap) {
+//        if(!args.ignoreSiteMap) {
             config.crawler().setStartSitemapURLs(sitemaps.toArray(new String[]{}));
-        }
+//        }
 
         configureLogging(workingDir);
 

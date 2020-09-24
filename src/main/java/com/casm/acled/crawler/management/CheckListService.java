@@ -344,13 +344,13 @@ public class CheckListService {
                         values = ImmutableList.of("");
                     }
 
-                    for(String value : values){
+                    for(Object value : values){
 
                         List<String> row = new ArrayList<>();
 
                         row.add(id);
                         row.add(field);
-                        row.add(value);
+                        row.add(value.toString());
                         csv.printRecord( row );
                     }
                 }

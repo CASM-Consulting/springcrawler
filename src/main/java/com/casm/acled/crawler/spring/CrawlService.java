@@ -115,47 +115,40 @@ public class CrawlService {
 
         Source source = args.source;
 
-        if(args.depth == 0 && ! checkListService.hasSiteMaps(source)) {
+        int sourceId = source.id();
 
-            logger.info("Quitting: only site maps requested - {} has no sitemap", (String) source.get(Source.STANDARD_NAME));
-
-        } else {
-
-            int sourceId = source.id();
-
-            //ThreadGroup required for logger context, see CustomLoggerRepository
-            ThreadGroup tg = new ThreadGroup(Integer.toString(sourceId));
+        //ThreadGroup required for logger context, see CustomLoggerRepository
+        ThreadGroup tg = new ThreadGroup(Integer.toString(sourceId));
 
 //            ExecutorService executor = Executors.newSingleThreadExecutor();
 //            Future<Void> future = executor.submit()
 
-            Thread thread = new Thread(tg, () -> {
+        Thread thread = new Thread(tg, () -> {
 
-                List<String> sitemaps = getSitemaps(source);
+            List<String> sitemaps = getSitemaps(source);
 
-                ACLEDImporter importer = new ACLEDImporter(articleDAO, source, sourceListDAO, true);
+            ACLEDImporter importer = new ACLEDImporter(articleDAO, source, sourceListDAO, true);
 
-                Crawl crawl = new Crawl(args, importer, reporter, sitemaps);
+            Crawl crawl = new Crawl(args, importer, reporter, sitemaps);
 
-                crawl.run();
-            });
+            crawl.run();
+        });
 
-            AtomicReference<Throwable> thrown = new AtomicReference<>();
+        AtomicReference<Throwable> thrown = new AtomicReference<>();
 
-            thread.setUncaughtExceptionHandler((Thread th, Throwable ex)->{
-                thrown.set(ex);
-            });
+        thread.setUncaughtExceptionHandler((Thread th, Throwable ex)->{
+            thrown.set(ex);
+        });
 
-            thread.start();
+        thread.start();
 
-            try {
-                thread.join();
-            } catch (InterruptedException e){
-                throw new RuntimeException(e);
-            }
-            if(thrown.get()!=null) {
-                throw new RuntimeException(thrown.get());
-            }
+        try {
+            thread.join();
+        } catch (InterruptedException e){
+            throw new RuntimeException(e);
+        }
+        if(thrown.get()!=null) {
+            throw new RuntimeException(thrown.get());
         }
 
     }
