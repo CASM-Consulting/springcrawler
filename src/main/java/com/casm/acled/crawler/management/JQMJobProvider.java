@@ -57,15 +57,14 @@ public class JQMJobProvider implements JobProvider {
         for(SourceList list : lists) {
             List<Source> listSources = sourceDAO.byList(list);
 
-            // TODO: where is crawl active set?
-            if(list.isTrue(SourceList.CRAWL_ACTIVE)) {
-                sources.addAll(listSources);
-            }
+            sources.addAll(listSources);
         }
 
         for (Source source: sources) {
-            JQMJob job = new JQMJob(source, args);
-            jobs.add(job);
+            if (source.isFalse(Source.CRAWL_DISABLED)){
+                JQMJob job = new JQMJob(source, args);
+                jobs.add(job);
+            }
         }
 
         return jobs;

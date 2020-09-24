@@ -135,12 +135,7 @@ public class SchedulerService {
         if (jobEndTime.isBefore(prevRun)) {
             return Action.RUN;
         } else {
-            if (jobEndTime.isAfter(prevRun) && jobEndTime.isBefore(nextRun)) {
-                return Action.PASS;
-            }
-            else {
-                return Action.PASS; // TODO is this right?
-            }
+            return Action.PASS;
         }
     }
 
