@@ -11,7 +11,7 @@ public interface JobProvider {
 
     List<Job> getJobs(CrawlArgs args);
 
-    Job getJob(int id);
+    Job getJob(int id, CrawlArgs args);
 
     void setPID(int id, int pid);
 

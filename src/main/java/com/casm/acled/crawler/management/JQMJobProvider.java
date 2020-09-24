@@ -37,8 +37,8 @@ public class JQMJobProvider implements JobProvider {
 
 
     @Override
-    public Job getJob(int id) {
-        return new JQMJob(sourceDAO.getById(id).get());
+    public Job getJob(int id, CrawlArgs args) {
+        return new JQMJob(sourceDAO.getById(id).get(), args);
     }
 
     @Override
@@ -51,23 +51,23 @@ public class JQMJobProvider implements JobProvider {
     public List<Job> getJobs(CrawlArgs args) {
         List<SourceList> lists = sourceListDAO.getAll();
 
-        Set<Source> globalActiveSources = new HashSet<>();
-        List<Job> allJobs = new ArrayList<>();
+        Set<Source> sources = new HashSet<>();
+        List<Job> jobs = new ArrayList<>();
 
         for(SourceList list : lists) {
             List<Source> listSources = sourceDAO.byList(list);
 
             // TODO: where is crawl active set?
             if(list.isTrue(SourceList.CRAWL_ACTIVE)) {
-                globalActiveSources.addAll(listSources);
+                sources.addAll(listSources);
             }
         }
 
-        for (Source source: globalActiveSources) {
-            JQMJob job = new JQMJob(source);
-            allJobs.add(job);
+        for (Source source: sources) {
+            JQMJob job = new JQMJob(source, args);
+            jobs.add(job);
         }
 
-        return allJobs;
+        return jobs;
     }
 }

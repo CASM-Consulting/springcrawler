@@ -18,6 +18,7 @@ import java.util.*;
 
 public class JQMJob implements Job {
 
+    private CrawlArgs args;
     private Source source;
     private JobInstance jobInstance;
 
@@ -26,13 +27,14 @@ public class JQMJob implements Job {
     }
 
 
-    public JQMJob (Source source) {
-        this(source, null, null);
+    public JQMJob (Source source, CrawlArgs args) {
+        this(source, args,null);
     }
 
-    public JQMJob (Source source, JobRequest jobRequest, JobInstance jobInstance) {
+    public JQMJob (Source source, CrawlArgs args, JobInstance jobInstance) {
         this.jobInstance = jobInstance;
         this.source = source;
+        this.args = args;
     }
 
 
@@ -44,6 +46,8 @@ public class JQMJob implements Job {
         JobRequest jobRequest = JobRequest.create(CrawlerSweep.JQM_APP_NAME, CrawlerSweep.JQM_USER)
                 .addParameter(Crawl.SOURCE_ID, Integer.toString(source.id()))
                 .addParameter(Source.CRAWL_SCHEDULE, source.get(Source.CRAWL_SCHEDULE)); // TODO: check that this is correct
+
+
 
         return jobRequest;
     }
