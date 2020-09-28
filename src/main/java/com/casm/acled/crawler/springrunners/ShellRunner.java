@@ -1,5 +1,4 @@
 package com.casm.acled.crawler.springrunners;
-
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Strings;
 import com.casm.acled.configuration.ObjectMapperConfiguration;
@@ -21,17 +20,22 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
 import org.springframework.boot.autoconfigure.validation.ValidationAutoConfiguration;
 import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
 
 import org.springframework.core.MethodParameter;
+import org.springframework.shell.*;
+import org.springframework.shell.standard.ShellMethod;
+import org.springframework.shell.standard.ShellComponent;
+import org.springframework.shell.standard.ShellOption;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.stream.Stream;
 
-
+import javax.validation.Valid;
 
 @EnableAutoConfiguration(exclude={HibernateJpaAutoConfiguration.class, CamundaBpmAutoConfiguration.class, CamundaBpmRestJerseyAutoConfiguration.class, ValidationAutoConfiguration.class})
 // We need the special object mapper, though.
@@ -39,9 +43,10 @@ import java.util.stream.Stream;
 @Import({ObjectMapperConfiguration.class})
 // And we also need the DAOs.
 @ComponentScan(basePackages={"com.casm.acled.dao", "com.casm.acled.crawler"})
-public class CheckListRunner implements CommandLineRunner{
+@ShellComponent
+public class ShellRunner {
 
-    protected static final Logger logger = LoggerFactory.getLogger(CheckListRunner.class);
+    protected static final Logger logger = LoggerFactory.getLogger(ShellRunner.class);
 
     @Autowired
     private CheckListService checkListService;
@@ -54,52 +59,94 @@ public class CheckListRunner implements CommandLineRunner{
 
     private CrawlArgs crawlArgs;
 
-    @Override
-    public void run(String... args) throws Exception {
-
+    @ShellMethod(value = "run to check source list ", key = "check")
+    // probably should give a hint of potential parameters;
+    // the help command still not working:
+    // Action: Correct the classpath of your application so that it contains a single, compatible version of com.beust.jcommander.JCommander
+    public void checkSourceList(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) {
         reporter.randomRunId();
 
         crawlArgs = argsService.get();
+        crawlArgs.raw = args;
 
         crawlArgs.raw.program = "check";
-        crawlArgs.raw.sourceList = "fake-net";
-
-        JCommander.newBuilder()
-                .addObject(crawlArgs.raw)
-                .build()
-                .parse(args);
 
         crawlArgs.init();
 
-        switch(crawlArgs.program) {
-            case "import":
-                checkListService.importCrawlerSourceList(crawlArgs);
-                break;
-            case "export":
-                checkListService.exportCrawlerSourceList(crawlArgs);
-                break;
-            case "check":
-                checkListService.checkSourceList(crawlArgs);
-                break;
-            case "example-urls":
-                checkListService.outputExampleURLCheck(crawlArgs);
-                break;
-            default:
-                logger.error("program {} not recognised", crawlArgs.program);
-                break;
-        }
+        checkListService.checkSourceList(crawlArgs);
 
         reporter.getRunReports().stream().forEach(r -> logger.info(r.toString()));
+
+    }
+
+    @ShellMethod(value = "run to import source list", key = "import")
+    public void importSourceList(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) throws Exception{
+        reporter.randomRunId();
+
+        crawlArgs = argsService.get();
+        crawlArgs.raw = args;
+
+        crawlArgs.raw.program = "import";
+
+        crawlArgs.init();
+
+        checkListService.importCrawlerSourceList(crawlArgs);
+
+        reporter.getRunReports().stream().forEach(r -> logger.info(r.toString()));
+
+    }
+
+    @ShellMethod(value = "run to export source list", key = "export")
+    public void exportSourceList(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) throws Exception{
+        reporter.randomRunId();
+
+        crawlArgs = argsService.get();
+        crawlArgs.raw = args;
+
+        crawlArgs.raw.program = "export";
+
+        crawlArgs.init();
+
+        checkListService.exportCrawlerSourceList(crawlArgs);
+
+        reporter.getRunReports().stream().forEach(r -> logger.info(r.toString()));
+
+    }
+
+    @ShellMethod(value = "run to output example url ", key = "output")
+    public void outputExampleURLCheck(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) throws Exception{
+        reporter.randomRunId();
+
+        crawlArgs = argsService.get();
+        crawlArgs.raw = args;
+
+        crawlArgs.raw.program = "example-urls";
+
+        crawlArgs.init();
+
+        checkListService.outputExampleURLCheck(crawlArgs);
+
+        reporter.getRunReports().stream().forEach(r -> logger.info(r.toString()));
+
     }
 
     public static void main(String[] args) {
 
-        SpringApplication app = new SpringApplication(CheckListRunner.class);
+        SpringApplication app = new SpringApplication(ShellRunner.class);
         app.setBannerMode(Banner.Mode.OFF);
         app.setWebApplicationType(WebApplicationType.NONE);
         ConfigurableApplicationContext ctx = app.run(args);
         logger.info("Spring Boot application started");
         ctx.close();
     }
-}
 
+
+
+
+
+
+
+
+
+
+}

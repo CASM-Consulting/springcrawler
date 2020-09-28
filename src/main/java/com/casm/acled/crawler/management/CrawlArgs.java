@@ -29,8 +29,8 @@ public class CrawlArgs {
 
     private final SourceListDAO sourceListDAO;
 
-    public class Raw {
-        @Parameter(description = "Program")
+    public static class Raw {
+        @Parameter(names = "-p", description = "Program")
         public String program;
 
         @Parameter(names = "-jqm", description = "JQM Program")
@@ -51,7 +51,7 @@ public class CrawlArgs {
         @Parameter(names = "-d", description = "Crawl depth")
         public Integer depth = 5;
 
-        @Parameter(names = "-p", description = "Politeness delay")
+        @Parameter(names = "-pl", description = "Politeness delay")
         public Integer politeness = 100;
 
         @Parameter(names = "-ism", description = "Ignore site maps")
@@ -80,7 +80,7 @@ public class CrawlArgs {
     }
 
 
-    public final Raw raw;
+    public Raw raw;
 
     public String program;
 
