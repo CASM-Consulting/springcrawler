@@ -58,6 +58,7 @@ public class CustomLoggerRepository extends Hierarchy {
 
         String appenderName = name + "-" + threadGroup;
 
+        //get a logger as per config
         Logger logger = super.getLogger(appenderName);
 
         synchronized (loggerCache) {
@@ -73,6 +74,7 @@ public class CustomLoggerRepository extends Hierarchy {
                         FileLogManager manager = new FileLogManager(workingDir.resolve(id).resolve(LOGS).toString());
                         return manager;
                     });
+
                     Appender appender = appenderCache.get(appenderName, () -> {
                         String id = REGISTRY.get(threadGroup);
                         return fileLogManager.createAppender(id);

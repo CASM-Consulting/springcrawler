@@ -692,9 +692,9 @@ public class DateParsers {
     }
 
     public void test() {
-        String date = "Por: Max Peñaloza El Día Domingo 10 de Junio del 2018 a las 14:23";
+        String date = "Xalapa | 2020-09-24 | Cortesía";
         DateParser dp = CompositeDateParser.of(ImmutableList.of(
-                "ISO:/d 'de' MMM 'del' yyyy 'a las' HH:mm/es/RE.*?(\\d{1,2} de.+)/"
+                "ISO:/yyyy-MM-dd//RE.*| (.*) |.*"
         ));
 
 //        dp = dp140;
@@ -705,10 +705,10 @@ public class DateParsers {
 
     public static void runParser() {
         DateParser parser = CompositeDateParser.of(ImmutableList.of(
-                "ISO:|dd.MM.yyyy HH:mm:ss|es_MX|RE.*?/ (.*)|"
+                "ISO:/yyyy-MM-dd//RE.*| (.*) |.*"
         ));
 
-        List<String> examples = ImmutableList.of("Ciudad de México / 06.09.2020 20:26:30");
+        List<String> examples = ImmutableList.of("Xalapa | 2020-09-24 | Cortesía");
 
         for(String example : examples) {
             System.out.println(parser.parse(example).toString());

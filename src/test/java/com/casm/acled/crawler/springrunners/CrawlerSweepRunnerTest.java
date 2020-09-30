@@ -5,10 +5,6 @@ import org.springframework.boot.Banner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.WebApplicationType;
 
-import java.time.LocalDate;
-
-import static org.junit.Assert.*;
-
 public class CrawlerSweepRunnerTest {
 
     @Test
@@ -21,7 +17,7 @@ public class CrawlerSweepRunnerTest {
 
         String[] args  = new String[]{sourceListId, sourceId };
 
-        SpringApplication app = new SpringApplication(CrawlerSweepRunner.class);
+        SpringApplication app = new SpringApplication(CrawlerJQMRunner.class);
         app.setBannerMode(Banner.Mode.OFF);
         app.setWebApplicationType(WebApplicationType.NONE);
         app.run(args);

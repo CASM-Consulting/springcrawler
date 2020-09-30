@@ -44,6 +44,7 @@ public enum Event {
     ARTICLE_CONTENT_MATCH,
     ARTICLE_CONTENT_TOO_MANY_MATCHES,
     // new class used for scheduler
+    JOB_STARTED,
     JOB_CANCELLED,
     JOB_STILL_STARTING,
     JOB_STILL_RUNNING,
