@@ -208,6 +208,15 @@ public class CrawlArgs {
 
     }
 
+    // added to allow access these data;
+    public SourceDAO getSourceDAO() {
+        return this.sourceDAO;
+    }
+
+    public SourceListDAO getSourceListDAO() {
+        return this.sourceListDAO;
+    }
+
     public List<JobRequest> toJobRequests() {
 
         List<JobRequest> requests = new ArrayList<>();
