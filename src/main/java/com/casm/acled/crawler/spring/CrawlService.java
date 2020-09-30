@@ -16,6 +16,11 @@ import com.casm.acled.dao.entities.SourceListDAO;
 import com.casm.acled.entities.source.Source;
 import com.casm.acled.entities.sourcelist.SourceList;
 import com.google.common.collect.ImmutableList;
+import com.norconex.collector.http.robot.RobotsTxt;
+import com.norconex.collector.http.robot.impl.StandardRobotsTxtProvider;
+import org.apache.http.client.HttpClient;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.glassfish.jersey.client.ClientProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -86,7 +91,7 @@ public class CrawlService {
             args.sourceLists = ImmutableList.of(maybesSourceList.get());
             args.depth = 3;
 
-            Crawl crawl = new Crawl(args, importer, reporter, ImmutableList.of() );
+            Crawl crawl = new Crawl(args, importer, reporter);
 //            crawl.getConfig().crawler().setIgnoreSitemap(false);
             crawl.run();
         } else {
@@ -125,11 +130,9 @@ public class CrawlService {
 
         Thread thread = new Thread(tg, () -> {
 
-            List<String> sitemaps = getSitemaps(source);
-
             ACLEDImporter importer = new ACLEDImporter(articleDAO, source, sourceListDAO, true);
 
-            Crawl crawl = new Crawl(args, importer, reporter, sitemaps);
+            Crawl crawl = new Crawl(args, importer, reporter);
 
             crawl.run();
         });
@@ -240,10 +243,25 @@ public class CrawlService {
         return sitemaps;
     }
 
+    public List<String> getSitemaps(Source source) {
+
+        String url = source.get(Source.LINK);
+
+        StandardRobotsTxtProvider srtp  = new StandardRobotsTxtProvider();
+
+        HttpClient httpClient = HttpClientBuilder.create().build();
+
+        RobotsTxt robotsTxt = srtp.getRobotsTxt(httpClient, url, "CASM Tech");
+
+        List<String> sitemaps = Arrays.asList(robotsTxt.getSitemapLocations());
+
+        return sitemaps;
+    }
+
     /**
      * TODO(andy) how do we use STANDARD_SITEMAP_LOCS - won't this mess with "hasSiteMaps()"?
      */
-    public List<String> getSitemaps(Source source) {
+    public List<String> getSitemaps3(Source source) {
 
         String url = source.get(Source.LINK);
         List<String> predefinedSitemaps = source.get(Source.CRAWL_SITEMAP_LOCATIONS);

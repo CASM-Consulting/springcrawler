@@ -45,6 +45,9 @@ public class CrawlerScheduleRunner implements CommandLineRunner {
     @Autowired
     private CrawlArgsService argsService;
 
+    @Autowired
+    private PathService pathService;
+
     private CrawlArgs crawlArgs;
 
     @Override
@@ -59,8 +62,12 @@ public class CrawlerScheduleRunner implements CommandLineRunner {
                 .build()
                 .parse(args);
 
+//        crawlArgs.workingDir = pathService.workingDir();
+//        crawlArgs.scrapersDir = pathService.scraperDir();
+
         crawlArgs.init();
 
+        schedulerService.clearPIDs(crawlArgs);
         schedulerService.schedule(crawlArgs);
 
         reporter.getRunReports().stream().forEach(r -> logger.info(r.toString()));

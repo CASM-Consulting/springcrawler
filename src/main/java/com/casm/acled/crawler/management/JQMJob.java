@@ -82,6 +82,9 @@ public class JQMJob implements Job {
 
     @Override
     public CronExpression getSchedule() {
+        if(!source.hasValue(Source.CRAWL_SCHEDULE) || !source.hasValue(Source.TIMEZONE)) {
+            return null;
+        }
         try {
             ZoneId zoneId = ZoneId.of(source.get(Source.TIMEZONE));
             TimeZone timeZone = TimeZone.getTimeZone(zoneId);

@@ -48,6 +48,12 @@ public class JQMJobProvider implements JobProvider {
     }
 
     @Override
+    public void clearPID(int id) {
+        Source source = sourceDAO.getById(id).get().remove(Source.CRAWL_JOB_ID);
+        sourceDAO.overwrite(source);
+    }
+
+    @Override
     public List<Job> getJobs(CrawlArgs args) {
         List<SourceList> lists = sourceListDAO.getAll();
 

@@ -21,6 +21,7 @@ import com.casm.acled.entities.source.Source;
 import com.casm.acled.entities.sourcelist.SourceList;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.mchange.lang.IntegerUtils;
 import com.norconex.collector.http.doc.HttpDocument;
 import com.opencsv.CSVReader;
 import org.apache.commons.csv.CSVFormat;
@@ -117,6 +118,14 @@ public class CheckListService {
         dateTimeService.attemptDateTimeParse(source, ImmutableList.of(dateParser), getFromArticles);
     }
 
+
+    public boolean checkSchedule(Source source) {
+        if(source.hasValue(Source.CRAWL_SCHEDULE) && source.hasValue(Source.TIMEZONE)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
 
     public boolean checkConnection(Source source) {
         String url = source.get(Source.LINK);
@@ -273,12 +282,17 @@ public class CheckListService {
 
     public void checkSourceList(CrawlArgs args) {
 
-        SourceList sourceList = args.sourceLists.get(0);
-        List<Source> sources = sourceDAO.byList(sourceList);
+        if(args.source == null) {
 
-        for(Source source : sources) {
+            SourceList sourceList = args.sourceLists.get(0);
+            List<Source> sources = sourceDAO.byList(sourceList);
 
-            checkSource(args, source);
+            for(Source source : sources) {
+
+                checkSource(args, source);
+            }
+        } else {
+            checkSource(args, args.source);
         }
     }
 
@@ -296,6 +310,14 @@ public class CheckListService {
         }
     }
 
+    private <V extends VersionedEntity<V>> boolean isInt(V entity, String field){
+        if (entity.spec().get(field).getKlass().isAssignableFrom(Integer.class)){
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     private <V extends VersionedEntity<V>> boolean isBoolean(V entity, String field){
         if (entity.spec().get(field).getKlass().isAssignableFrom(Boolean.class)){
             return true;
@@ -304,11 +326,14 @@ public class CheckListService {
         }
     }
 
+    private static final Set<String> importExportFields = ImmutableSet.of(Source.LINK, Source.EXAMPLE_URLS, Source.DATE_FORMAT,
+            Source.LOCALES, Source.CRAWL_DISABLE_SITEMAP_DISCOVERY, Source.CRAWL_SITEMAP_LOCATIONS, Source.SEED_URLS,
+            Source.CRAWL_SCHEDULE, Source.TIMEZONE, Source.CRAWL_DEPTH);
+
     public void exportCrawlerSourcesToCSV(Path outputDir, String fileName, List<Source> sources) throws IOException {
 
         List<String> headers = ImmutableList.of("id", "field", "value");
-        Set<String> fields = ImmutableSet.of(Source.LINK, Source.EXAMPLE_URLS, Source.DATE_FORMAT, Source.LOCALES,
-                Source.CRAWL_DISABLE_SITEMAP_DISCOVERY, Source.CRAWL_SITEMAP_LOCATIONS, Source.SEED_URLS, Source.CRAWL_RECRAWL_PATTERN);
+        Set<String> fields = importExportFields;
 
         try (
                 final OutputStream outputStream = java.nio.file.Files.newOutputStream(outputDir.resolve(fileName), StandardOpenOption.CREATE);
@@ -363,8 +388,7 @@ public class CheckListService {
         String FIELD = "field";
         String VALUE = "value";
 
-        Set<String> allowedFields = ImmutableSet.of(Source.LINK, Source.EXAMPLE_URLS, Source.DATE_FORMAT, Source.LOCALES,
-                Source.CRAWL_DISABLE_SITEMAP_DISCOVERY, Source.CRAWL_SITEMAP_LOCATIONS, Source.SEED_URLS, Source.CRAWL_RECRAWL_PATTERN);
+        Set<String> allowedFields = importExportFields;
 
         try (
                 Reader reader = java.nio.file.Files.newBufferedReader(seedsPath);
@@ -414,7 +438,10 @@ public class CheckListService {
                     } else if (isBoolean(source, field)){
 
                         return source.put(field, BooleanUtils.toBoolean(value));
-                    } else {
+                    }   else if (isInt(source, field)){
+
+                        return source.put(field, Integer.parseInt(value));
+                    }  else {
 
                         return source.put(field, value);
                     }

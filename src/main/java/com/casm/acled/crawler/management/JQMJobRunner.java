@@ -22,6 +22,9 @@ public class JQMJobRunner implements JobRunner {
     @Autowired
     private JobProvider jobProvider;
 
+    @Autowired
+    private PathService pathService;
+
     public JQMJobRunner () {
 
         try (

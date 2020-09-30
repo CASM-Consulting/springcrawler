@@ -78,7 +78,7 @@ public class Crawl {
         }
     }
 
-    public Crawl(CrawlArgs args, ACLEDImporter importer, Reporter reporter, List<String> sitemaps) {
+    public Crawl(CrawlArgs args, ACLEDImporter importer, Reporter reporter) {
         this.source = args.source;
         this.from = args.from;
         this.to = args.to;
@@ -93,12 +93,18 @@ public class Crawl {
 
         Path workingDir = args.workingDir;
 
+        boolean sitemapDiscoveryDisabled = source.isTrue(Source.CRAWL_DISABLE_SITEMAP_DISCOVERY);
+
+        args.ignoreSiteMap = source.isTrue(Source.CRAWL_DISABLE_SITEMAPS) || sitemapDiscoveryDisabled;
+
+
         config = new NorconexConfiguration(workingDir.resolve(scraperCachePath), args);
         config.crawler().setUrlNormalizer(new RootLogAppenderClearingURLNormaliser());
 
-//        if(!args.ignoreSiteMap) {
+        if( source.isFalse(Source.CRAWL_DISABLE_SITEMAPS) ) {
+            List<String> sitemaps = source.get(Source.CRAWL_SITEMAP_LOCATIONS);
             config.crawler().setStartSitemapURLs(sitemaps.toArray(new String[]{}));
-//        }
+        }
 
         configureLogging(workingDir);
 
@@ -158,7 +164,7 @@ public class Crawl {
             config.crawler().setReferenceFilters(filter);
         }
 
-        if(!sitemaps.isEmpty() && from != null) {
+        if(!args.ignoreSiteMap && from != null) {
             config.crawler().setMetadataFilters(new SiteMapLastModifiedMetadataFilter(from));
         }
 

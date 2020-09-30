@@ -15,4 +15,6 @@ public interface JobProvider {
 
     void setPID(int id, int pid);
 
+    void clearPID(int id);
+
 }

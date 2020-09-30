@@ -27,7 +27,7 @@ public class CrawlArgs {
 
     private final SourceListDAO sourceListDAO;
 
-    public class Raw {
+    public static class Raw {
         @Parameter(description = "Program")
         public String program;
 
@@ -133,6 +133,8 @@ public class CrawlArgs {
         this.sourceDAO = sourceDAO;
         this.sourceListDAO = sourceListDAO;
     }
+
+
     
     public void init() {
 
@@ -230,7 +232,11 @@ public class CrawlArgs {
         jobRequest.addParameter( SKIP_KEYWORDS, skipKeywords.toString() );
         jobRequest.addParameter( IGNORE_SITE_MAP, ignoreSiteMap.toString() );
 //        jobRequest.addParameter( ONLY_SITE_MAP, onlySiteMap.toString() );
-        jobRequest.addParameter( DEPTH, Integer.toString( depth ) );
+        if(source.hasValue(Source.CRAWL_DEPTH)) {
+            jobRequest.addParameter( DEPTH, Integer.toString( source.get(Source.CRAWL_DEPTH) ) );
+        } else {
+            jobRequest.addParameter( DEPTH, Integer.toString( depth ) );
+        }
         jobRequest.addParameter( MAX_ARTICLES, Integer.toString( maxArticle ) );
         jobRequest.addParameter( POLITENESS, Integer.toString( politeness ) );
         jobRequest.addParameter( WORKING_DIR, workingDir.toString() );
@@ -258,7 +264,7 @@ public class CrawlArgs {
 
 
         raw.source = runtimeParameters.get(SOURCE);
-        
+
         if(runtimeParameters.get(SOURCE_LISTS) != null) {
             raw.sourceLists = Arrays.asList(runtimeParameters.get(SOURCE_LISTS).split(",").clone());
         }

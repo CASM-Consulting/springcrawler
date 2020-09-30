@@ -29,6 +29,9 @@ public class SchedulerService {
     private final Reporter reporter;
     private final TimeProvider timeProvider;
 
+    @Autowired
+    private CheckListService checkListService;
+
     private enum Action {
         RUN,
         PASS
@@ -149,6 +152,14 @@ public class SchedulerService {
         reporter.report(Report.of(Event.JOB_STILL_STARTING).id(job.id()).message(job.name()+"||"+msg));
     }
 
+    public void clearPIDs(CrawlArgs args) {
+        jobProvider.getJobs(args).forEach(j -> {
+            if (j.pid().isPresent()){
+                jobProvider.clearPID(j.id());
+            }
+        });
+    }
+
     private Optional<Job> checkJobStatus(int jobPID) {
 
         Optional<Job> maybeJob = Optional.empty();
@@ -166,9 +177,13 @@ public class SchedulerService {
 
     public void ensureSchedule(Job job) {
 
-        CronExpression cron = new CronExpression(defaultCronSchedule);
+        CronExpression cron;
 
         cron = job.getSchedule();
+
+        if(cron == null) {
+            return;
+        }
 
         LocalDateTime now = timeProvider.getTime();
 
@@ -207,7 +222,7 @@ public class SchedulerService {
                 case Job.FAILED:
                     // if job crashed, we should definitely report that and pass it or rerun it?? not sure;
                     reportJob(job, Event.JOB_CRASHED);
-                    action = Action.PASS;
+                    action = Action.RUN;
                     break;
                 case Job.CANCELLED:
                     reportJob(job, Event.JOB_CANCELLED);
@@ -230,8 +245,14 @@ public class SchedulerService {
             case RUN:
                 job.setFromTo(crawlFrom, crawlTo);
                 jobRunner.runJob(job);
+                reporter.report(Report.of(Event.JOB_STARTED)
+                        .message(job.name() + " : " + cron.getCronExpression())
+                        .id(job.id())
+                );
+                logger.debug("running {} on schedule {}", job.name(), cron.getCronExpression() );
                 break;
             case PASS:
+                logger.debug("passing {} on schedule {}", job.name(), cron.getCronExpression());
             default:
 
         }
@@ -251,6 +272,12 @@ public class SchedulerService {
         List<Job> jobs = jobProvider.getJobs(args);
 
         for (Job job : jobs) {
+
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                //pass
+            }
 
             ensureSchedule(job);
         }
