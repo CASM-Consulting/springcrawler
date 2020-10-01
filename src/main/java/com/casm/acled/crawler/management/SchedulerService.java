@@ -19,14 +19,6 @@ import java.util.*;
 
 @Service
 public class SchedulerService {
-    //TODO
-    // to ask, the project sometimes will run several applications for instance, when I only execute the SchedulerRunner, it sometimes run Crawler.. and ...;
-    // the idea is that, we load all possible job requests from source, and compare them with current running/created job instances, then
-    // about the crawl_JOB_ID, if it doesnt have one, then it doesnt run, just run it.
-
-    // the whole pipeline: get all possible jobs from jobprovider, check if job is valid/runnable by makeJob method and JobRunner's get JOB, then choose too run them or not;
-    // if crawl_job_id does not exist, then run it;
-    // jobprovider provides all potential jobs, jobrunner will check them onebyone by using getJob(), and run it by runJob(); Only a job request object (wrapped as Job object) is passed
 
     protected static final Logger logger = LoggerFactory.getLogger(SchedulerService.class);
 
@@ -36,6 +28,9 @@ public class SchedulerService {
     private final JobProvider jobProvider;
     private final Reporter reporter;
     private final TimeProvider timeProvider;
+
+    @Autowired
+    private CheckListService checkListService;
 
     private enum Action {
         RUN,
@@ -125,7 +120,9 @@ public class SchedulerService {
         }
     }
 
-    // to be implemented, running so slowly and should report to admin. could involve cronexpression comparison
+    /**
+     * Did job fail to finish running before it must be run again?
+     */
     private Action checkStillRunningFromLastTime(Job job, Event e) {
         // TODO: does comparison even need to be made at this stage?
         reporter.report(Report.of(e).id(job.id()).message(job.name()));
@@ -140,27 +137,27 @@ public class SchedulerService {
         LocalDateTime jobEndTime = job.getStopped();
         if (jobEndTime.isBefore(prevRun)) {
             return Action.RUN;
-        }
-        else {
-            if (jobEndTime.isAfter(prevRun) && jobEndTime.isBefore(nextRun)) {
-                return Action.PASS;
-            }
-            else {
-                return Action.PASS;
-            }
+        } else {
+            return Action.PASS;
         }
     }
 
-    // to be implemented , send email to admin
     private void reportJob(Job job, Event e) {
         reporter.report(Report.of(e).id(job.id()).message(job.name()));
     }
 
-    // to be implemented, how long between enquequed and current state; report to admin about this.
     private void checkTimeSinceSubmitted(Job job, LocalDateTime timeNow) {
         LocalDateTime jobStartTime = job.getStarted();
         String msg = String.format("The job is still starting; it started at %s and current time is %s", jobStartTime.toString(), timeNow.toString());
         reporter.report(Report.of(Event.JOB_STILL_STARTING).id(job.id()).message(job.name()+"||"+msg));
+    }
+
+    public void clearPIDs(CrawlArgs args) {
+        jobProvider.getJobs(args).forEach(j -> {
+            if (j.pid().isPresent()){
+                jobProvider.clearPID(j.id());
+            }
+        });
     }
 
     private Optional<Job> checkJobStatus(int jobPID) {
@@ -180,27 +177,38 @@ public class SchedulerService {
 
     public void ensureSchedule(Job job) {
 
-
-        CronExpression cron = new CronExpression(defaultCronSchedule);
+        CronExpression cron;
 
         cron = job.getSchedule();
 
-//        ZoneId zoneId = ZoneId.of(source.get(Source.TIMEZONE));
-//        TimeZone timeZone = TimeZone.getTimeZone(zoneId);
-//        cron.setTimeZone(timeZone);
+        if(cron == null) {
+            return;
+        }
 
-//        Date zonedNow = getZonedNow(zoneId);
         LocalDateTime now = timeProvider.getTime();
+
+        // A job that's never been run before will default to crawling from a week ago
+        LocalDate crawlFrom = now.minusDays(7).toLocalDate();
+        // The to date will always be a couple months ahead to ensure we don't discount any data that's too recent
+        LocalDate crawlTo = now.plusMonths(2).toLocalDate();
+
         LocalDateTime nextRun = fromDate(cron.getTimeAfter(toDate(now)));
         LocalDateTime prevRun = fromDate(getTimeBefore(toDate(now), cron));
 
+        // pid could be null
+        Optional<Integer> maybePid = job.pid();
+
         // check if it is a registered one;
-        Optional<Job> maybeJob = checkJobStatus(job.pid());
+        Optional<Job> maybeJob = maybePid.isPresent()? checkJobStatus(maybePid.get()) : Optional.empty();
 
         Action action;
 
         if(maybeJob.isPresent()) {
             Job curJob = maybeJob.get();
+
+            // Set the from date to when the job last started (minusing a day for safety)
+            crawlFrom = curJob.getStarted().minusDays(1).toLocalDate();
+
             String jobState = curJob.state();
             switch (jobState) {
                 case Job.RUNNING:
@@ -214,7 +222,7 @@ public class SchedulerService {
                 case Job.FAILED:
                     // if job crashed, we should definitely report that and pass it or rerun it?? not sure;
                     reportJob(job, Event.JOB_CRASHED);
-                    action = Action.PASS;
+                    action = Action.RUN;
                     break;
                 case Job.CANCELLED:
                     reportJob(job, Event.JOB_CANCELLED);
@@ -235,9 +243,16 @@ public class SchedulerService {
 
         switch (action) {
             case RUN:
+                job.setFromTo(crawlFrom, crawlTo);
                 jobRunner.runJob(job);
+                reporter.report(Report.of(Event.JOB_STARTED)
+                        .message(job.name() + " : " + cron.getCronExpression())
+                        .id(job.id())
+                );
+                logger.debug("running {} on schedule {}", job.name(), cron.getCronExpression() );
                 break;
             case PASS:
+                logger.debug("passing {} on schedule {}", job.name(), cron.getCronExpression());
             default:
 
         }
@@ -252,20 +267,19 @@ public class SchedulerService {
         return LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
     }
 
-    public void schedule( ) throws Exception {
+    public void schedule(CrawlArgs args) throws Exception {
 
-        // example parameters; probably we should decide if we should run job request using corresponding Jobinstance's parameters or using our own new parameters;
-        Map<String, String> params = new HashMap<String, String>();
-        params.put(Crawl.SKIP_KEYWORD_FILTER, Boolean.TRUE.toString());
-        params.put(Crawl.FROM, LocalDate.of(2020, 8,21).toString());
-        params.put(Crawl.TO, LocalDate.of(2020, 8,28).toString());
+        List<Job> jobs = jobProvider.getJobs(args);
 
-        List<Job> allPossibleJobs = jobProvider.getJobs(params);
-        for (Job possibleJob : allPossibleJobs) {
+        for (Job job : jobs) {
 
-            ensureSchedule(possibleJob);
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                //pass
+            }
 
+            ensureSchedule(job);
         }
-
     }
 }

@@ -16,6 +16,11 @@ import com.casm.acled.dao.entities.SourceListDAO;
 import com.casm.acled.entities.source.Source;
 import com.casm.acled.entities.sourcelist.SourceList;
 import com.google.common.collect.ImmutableList;
+import com.norconex.collector.http.robot.RobotsTxt;
+import com.norconex.collector.http.robot.impl.StandardRobotsTxtProvider;
+import org.apache.http.client.HttpClient;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.glassfish.jersey.client.ClientProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -82,11 +87,11 @@ public class CrawlService {
 
             CrawlArgs args = argsService.get();
 
-            args.sources = ImmutableList.of(maybeSource.get());
-            args.sourceList = maybesSourceList.get();
+            args.source = maybeSource.get();
+            args.sourceLists = ImmutableList.of(maybesSourceList.get());
             args.depth = 3;
 
-            Crawl crawl = new Crawl(args, importer, reporter, ImmutableList.of() );
+            Crawl crawl = new Crawl(args, importer, reporter);
 //            crawl.getConfig().crawler().setIgnoreSitemap(false);
             crawl.run();
         } else {
@@ -102,8 +107,8 @@ public class CrawlService {
 
         CrawlArgs args = argsService.get();
 
-        args.sources = ImmutableList.of(maybeSource.get());
-        args.sourceList = maybesSourceList.get();
+        args.source = maybeSource.get();
+        args.sourceLists = ImmutableList.of(maybesSourceList.get());
         args.from = from;
         args.to = to;
         args.skipKeywords = skipKeywords;
@@ -113,49 +118,40 @@ public class CrawlService {
 
     public void run(CrawlArgs args) {
 
-        Source source = args.sources.get(0);
+        Source source = args.source;
 
-        if(args.depth == 0 && ! checkListService.hasSiteMaps(source)) {
+        int sourceId = source.id();
 
-            logger.info("Quitting: only site maps requested - {} has no sitemap", (String) source.get(Source.STANDARD_NAME));
-
-        } else {
-
-            int sourceId = source.id();
-
-            //ThreadGroup required for logger context, see CustomLoggerRepository
-            ThreadGroup tg = new ThreadGroup(Integer.toString(sourceId));
+        //ThreadGroup required for logger context, see CustomLoggerRepository
+        ThreadGroup tg = new ThreadGroup(Integer.toString(sourceId));
 
 //            ExecutorService executor = Executors.newSingleThreadExecutor();
 //            Future<Void> future = executor.submit()
 
-            Thread thread = new Thread(tg, () -> {
+        Thread thread = new Thread(tg, () -> {
 
-                List<String> sitemaps = getSitemaps(source);
+            ACLEDImporter importer = new ACLEDImporter(articleDAO, source, sourceListDAO, true);
 
-                ACLEDImporter importer = new ACLEDImporter(articleDAO, source, sourceListDAO, true);
+            Crawl crawl = new Crawl(args, importer, reporter);
 
-                Crawl crawl = new Crawl(args, importer, reporter, sitemaps);
+            crawl.run();
+        });
 
-                crawl.run();
-            });
+        AtomicReference<Throwable> thrown = new AtomicReference<>();
 
-            AtomicReference<Throwable> thrown = new AtomicReference<>();
+        thread.setUncaughtExceptionHandler((Thread th, Throwable ex)->{
+            thrown.set(ex);
+        });
 
-            thread.setUncaughtExceptionHandler((Thread th, Throwable ex)->{
-                thrown.set(ex);
-            });
+        thread.start();
 
-            thread.start();
-
-            try {
-                thread.join();
-            } catch (InterruptedException e){
-                throw new RuntimeException(e);
-            }
-            if(thrown.get()!=null) {
-                throw new RuntimeException(thrown.get());
-            }
+        try {
+            thread.join();
+        } catch (InterruptedException e){
+            throw new RuntimeException(e);
+        }
+        if(thrown.get()!=null) {
+            throw new RuntimeException(thrown.get());
         }
 
     }
@@ -247,10 +243,25 @@ public class CrawlService {
         return sitemaps;
     }
 
+    public List<String> getSitemaps(Source source) {
+
+        String url = source.get(Source.LINK);
+
+        StandardRobotsTxtProvider srtp  = new StandardRobotsTxtProvider();
+
+        HttpClient httpClient = HttpClientBuilder.create().build();
+
+        RobotsTxt robotsTxt = srtp.getRobotsTxt(httpClient, url, "CASM Tech");
+
+        List<String> sitemaps = Arrays.asList(robotsTxt.getSitemapLocations());
+
+        return sitemaps;
+    }
+
     /**
      * TODO(andy) how do we use STANDARD_SITEMAP_LOCS - won't this mess with "hasSiteMaps()"?
      */
-    public List<String> getSitemaps(Source source) {
+    public List<String> getSitemaps3(Source source) {
 
         String url = source.get(Source.LINK);
         List<String> predefinedSitemaps = source.get(Source.CRAWL_SITEMAP_LOCATIONS);
