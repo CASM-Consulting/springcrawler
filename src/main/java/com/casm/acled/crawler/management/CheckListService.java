@@ -51,6 +51,11 @@ import java.util.stream.Collectors;
 
 import static com.casm.acled.crawler.spring.CrawlService.STANDARD_SITEMAP_LOCS;
 
+import org.springframework.shell.table.ArrayTableModel;
+import org.springframework.shell.table.BorderStyle;
+import org.springframework.shell.table.TableBuilder;
+import org.springframework.shell.table.TableModel;
+
 @Service
 public class CheckListService {
 
@@ -132,6 +137,10 @@ public class CheckListService {
         Client client = ClientBuilder.newClient();
 
         boolean pass = true;
+
+//        if (url==null) {
+//            return false;
+//        }
 
 //        target.property(ClientProperties.FOLLOW_REDIRECTS, Boolean.TRUE);
         try {
@@ -237,6 +246,7 @@ public class CheckListService {
 
         if(hasSiteMaps) {
             reporter.report(Report.of(Event.HAS_SITE_MAPS).id(source.id()).message(source.get(Source.STANDARD_NAME)));
+
         }
 
         if(hasDateFormat && hasExamples && scraperExists) {
@@ -264,6 +274,98 @@ public class CheckListService {
 
     }
 
+    public String [] checkSourceStatus(CrawlArgs args, Source source)  {
+
+        Object connection;
+        Object scraperExists;
+        Object hasExamples;
+        Object hasDateFormat;
+        Object hasSiteMaps;
+
+
+        List<String> checkValue = new ArrayList<String>();
+
+        boolean passed = false;
+
+        try {
+            connection = checkConnection(source);
+        }
+        catch (Exception e) {
+             connection = e.getMessage();
+        }
+
+        try {
+            scraperExists = scraperExists(args, source);
+        }
+        catch (Exception e) {
+            scraperExists = e.getMessage();
+        }
+
+        try {
+            hasExamples = hasExamples(source);
+        }
+        catch (Exception e) {
+            hasExamples = e.getMessage();
+        }
+
+        try {
+            hasDateFormat = hasDateFormat(source);
+        }
+        catch (Exception e) {
+            hasDateFormat = e.getMessage();
+        }
+
+        try {
+            hasSiteMaps = hasSiteMaps(source);
+        }
+        catch (Exception e) {
+            hasSiteMaps = e.getMessage();
+        }
+//        boolean scraperExists = scraperExists(args, source);
+//        boolean hasExamples = hasExamples(source);
+//        boolean hasDateFormat = hasDateFormat(source);
+//        boolean hasSiteMaps = hasSiteMaps(source);
+
+        checkValue.add(source.get(Source.STANDARD_NAME));
+        checkValue.add(String.valueOf(connection));
+        checkValue.add(String.valueOf(scraperExists));
+        checkValue.add(String.valueOf(hasExamples));
+        checkValue.add(String.valueOf(hasDateFormat));
+        checkValue.add(String.valueOf(hasSiteMaps));
+
+        //TODO: not sure about below commented blocks, whether to add them;
+//        if(hasSiteMaps) {
+//            reporter.report(Report.of(Event.HAS_SITE_MAPS).id(source.id()).message(source.get(Source.STANDARD_NAME)));
+//
+//        }
+
+//        if(hasDateFormat && hasExamples && scraperExists) {
+//
+//            boolean datesParsed = datesParse(args, source);
+//
+//            if(datesParsed) {
+//                passed = true;
+////                reporter.report(Report.of(Event.SCRAPE_PASS).id(source.id()).message(source.get(Source.STANDARD_NAME)));
+//            }
+//        }
+//
+//        if(!connection) {
+//            passed = false;
+//        }
+//
+//        if(args.flagSet.contains(CrawlArgs.Flags.DISABLE_ON_FAIL) ) {
+//            if(passed) {
+//                source = source.put(Source.CRAWL_DISABLED, false);
+//            } else {
+//                source = source.put(Source.CRAWL_DISABLED, true);
+//            }
+//            sourceDAO.upsert(source);
+//        }
+
+        return checkValue.toArray(new String[checkValue.size()]);
+
+    }
+
     public void exportCrawlerSourceList(CrawlArgs args) throws IOException {
 
         SourceList sourceList = args.sourceLists.get(0);
@@ -281,19 +383,51 @@ public class CheckListService {
     }
 
     public void checkSourceList(CrawlArgs args) {
+        String [] header = {"Source ID", "connection", "scraperExists", "hasExamples", "hasDateFormat", "hasSiteMaps"};
+//        String [] header = {"Source ID", "hasSiteMaps"};
+        String [][] content = new String[][] {header};
 
-        if(args.source == null) {
+        SourceList sourceList = args.sourceLists.get(0);
+        List<Source> sources = sourceDAO.byList(sourceList);
 
-            SourceList sourceList = args.sourceLists.get(0);
-            List<Source> sources = sourceDAO.byList(sourceList);
+        for(Source source : sources) {
 
-            for(Source source : sources) {
-
-                checkSource(args, source);
+//            checkSource(args, source);
+            // for debugging, use only one source;
+//            if (source.get(Source.STANDARD_NAME).equals("Imagen del Golfo")) {
+//                String [] checkArray = checkSourceStatus(args, source);
+//                if (checkArray.length==0) {
+//                    continue;
+//                }
+//                content = insertRow(content,content.length, checkArray);
+//
+//            }
+            String [] checkArray = checkSourceStatus(args, source);
+            if (checkArray.length==0) {
+                continue;
             }
-        } else {
-            checkSource(args, args.source);
+            content = insertRow(content,content.length, checkArray);
+
         }
+
+        TableModel model = new ArrayTableModel(content);
+        TableBuilder tableBuilder = new TableBuilder(model);
+        tableBuilder.addFullBorder(BorderStyle.fancy_light);
+        System.out.println(tableBuilder.build().render(80));
+
+
+    }
+
+    public static String[][] insertRow(String[][] m, int r, String[] data) {
+        String[][] out = new String[m.length + 1][];
+        for (int i = 0; i < r; i++) {
+            out[i] = m[i];
+        }
+        out[r] = data;
+        for (int i = r + 1; i < out.length; i++) {
+            out[i] = m[i - 1];
+        }
+        return out;
     }
 
     public void exportCrawlerSourcesToCSV(Path outputDir, String fileName, SourceList sourceList) throws IOException {

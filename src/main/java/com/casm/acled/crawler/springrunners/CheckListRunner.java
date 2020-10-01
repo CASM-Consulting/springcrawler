@@ -1,11 +1,14 @@
 package com.casm.acled.crawler.springrunners;
 
 import com.beust.jcommander.JCommander;
+import com.beust.jcommander.Strings;
 import com.casm.acled.configuration.ObjectMapperConfiguration;
 import com.casm.acled.crawler.management.CheckListService;
 import com.casm.acled.crawler.management.CrawlArgs;
 import com.casm.acled.crawler.management.CrawlArgsService;
 import com.casm.acled.crawler.reporting.Reporter;
+import com.google.common.collect.ImmutableList;
+import net.sf.extjwnl.data.Exc;
 import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
 import org.camunda.bpm.spring.boot.starter.rest.CamundaBpmRestJerseyAutoConfiguration;
 import org.slf4j.Logger;
@@ -22,13 +25,22 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
 
+import org.springframework.core.MethodParameter;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Random;
+import java.util.stream.Stream;
+
+
+
 @EnableAutoConfiguration(exclude={HibernateJpaAutoConfiguration.class, CamundaBpmAutoConfiguration.class, CamundaBpmRestJerseyAutoConfiguration.class, ValidationAutoConfiguration.class})
 // We need the special object mapper, though.
 //@Import({ObjectMapperConfiguration.class, CLIRunner.ShutdownConfig.class})
 @Import({ObjectMapperConfiguration.class})
 // And we also need the DAOs.
 @ComponentScan(basePackages={"com.casm.acled.dao", "com.casm.acled.crawler"})
-public class CheckListRunner implements CommandLineRunner {
+public class CheckListRunner implements CommandLineRunner{
 
     protected static final Logger logger = LoggerFactory.getLogger(CheckListRunner.class);
 
@@ -43,13 +55,15 @@ public class CheckListRunner implements CommandLineRunner {
 
     private CrawlArgs crawlArgs;
 
-
-
     @Override
     public void run(String... args) throws Exception {
+
         reporter.randomRunId();
 
         crawlArgs = argsService.get();
+
+        crawlArgs.raw.program = "check";
+        crawlArgs.raw.sourceLists = ImmutableList.of("fake-net");
 
         JCommander.newBuilder()
                 .addObject(crawlArgs.raw)
@@ -89,3 +103,4 @@ public class CheckListRunner implements CommandLineRunner {
         ctx.close();
     }
 }
+

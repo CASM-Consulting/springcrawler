@@ -110,6 +110,7 @@ public class CrawlerDirectRunner implements CommandLineRunner {
         crawlArgs.raw.workingDir = "/home/sw206/jqm/jqm-2.2.5/test";
         crawlArgs.raw.scrapersDir = "/home/sw206/git/acled-scrapers/";
 //        crawlArgs.raw.scrapersDir = "/Users/adr27/Documents/git/acled-scrapers/";
+//        crawlArgs.raw.scrapersDir = "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/springcrawler/testscrapers/generic/";
         crawlArgs.raw.depth = 0;
 //        crawlArgs.raw.ignoreSiteMap = true;
 
