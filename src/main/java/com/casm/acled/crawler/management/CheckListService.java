@@ -14,6 +14,7 @@ import com.casm.acled.crawler.util.Util;
 import com.casm.acled.dao.entities.ArticleDAO;
 import com.casm.acled.dao.entities.SourceDAO;
 import com.casm.acled.dao.entities.SourceListDAO;
+import com.casm.acled.dao.entities.SourceSourceListDAO;
 import com.casm.acled.entities.EntityVersions;
 import com.casm.acled.entities.VersionedEntity;
 import com.casm.acled.entities.article.Article;
@@ -81,6 +82,9 @@ public class CheckListService {
 
     @Autowired
     private SourceListDAO sourceListDAO;
+
+    @Autowired
+    private SourceSourceListDAO sourceSourceListDAO;
 
     @Autowired
     private ArticleDAO articleDAO;
@@ -387,6 +391,10 @@ public class CheckListService {
 //        String [] header = {"Source ID", "hasSiteMaps"};
         String [][] content = new String[][] {header};
 
+        if (args.sourceLists == null || args.sourceLists.isEmpty()){
+            throw new RuntimeException("No source list specified.");
+        }
+
         SourceList sourceList = args.sourceLists.get(0);
         List<Source> sources = sourceDAO.byList(sourceList);
 
@@ -658,4 +666,11 @@ public class CheckListService {
     }
 
 
+    public void linkSourceToSourceList(CrawlArgs crawlArgs) {
+
+        for (SourceList sl : crawlArgs.sourceLists){
+
+            sourceSourceListDAO.link(crawlArgs.source, sl);
+        }
+    }
 }
