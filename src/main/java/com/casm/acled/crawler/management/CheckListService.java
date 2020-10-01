@@ -316,7 +316,6 @@ public class CheckListService {
         }
 
         try {
-            // should use check sitemap discovery code; imagen del golfo should return true, but now false;
             hasSiteMaps = hasSiteMaps(source);
         }
         catch (Exception e) {
