@@ -129,9 +129,9 @@ public class CheckListService {
 
         boolean pass = true;
 
-        if (url==null) {
-            return false;
-        }
+//        if (url==null) {
+//            return false;
+//        }
 
 //        target.property(ClientProperties.FOLLOW_REDIRECTS, Boolean.TRUE);
         try {
@@ -267,27 +267,65 @@ public class CheckListService {
 
     public String [] checkSourceStatus(CrawlArgs args, Source source)  {
 
+        Object connection;
+        Object scraperExists;
+        Object hasExamples;
+        Object hasDateFormat;
+        Object hasSiteMaps;
+
+
         List<String> checkValue = new ArrayList<String>();
 
         boolean passed = false;
 
-        if (source.get(Source.LINK) == null) {
-            return checkValue.toArray(new String[checkValue.size()]);
+        try {
+            connection = checkConnection(source);
+        }
+        catch (Exception e) {
+             connection = e.getMessage();
         }
 
-//        boolean connection = checkConnection(source);
+        try {
+            scraperExists = scraperExists(args, source);
+        }
+        catch (Exception e) {
+            scraperExists = e.getMessage();
+        }
+
+        try {
+            hasExamples = hasExamples(source);
+        }
+        catch (Exception e) {
+            hasExamples = e.getMessage();
+        }
+
+        try {
+            hasDateFormat = hasDateFormat(source);
+        }
+        catch (Exception e) {
+            hasDateFormat = e.getMessage();
+        }
+
+        try {
+            // should use check sitemap discovery code; imagen del golfo should return true, but now false;
+            hasSiteMaps = hasSiteMaps(source);
+        }
+        catch (Exception e) {
+            hasSiteMaps = e.getMessage();
+        }
 //        boolean scraperExists = scraperExists(args, source);
 //        boolean hasExamples = hasExamples(source);
 //        boolean hasDateFormat = hasDateFormat(source);
-        boolean hasSiteMaps = hasSiteMaps(source);
+//        boolean hasSiteMaps = hasSiteMaps(source);
 
         checkValue.add(source.get(Source.STANDARD_NAME));
-//        checkValue.add(String.valueOf(connection));
-//        checkValue.add(String.valueOf(scraperExists));
-//        checkValue.add(String.valueOf(hasExamples));
-//        checkValue.add(String.valueOf(hasDateFormat));
+        checkValue.add(String.valueOf(connection));
+        checkValue.add(String.valueOf(scraperExists));
+        checkValue.add(String.valueOf(hasExamples));
+        checkValue.add(String.valueOf(hasDateFormat));
         checkValue.add(String.valueOf(hasSiteMaps));
 
+        //TODO: not sure about below commented blocks, whether to add them;
 //        if(hasSiteMaps) {
 //            reporter.report(Report.of(Event.HAS_SITE_MAPS).id(source.id()).message(source.get(Source.STANDARD_NAME)));
 //
@@ -337,7 +375,8 @@ public class CheckListService {
     }
 
     public void checkSourceList(CrawlArgs args) {
-        String [] header = {"Source ID", "hasSiteMaps"};
+        String [] header = {"Source ID", "connection", "scraperExists", "hasExamples", "hasDateFormat", "hasSiteMaps"};
+//        String [] header = {"Source ID", "hasSiteMaps"};
         String [][] content = new String[][] {header};
 
         SourceList sourceList = args.sourceList;
@@ -346,6 +385,15 @@ public class CheckListService {
         for(Source source : sources) {
 
 //            checkSource(args, source);
+            // for debugging, use only one source;
+//            if (source.get(Source.STANDARD_NAME).equals("Imagen del Golfo")) {
+//                String [] checkArray = checkSourceStatus(args, source);
+//                if (checkArray.length==0) {
+//                    continue;
+//                }
+//                content = insertRow(content,content.length, checkArray);
+//
+//            }
             String [] checkArray = checkSourceStatus(args, source);
             if (checkArray.length==0) {
                 continue;
