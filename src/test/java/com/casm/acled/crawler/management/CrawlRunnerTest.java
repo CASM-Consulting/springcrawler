@@ -1,10 +1,6 @@
 package com.casm.acled.crawler.management;
 
-import com.casm.acled.crawler.springrunners.CrawlerServiceRunner;
 import org.junit.Test;
-import org.springframework.boot.Banner;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.WebApplicationType;
 
 import java.time.LocalDate;
 

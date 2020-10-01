@@ -7,17 +7,15 @@ import com.casm.acled.dao.entities.SourceListDAO;
 import com.casm.acled.entities.source.Source;
 import com.casm.acled.entities.sourcelist.SourceList;
 import com.enioka.jqm.api.JobRequest;
-import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class CrawlArgs {
 
@@ -37,10 +35,10 @@ public class CrawlArgs {
         public String jqmProgram = "JQMSpringCollectorV1";
 
         @Parameter(names = "-s", description = "Source")
-        public List<String> sources;
+        public String source;
 
-        @Parameter(names = "-sl", description = "Source list")
-        public String sourceList;
+        @Parameter(names = "-sl", description = "Source lists")
+        public List<String> sourceLists;
 
         @Parameter(names = "-cid", description = "Crawl ID override")
         public String crawlId;
@@ -57,8 +55,8 @@ public class CrawlArgs {
         @Parameter(names = "-ism", description = "Ignore site maps")
         public Boolean ignoreSiteMap = false;
 
-        @Parameter(names = "-osm", description = "Only Site maps")
-        public Boolean onlySiteMap = false;
+//        @Parameter(names = "-osm", description = "Only Site maps")
+//        public Boolean onlySiteMap = false;
 
         @Parameter(names = "-sk", description = "Skip keyword matching")
         public Boolean skipKeywords = false;
@@ -86,11 +84,11 @@ public class CrawlArgs {
 
     public String jqmProgram;
 
-    public List<Source> sources;
-    public static final String SOURCE_ID = "SOURCE_ID";
+    public Source source;
+    public static final String SOURCE = "SOURCE";
 
-    public SourceList sourceList;
-    public static final String SOURCE_LIST_ID = "SOURCE_LIST_ID";
+    public List<SourceList> sourceLists;
+    public static final String SOURCE_LISTS = "SOURCE_LISTS";
 
     public String crawlId;
     public static final String CRAWL_ID = "CRAWL_ID";
@@ -135,30 +133,33 @@ public class CrawlArgs {
         this.sourceDAO = sourceDAO;
         this.sourceListDAO = sourceListDAO;
     }
-    
+
+
+
     public void init() {
 
-        if(raw.sources != null) {
-            sources = new ArrayList<>();
-            for(String sourceName : raw.sources) {
-                Optional<Source> maybeSource = sourceDAO.byName(sourceName);
-                if(maybeSource.isPresent()) {
-                    Source source = maybeSource.get();
-                    sources.add(source);
-                }
-            }
-        }
+        if (sourceDAO != null && sourceListDAO != null) {
 
-        if(raw.sourceList != null) {
-            Optional<SourceList> maybeSourceList = sourceListDAO.byName(raw.sourceList);
-            if(maybeSourceList.isPresent()) {
-                sourceList = maybeSourceList.get();
-                if(sources == null) {
-                    sources = sourceDAO.byList(sourceList);
-                }
-            } else {
-                throw new RuntimeException("Source List is required");
+            if (raw.source != null) {
+                source = sourceDAO.byName(raw.source).get();
             }
+
+            if (raw.sourceLists == null && source != null) {
+                sourceLists = sourceListDAO.bySource(source);
+            } else if(raw.sourceLists != null) {
+                sourceLists = raw.sourceLists.stream()
+                        .map(sl ->  {
+                            Optional<SourceList> maybeSourceList = sourceListDAO.byName(sl);
+                            if(maybeSourceList.isPresent()) {
+                                return maybeSourceList.get();
+                            } else {
+                                return null;
+                            }
+                        })
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toList());
+            }
+
         }
 
         crawlId = raw.crawlId;
@@ -217,30 +218,34 @@ public class CrawlArgs {
         return this.sourceListDAO;
     }
 
-    public List<JobRequest> toJobRequests() {
-
-        List<JobRequest> requests = new ArrayList<>();
-
-        for(Source source : sources) {
-            JobRequest request = toJobRequest(source);
-            requests.add(request);
-        }
-
-        return requests;
+    public JobRequest toJobRequest() {
+        return toJobRequest(source);
     }
 
-    private JobRequest toJobRequest(Source source) {
+    public JobRequest toJobRequest(Source source) {
         JobRequest jobRequest = JobRequest.create(jqmProgram, CrawlerSweep.JQM_USER);
 
-        jobRequest.addParameter( SOURCE_ID, Integer.toString( source.id() ) );
-        jobRequest.addParameter( SOURCE_LIST_ID, Integer.toString( sourceList.id() ) );
+        jobRequest.addParameter(SOURCE, source.get(Source.STANDARD_NAME) );
+
+        if(sourceLists != null && ! sourceLists.isEmpty()) {
+            jobRequest.addParameter(SOURCE_LISTS, sourceLists
+                    .stream()
+                    .map(sl -> (String)sl.get(SourceList.LIST_NAME) )
+                    .collect(Collectors.joining(",")));
+        }
+
+
         if(crawlId != null) {
             jobRequest.addParameter( CRAWL_ID, crawlId );
         }
         jobRequest.addParameter( SKIP_KEYWORDS, skipKeywords.toString() );
         jobRequest.addParameter( IGNORE_SITE_MAP, ignoreSiteMap.toString() );
 //        jobRequest.addParameter( ONLY_SITE_MAP, onlySiteMap.toString() );
-        jobRequest.addParameter( DEPTH, Integer.toString( depth ) );
+        if(source.hasValue(Source.CRAWL_DEPTH)) {
+            jobRequest.addParameter( DEPTH, Integer.toString( source.get(Source.CRAWL_DEPTH) ) );
+        } else {
+            jobRequest.addParameter( DEPTH, Integer.toString( depth ) );
+        }
         jobRequest.addParameter( MAX_ARTICLES, Integer.toString( maxArticle ) );
         jobRequest.addParameter( POLITENESS, Integer.toString( politeness ) );
         jobRequest.addParameter( WORKING_DIR, workingDir.toString() );
@@ -266,11 +271,12 @@ public class CrawlArgs {
 
     public void init(Map<String,String> runtimeParameters) {
 
-        int sourceId = Integer.parseInt(runtimeParameters.get(SOURCE_ID));
-        int sourceListId = Integer.parseInt(runtimeParameters.get(SOURCE_LIST_ID));
 
-        sources = ImmutableList.of(sourceDAO.getById(sourceId).get());
-        sourceList = sourceListDAO.getById(sourceListId).get();
+        raw.source = runtimeParameters.get(SOURCE);
+
+        if(runtimeParameters.get(SOURCE_LISTS) != null) {
+            raw.sourceLists = Arrays.asList(runtimeParameters.get(SOURCE_LISTS).split(",").clone());
+        }
 
         raw.crawlId = runtimeParameters.get(CRAWL_ID);
         raw.depth = Integer.parseInt(runtimeParameters.get(DEPTH));

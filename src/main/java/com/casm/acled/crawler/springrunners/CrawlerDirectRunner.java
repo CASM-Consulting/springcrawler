@@ -3,7 +3,6 @@ package com.casm.acled.crawler.springrunners;
 import com.casm.acled.configuration.ObjectMapperConfiguration;
 import com.casm.acled.crawler.management.CrawlArgs;
 import com.casm.acled.crawler.management.CrawlArgsService;
-import com.casm.acled.crawler.management.CrawlerSweep;
 import com.casm.acled.crawler.reporting.Reporter;
 import com.casm.acled.crawler.spring.CrawlService;
 import com.casm.acled.dao.entities.SourceListDAO;
@@ -33,14 +32,14 @@ import java.time.format.DateTimeParseException;
 @Import({ObjectMapperConfiguration.class})
 // And we also need the DAOs.
 @ComponentScan(basePackages={"com.casm.acled.dao", "com.casm.acled.crawler"})
-public class CrawlerServiceRunner implements CommandLineRunner {
+public class CrawlerDirectRunner implements CommandLineRunner {
 
 //    static {
 //        Object guard = new Object();
 //        LoggerRepository rs = new CustomLoggerRepository(new RootLogger((Level) Level.DEBUG));
 //        LogManager.setRepositorySelector(new DefaultRepositorySelector(rs), guard);
 //    }
-    protected static final Logger logger = LoggerFactory.getLogger(CrawlerServiceRunner.class);
+    protected static final Logger logger = LoggerFactory.getLogger(CrawlerDirectRunner.class);
 
     @Autowired
     private SourceListDAO sourceListDAO;
@@ -99,17 +98,21 @@ public class CrawlerServiceRunner implements CommandLineRunner {
 
         crawlArgs.raw.skipKeywords = false;
         crawlArgs.raw.program = "crawl";
-        crawlArgs.raw.sources = ImmutableList.of("fake-net");
-//        crawlArgs.raw.sources = ImmutableList.of("Milenio");
-//        crawlArgs.raw.sources = ImmutableList.of("MiMorelia");
-//        crawlArgs.raw.sourceList = "mexico-1";
-        crawlArgs.raw.sourceList = "fake-net";
-        crawlArgs.raw.from = "2020-09-18";
+
+        crawlArgs.raw.source = "Imagen del Golfo";
+//        crawlArgs.raw.source = "Milenio";
+//        crawlArgs.raw.source = "MiMorelia";
+        crawlArgs.raw.sourceLists = ImmutableList.of("mexico-1");
+//        crawlArgs.raw.sourceList = "fake-net";
+        crawlArgs.raw.from = "2020-09-27";
         crawlArgs.raw.to =  "2021-01-01";
-        crawlArgs.raw.workingDir = "test";
-        crawlArgs.raw.scrapersDir = "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/springcrawler/testscrapers/generic/";
-        crawlArgs.raw.depth = 1;
-        crawlArgs.raw.ignoreSiteMap = true;
+//        crawlArgs.raw.workingDir = "test";
+        crawlArgs.raw.workingDir = "/home/sw206/jqm/jqm-2.2.5/test";
+        crawlArgs.raw.scrapersDir = "/home/sw206/git/acled-scrapers/";
+//        crawlArgs.raw.scrapersDir = "/Users/adr27/Documents/git/acled-scrapers/";
+//        crawlArgs.raw.scrapersDir = "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/springcrawler/testscrapers/generic/";
+        crawlArgs.raw.depth = 0;
+//        crawlArgs.raw.ignoreSiteMap = true;
 
         crawlArgs.init();
 
@@ -127,7 +130,7 @@ public class CrawlerServiceRunner implements CommandLineRunner {
 
     public static void main(String[] args) {
 
-        SpringApplication app = new SpringApplication(CrawlerServiceRunner.class);
+        SpringApplication app = new SpringApplication(CrawlerDirectRunner.class);
         app.setBannerMode(Banner.Mode.OFF);
         app.setWebApplicationType(WebApplicationType.NONE);
         ConfigurableApplicationContext ctx = app.run(args);
