@@ -7,6 +7,7 @@ import com.casm.acled.crawler.management.CheckListService;
 import com.casm.acled.crawler.management.CrawlArgs;
 import com.casm.acled.crawler.management.CrawlArgsService;
 import com.casm.acled.crawler.reporting.Reporter;
+import com.google.common.collect.ImmutableList;
 import net.sf.extjwnl.data.Exc;
 import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
 import org.camunda.bpm.spring.boot.starter.rest.CamundaBpmRestJerseyAutoConfiguration;
@@ -62,7 +63,7 @@ public class CheckListRunner implements CommandLineRunner{
         crawlArgs = argsService.get();
 
         crawlArgs.raw.program = "check";
-        crawlArgs.raw.sourceList = "fake-net";
+        crawlArgs.raw.sourceLists = ImmutableList.of("fake-net");
 
         JCommander.newBuilder()
                 .addObject(crawlArgs.raw)

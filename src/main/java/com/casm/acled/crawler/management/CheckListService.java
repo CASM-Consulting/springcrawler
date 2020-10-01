@@ -349,7 +349,7 @@ public class CheckListService {
         String [] header = {"Source ID", "hasSiteMaps"};
         String [][] content = new String[][] {header};
 
-        SourceList sourceList = args.sourceList;
+        SourceList sourceList = args.sourceLists.get(0);
         List<Source> sources = sourceDAO.byList(sourceList);
 
         for(Source source : sources) {
