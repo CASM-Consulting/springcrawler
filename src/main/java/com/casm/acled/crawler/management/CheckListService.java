@@ -285,23 +285,26 @@ public class CheckListService {
         Object hasExamples;
         Object hasDateFormat;
         Object hasSiteMaps;
+        Object dateParsed;
 
 
         List<String> checkValue = new ArrayList<String>();
 
-        boolean passed = false;
+        boolean checkDateParse = true;
 
         try {
             connection = checkConnection(source);
         }
         catch (Exception e) {
-             connection = e.getMessage();
+            checkDateParse = false;
+            connection = e.getMessage();
         }
 
         try {
             scraperExists = scraperExists(args, source);
         }
         catch (Exception e) {
+            checkDateParse = false;
             scraperExists = e.getMessage();
         }
 
@@ -309,6 +312,7 @@ public class CheckListService {
             hasExamples = hasExamples(source);
         }
         catch (Exception e) {
+            checkDateParse = false;
             hasExamples = e.getMessage();
         }
 
@@ -316,6 +320,7 @@ public class CheckListService {
             hasDateFormat = hasDateFormat(source);
         }
         catch (Exception e) {
+            checkDateParse = false;
             hasDateFormat = e.getMessage();
         }
 
@@ -330,12 +335,23 @@ public class CheckListService {
 //        boolean hasDateFormat = hasDateFormat(source);
 //        boolean hasSiteMaps = hasSiteMaps(source);
 
+        if (checkDateParse){
+            try {
+                dateParsed = datesParse(args, source);
+            } catch (Exception e){
+                dateParsed = e.getMessage();
+            }
+        } else {
+            dateParsed = false;
+        }
+
         checkValue.add(source.get(Source.STANDARD_NAME));
         checkValue.add(String.valueOf(connection));
         checkValue.add(String.valueOf(scraperExists));
         checkValue.add(String.valueOf(hasExamples));
         checkValue.add(String.valueOf(hasDateFormat));
         checkValue.add(String.valueOf(hasSiteMaps));
+        checkValue.add(String.valueOf(dateParsed));
 
         //TODO: not sure about below commented blocks, whether to add them;
 //        if(hasSiteMaps) {
@@ -391,7 +407,7 @@ public class CheckListService {
     }
 
     public void checkSourceList(CrawlArgs args) {
-        String [] header = {"Source ID", "connection", "scraperExists", "hasExamples", "hasDateFormat", "hasSiteMaps"};
+        String [] header = {"Source ID", "connection", "scraperExists", "hasExamples", "hasDateFormat", "hasSiteMaps", "dateParsed"};
 //        String [] header = {"Source ID", "hasSiteMaps"};
         String [][] content = new String[][] {header};
 
