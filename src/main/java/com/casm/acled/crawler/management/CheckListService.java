@@ -278,6 +278,15 @@ public class CheckListService {
 
     }
 
+    public static boolean passed(Object maybeBoolean){
+        try {
+            Boolean b = (Boolean)maybeBoolean;
+            return b != null? b : false;
+        } catch (ClassCastException e){
+            return false;
+        }
+    }
+
     public String [] checkSourceStatus(CrawlArgs args, Source source)  {
 
         System.out.println("Checking source: " + source.get(Source.STANDARD_NAME));
@@ -292,13 +301,10 @@ public class CheckListService {
 
         List<String> checkValue = new ArrayList<String>();
 
-        boolean checkDateParse = true;
-
         try {
             connection = checkConnection(source);
         }
         catch (Exception e) {
-            checkDateParse = false;
             connection = e.getMessage();
         }
 
@@ -306,7 +312,6 @@ public class CheckListService {
             scraperExists = scraperExists(args, source);
         }
         catch (Exception e) {
-            checkDateParse = false;
             scraperExists = e.getMessage();
         }
 
@@ -314,7 +319,6 @@ public class CheckListService {
             hasExamples = hasExamples(source);
         }
         catch (Exception e) {
-            checkDateParse = false;
             hasExamples = e.getMessage();
         }
 
@@ -322,7 +326,6 @@ public class CheckListService {
             hasDateFormat = hasDateFormat(source);
         }
         catch (Exception e) {
-            checkDateParse = false;
             hasDateFormat = e.getMessage();
         }
 
@@ -332,12 +335,8 @@ public class CheckListService {
         catch (Exception e) {
             hasSiteMaps = e.getMessage();
         }
-//        boolean scraperExists = scraperExists(args, source);
-//        boolean hasExamples = hasExamples(source);
-//        boolean hasDateFormat = hasDateFormat(source);
-//        boolean hasSiteMaps = hasSiteMaps(source);
 
-        if (checkDateParse){
+        if (passed(hasExamples) && passed(connection) && passed(hasDateFormat)){
             try {
                 dateParsed = datesParse(args, source);
             } catch (Exception e){
@@ -355,34 +354,6 @@ public class CheckListService {
         checkValue.add(String.valueOf(hasSiteMaps));
         checkValue.add(String.valueOf(dateParsed));
 
-        //TODO: not sure about below commented blocks, whether to add them;
-//        if(hasSiteMaps) {
-//            reporter.report(Report.of(Event.HAS_SITE_MAPS).id(source.id()).message(source.get(Source.STANDARD_NAME)));
-//
-//        }
-
-//        if(hasDateFormat && hasExamples && scraperExists) {
-//
-//            boolean datesParsed = datesParse(args, source);
-//
-//            if(datesParsed) {
-//                passed = true;
-////                reporter.report(Report.of(Event.SCRAPE_PASS).id(source.id()).message(source.get(Source.STANDARD_NAME)));
-//            }
-//        }
-//
-//        if(!connection) {
-//            passed = false;
-//        }
-//
-//        if(args.flagSet.contains(CrawlArgs.Flags.DISABLE_ON_FAIL) ) {
-//            if(passed) {
-//                source = source.put(Source.CRAWL_DISABLED, false);
-//            } else {
-//                source = source.put(Source.CRAWL_DISABLED, true);
-//            }
-//            sourceDAO.upsert(source);
-//        }
 
         return checkValue.toArray(new String[checkValue.size()]);
 
