@@ -20,6 +20,7 @@ import com.casm.acled.entities.VersionedEntity;
 import com.casm.acled.entities.article.Article;
 import com.casm.acled.entities.source.Source;
 import com.casm.acled.entities.sourcelist.SourceList;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.mchange.lang.IntegerUtils;
@@ -50,6 +51,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static com.casm.acled.crawler.scraper.ScraperFields.*;
 import static com.casm.acled.crawler.spring.CrawlService.STANDARD_SITEMAP_LOCS;
 
 import org.springframework.shell.table.ArrayTableModel;
@@ -298,6 +300,10 @@ public class CheckListService {
         Object hasSiteMaps;
         Object dateParsed;
 
+        Object titleScraped;
+        Object dateScraped;
+        Object articleScraped;
+
 
         List<String> checkValue = new ArrayList<String>();
 
@@ -336,14 +342,38 @@ public class CheckListService {
             hasSiteMaps = e.getMessage();
         }
 
-        if (passed(hasExamples) && passed(connection) && passed(hasDateFormat)){
-            try {
-                dateParsed = datesParse(args, source);
-            } catch (Exception e){
-                dateParsed = e.getMessage();
+        if (passed(hasExamples) && passed(connection) && passed(scraperExists)){
+
+            if (passed(hasDateFormat)) {
+                try {
+                    dateParsed = datesParse(args, source);
+                } catch (Exception e) {
+                    dateParsed = e.getMessage();
+                }
+            } else {
+                dateParsed = false;
             }
+
+            List<HttpDocument> scraped = scraperService.checkExampleURLs(args.scrapersDir, source);
+
+            titleScraped = dateScraped = articleScraped = true;
+            for (HttpDocument doc : scraped){
+                if (Strings.isNullOrEmpty(doc.getMetadata().getString(SCRAPED_TITLE))){
+                    titleScraped = false;
+                }
+                if (Strings.isNullOrEmpty(doc.getMetadata().getString(SCRAPED_DATE))){
+                    dateScraped = false;
+                }
+                if (Strings.isNullOrEmpty(doc.getMetadata().getString(SCRAPED_ARTICLE))){
+                    articleScraped = false;
+                }
+            }
+
         } else {
             dateParsed = false;
+            titleScraped = false;
+            dateScraped = false;
+            articleScraped = false;
         }
 
         checkValue.add(source.get(Source.STANDARD_NAME));
@@ -352,7 +382,11 @@ public class CheckListService {
         checkValue.add(String.valueOf(hasExamples));
         checkValue.add(String.valueOf(hasDateFormat));
         checkValue.add(String.valueOf(hasSiteMaps));
+        checkValue.add(String.valueOf(dateScraped));
         checkValue.add(String.valueOf(dateParsed));
+        checkValue.add(String.valueOf(titleScraped));
+        checkValue.add(String.valueOf(articleScraped));
+
 
 
         return checkValue.toArray(new String[checkValue.size()]);
@@ -380,7 +414,7 @@ public class CheckListService {
     }
 
     public void checkSourceList(CrawlArgs args) {
-        String [] header = {"Source ID", "connection", "scraperExists", "hasExamples", "hasDateFormat", "hasSiteMaps", "dateParsed"};
+        String [] header = {"Source ID", "connection", "scraperExists", "hasExamples", "hasDateFormat", "hasSiteMaps", "dateScraped", "dateParsed", "titleScraped", "articleScraped"};
 //        String [] header = {"Source ID", "hasSiteMaps"};
         String [][] content = new String[][] {header};
 
@@ -621,7 +655,7 @@ public class CheckListService {
                     List<HttpDocument> docs = scraperService.checkExampleURLs(args.scrapersDir, source);
 
                     List<List<String>> lines = docs.stream().map(d -> ImmutableList.of(
-                            d.getMetadata().getString(ScraperFields.SCRAPED_TITLE, ""),
+                            d.getMetadata().getString(SCRAPED_TITLE, ""),
                             d.getMetadata().getString(ScraperFields.SCRAPED_ARTICLE, ""),
                             d.getMetadata().getString(ScraperFields.SCRAPED_DATE, ""),
                             d.getMetadata().getString("collector.url", "")
