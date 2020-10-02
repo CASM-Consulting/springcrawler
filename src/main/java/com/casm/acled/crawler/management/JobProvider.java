@@ -9,10 +9,12 @@ import java.util.Map;
  */
 public interface JobProvider {
 
-    List<Job> getJobs(Map<String, String> params);
+    List<Job> getJobs(CrawlArgs args);
 
-    Job getJob(int id);
+    Job getJob(int id, CrawlArgs args);
 
     void setPID(int id, int pid);
+
+    void clearPID(int id);
 
 }

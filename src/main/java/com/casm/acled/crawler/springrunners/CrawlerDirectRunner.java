@@ -7,6 +7,7 @@ import com.casm.acled.crawler.management.CrawlerSweep;
 import com.casm.acled.crawler.reporting.Reporter;
 import com.casm.acled.crawler.spring.CrawlService;
 import com.casm.acled.dao.entities.SourceListDAO;
+import com.casm.acled.entities.source.Source;
 import com.google.common.collect.ImmutableList;
 import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
 import org.camunda.bpm.spring.boot.starter.rest.CamundaBpmRestJerseyAutoConfiguration;
@@ -33,14 +34,14 @@ import java.time.format.DateTimeParseException;
 @Import({ObjectMapperConfiguration.class})
 // And we also need the DAOs.
 @ComponentScan(basePackages={"com.casm.acled.dao", "com.casm.acled.crawler"})
-public class CrawlerServiceRunner implements CommandLineRunner {
+public class CrawlerDirectRunner implements CommandLineRunner {
 
 //    static {
 //        Object guard = new Object();
 //        LoggerRepository rs = new CustomLoggerRepository(new RootLogger((Level) Level.DEBUG));
 //        LogManager.setRepositorySelector(new DefaultRepositorySelector(rs), guard);
 //    }
-    protected static final Logger logger = LoggerFactory.getLogger(CrawlerServiceRunner.class);
+    protected static final Logger logger = LoggerFactory.getLogger(CrawlerDirectRunner.class);
 
     @Autowired
     private SourceListDAO sourceListDAO;
@@ -100,18 +101,31 @@ public class CrawlerServiceRunner implements CommandLineRunner {
         crawlArgs.raw.skipKeywords = false;
         crawlArgs.raw.program = "crawl";
 
-//        crawlArgs.raw.sources = ImmutableList.of("Milenio");
-//        crawlArgs.raw.sources = ImmutableList.of("MiMorelia");
-//        crawlArgs.raw.sources = ImmutableList.of("fake-net");
-//        crawlArgs.raw.sourceList = "mexico-1";
-        crawlArgs.raw.sourceList = "fake-net";
-        crawlArgs.raw.from = "2020-09-07";
-        crawlArgs.raw.to = "2020-10-09";
-        crawlArgs.raw.workingDir = "test";
-        crawlArgs.raw.scrapersDir = "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/springcrawler/testscrapers/generic";
-        crawlArgs.raw.depth = 5;
+//        crawlArgs.raw.source = "1";
+        crawlArgs.raw.source = "Imagen del Golfo";
+//        crawlArgs.raw.source = "Milenio";
+//        crawlArgs.raw.source = "MiMorelia";
+        crawlArgs.raw.sourceLists = ImmutableList.of("mexico-1");
+//        crawlArgs.raw.sourceLists = ImmutableList.of("fake-net");
+        crawlArgs.raw.from = "2020-09-27";
+        crawlArgs.raw.to =  "2021-01-01";
+//        crawlArgs.raw.workingDir = "test";
+        crawlArgs.raw.workingDir = "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/JQM_ROOT/test";
+//        crawlArgs.raw.scrapersDir = "/home/sw206/git/acled-scrapers/";
+//        crawlArgs.raw.scrapersDir = "/Users/adr27/Documents/git/acled-scrapers/";
+//        crawlArgs.raw.scrapersDir = "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/springcrawler/testscrapers/generic/";
+        crawlArgs.raw.scrapersDir = "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/acled-scrapers/";
+
+        crawlArgs.raw.depth = 0;
+//        crawlArgs.raw.ignoreSiteMap = true;
 
         crawlArgs.init();
+
+        // added here for testing; need to remove afterwards, probably should not assign it like this;
+        crawlArgs.source = crawlArgs.source.put(Source.SCRAPER_RULE_ARTICLE, "[{\"field\":\"root/root\",\"tags\":[{\"tag\":\"div\",\"class\":\"siete60\"}]},{\"field\":\"field.name/article\",\"tags\":[{\"custom\":\"div#contenido\"}]}]");
+        crawlArgs.source = crawlArgs.source.put(Source.SCRAPER_RULE_TITLE, "[{\"field\":\"root/root\",\"tags\":[{\"tag\":\"div\",\"class\":\"siete60\"}]},{\"field\":\"field.name/title\",\"tags\":[{\"tag\":\"div\",\"class\":\"SlaBLK22\"}]}]");
+
+
 
         crawlService.run(crawlArgs);
 //        collectExamples(1657,1);
@@ -127,7 +141,7 @@ public class CrawlerServiceRunner implements CommandLineRunner {
 
     public static void main(String[] args) {
 
-        SpringApplication app = new SpringApplication(CrawlerServiceRunner.class);
+        SpringApplication app = new SpringApplication(CrawlerDirectRunner.class);
         app.setBannerMode(Banner.Mode.OFF);
         app.setWebApplicationType(WebApplicationType.NONE);
         ConfigurableApplicationContext ctx = app.run(args);

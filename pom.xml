@@ -6,7 +6,7 @@
 
     <groupId>com.casm</groupId>
     <artifactId>acled-spring-crawler</artifactId>
-    <version>1.3.56</version>
+    <version>1.3.62</version>
 
     <packaging>jar</packaging>
 
@@ -16,7 +16,9 @@
         <version.spring.boot>2.1.5.RELEASE</version.spring.boot>
         <jqm.version>2.2.5</jqm.version>
         <m52norconex.version>1.5.14-SNAPSHOT</m52norconex.version>
-        <casm.acled.version>1.5.6</casm.acled.version>
+        <!--<casm.acled.version>1.5.7</casm.acled.version>-->
+        <!--1.5.9 for testing source article, title and date-->
+        <casm.acled.version>1.5.9</casm.acled.version>
         <lucene.version>8.5.1</lucene.version>
     </properties>
 
@@ -171,11 +173,11 @@
         <!--</dependency>-->
 
         <!-- get shell dependency -->
-<!--        <dependency>-->
-<!--            <groupId>org.springframework.shell</groupId>-->
-<!--            <artifactId>spring-shell-starter</artifactId>-->
-<!--            <version>2.0.0.RELEASE</version>-->
-<!--        </dependency>-->
+        <dependency>
+            <groupId>org.springframework.shell</groupId>
+            <artifactId>spring-shell-starter</artifactId>
+            <version>2.0.0.RELEASE</version>
+        </dependency>
 
         <!-- https://mvnrepository.com/artifact/junit/junit -->
         <dependency>
@@ -240,19 +242,32 @@
                     <groupId>com.norconex.collectors</groupId>
                     <artifactId>norconex-collector-http</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>com.enioka.jqm</groupId>
+                    <artifactId>jqm-api</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.enioka.jqm</groupId>
+                    <artifactId>jqm-api-client-jersey</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
 
         <dependency>
             <groupId>com.norconex.collectors</groupId>
             <artifactId>norconex-collector-http-casm</artifactId>
-            <version>2.9.4</version>
+            <version>2.9.7</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.slf4j</groupId>
                     <artifactId>slf4j-log4j12</artifactId>
                 </exclusion>
             </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>com.norconex.collectors</groupId>
+            <artifactId>norconex-committer-core</artifactId>
+            <version>2.1.3</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/net.sf.extjwnl/extjwnl -->
@@ -341,40 +356,29 @@
             <groupId>com.enioka.jqm</groupId>
             <artifactId>jqm-api</artifactId>
             <version>${jqm.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.enioka.jqm</groupId>
-                    <artifactId>jqm-api-client-hibernate</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.enioka.jqm</groupId>
             <artifactId>jqm-runner-spring</artifactId>
             <version>${jqm.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.enioka.jqm</groupId>
-                    <artifactId>jqm-api-client-hibernate</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.enioka.jqm</groupId>
             <artifactId>jqm-handler-spring</artifactId>
             <version>${jqm.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.enioka.jqm</groupId>
-                    <artifactId>jqm-api-client-hibernate</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.enioka.jqm</groupId>
             <artifactId>jqm-api-client-jersey</artifactId>
             <version>${jqm.version}</version>
         </dependency>
+
+        <!-- https://mvnrepository.com/artifact/com.enioka.jqm/jqm-api-client-jdbc -->
+<!--        <dependency>-->
+<!--            <groupId>com.enioka.jqm</groupId>-->
+<!--            <artifactId>jqm-api-client-jdbc</artifactId>-->
+<!--            <version>${jqm.version}</version>-->
+<!--        </dependency>-->
 
 
         <!-- LOGGING -->

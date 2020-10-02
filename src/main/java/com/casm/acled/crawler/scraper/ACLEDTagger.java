@@ -57,6 +57,7 @@ public class ACLEDTagger {
     public static final String DATE = "field.name/date";
     private final Source source;
 
+
     public static DOMTagger tagger;
 
 
@@ -67,6 +68,7 @@ public class ACLEDTagger {
             String id = Util.getID(source);
             path = path.resolve(id);
         }
+
         this.scraperPath = path.resolve(JOB_JSON);
         this.source = source;
         if(Files.notExists(this.scraperPath)) {
@@ -91,11 +93,41 @@ public class ACLEDTagger {
     }
 
     public void load() throws IOException {
+        // hoow to separate them.. all from file; all from source; part from file and part from source;
+        DOMTagger t = new DOMTagger();
 
         String processed = Util.processJSON(scraperPath.toFile());
         Map<String, List<Map<String, String>>> scraperDef = buildScraperDefinition(GeneralSplitterFactory.parseJsonTagSet(processed));
-        tagger = addDOMDetails(scraperDef);
 
+        String articleRule = source.get(Source.SCRAPER_RULE_ARTICLE);
+        String titleRule = source.get(Source.SCRAPER_RULE_TITLE);
+        String dateRule = source.get(Source.SCRAPER_RULE_DATE);
+
+        if (articleRule!=null) {
+            Map<String, List<Map<String, String>>> articleDef = buildScraperDefinition(GeneralSplitterFactory.parseJsonTagSet(articleRule));
+            addDOMDetailsSingle(articleDef, ARTICLE, ScraperFields.SCRAPED_ARTICLE, t);
+        }
+        else {
+            addDOMDetailsSingle(scraperDef, ARTICLE, ScraperFields.SCRAPED_ARTICLE, t);
+        }
+
+        if (titleRule!=null) {
+            Map<String, List<Map<String, String>>> titleDef = buildScraperDefinition(GeneralSplitterFactory.parseJsonTagSet(titleRule));
+            addDOMDetailsSingle(titleDef, TITLE, ScraperFields.SCRAPED_TITLE, t);
+        }
+        else {
+            addDOMDetailsSingle(scraperDef, TITLE, ScraperFields.SCRAPED_TITLE, t);
+        }
+
+        if (dateRule!=null) {
+            Map<String, List<Map<String, String>>> dateDef = buildScraperDefinition(GeneralSplitterFactory.parseJsonTagSet(dateRule));
+            addDOMDetailsSingle(dateDef, DATE, ScraperFields.SCRAPED_DATE, t);
+        }
+        else {
+            addDOMDetailsSingle(scraperDef, DATE, ScraperFields.SCRAPED_DATE, t);
+        }
+//        addDOMDetailsAll(scraperDef, t);
+        tagger = t;
     }
 
     public static DOMTagger load(Path path, Source source) {
@@ -143,8 +175,7 @@ public class ACLEDTagger {
     return rootSelector;
     }
 
-    public static DOMTagger addDOMDetails(Map<String, List<Map<String, String>>> scraperDef) {
-        DOMTagger t = new DOMTagger();
+    public void addDOMDetailsAll(Map<String, List<Map<String, String>>> scraperDef, DOMTagger t) {
         t.setParser(DOMUtil.PARSER_XML);
 
         // add root scope for searching;
@@ -199,7 +230,50 @@ public class ACLEDTagger {
             }
         }
 
-    return t;
+    }
+
+    public void addDOMDetailsSingle(Map<String, List<Map<String, String>>> scraperDef, String fromField, String toField, DOMTagger tagger) {
+        String rootSelector = constructRoot(scraperDef);
+        if (!rootSelector.equals("")) {
+            rootSelector = rootSelector + " ";
+        }
+
+        List<Map<String, String>> entry = scraperDef.get(fromField);
+
+        String selector = "";
+
+        for (Map<String, String> select : entry) {
+
+            if (select.containsKey("tag") || select.containsKey("custom")) {
+                if (selector.equals("")) {
+                    if (select.containsKey("tag")) {
+                        selector = selector + select.get("tag");
+                    }
+                    if (select.containsKey("custom")){
+                        selector = selector + select.get("custom");
+                    }
+                }
+                else {
+                    // for sub spans, always get the first one;
+                    if (select.containsKey("tag")) {
+                        // seems okay to add :nth-child(1) or not
+                        selector = selector + " " +select.get("tag") + "";
+                    }
+                    if (select.containsKey("custom")) {
+                        // seems okay to add :nth-child(1) or not
+                        selector = selector + " " +select.get("custom") + "";
+                    }
+
+                }
+                if (select.containsKey("class")) {
+                    selector = selector + "." + select.get("class");
+                }
+            }
+
+        }
+
+        tagger.addDOMExtractDetails(new DOMExtractDetails(rootSelector + selector, toField, true, "text"));
+
     }
 
     // used for testing;

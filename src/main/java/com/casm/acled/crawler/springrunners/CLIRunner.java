@@ -11,6 +11,7 @@ import com.casm.acled.configuration.ObjectMapperConfiguration;
 import com.casm.acled.crawler.management.CrawlArgs;
 import com.casm.acled.crawler.management.CrawlArgsService;
 import com.casm.acled.crawler.management.CrawlerSweep;
+import com.google.common.collect.ImmutableList;
 import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
 import org.camunda.bpm.spring.boot.starter.rest.CamundaBpmRestJerseyAutoConfiguration;
 
@@ -73,7 +74,7 @@ public class CLIRunner implements CommandLineRunner {
 
         crawlArgs.init();
 
-        crawlerSweep.sweep(crawlArgs);
+        crawlerSweep.sweep(ImmutableList.of(crawlArgs));
     }
 
 

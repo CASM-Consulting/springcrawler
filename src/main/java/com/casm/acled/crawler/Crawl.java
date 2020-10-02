@@ -83,8 +83,8 @@ public class Crawl {
         }
     }
 
-    public Crawl(CrawlArgs args, ACLEDCommitter importer, Reporter reporter, List<String> sitemaps) {
-        this.source = args.sources.get(0);
+    public Crawl(CrawlArgs args, ACLEDCommitter importer, Reporter reporter) {
+        this.source = args.source;
         this.from = args.from;
         this.to = args.to;
         this.reporter = reporter;
@@ -98,10 +98,16 @@ public class Crawl {
 
         Path workingDir = args.workingDir;
 
+        boolean sitemapDiscoveryDisabled = source.isTrue(Source.CRAWL_DISABLE_SITEMAP_DISCOVERY);
+
+        args.ignoreSiteMap = source.isTrue(Source.CRAWL_DISABLE_SITEMAPS) || sitemapDiscoveryDisabled;
+
+
         config = new NorconexConfiguration(workingDir.resolve(scraperCachePath), args);
         config.crawler().setUrlNormalizer(new RootLogAppenderClearingURLNormaliser());
 
-        if(!args.ignoreSiteMap) {
+        if( source.isFalse(Source.CRAWL_DISABLE_SITEMAPS) ) {
+            List<String> sitemaps = source.get(Source.CRAWL_SITEMAP_LOCATIONS);
             config.crawler().setStartSitemapURLs(sitemaps.toArray(new String[]{}));
         }
 
@@ -119,6 +125,7 @@ public class Crawl {
         EmptyMetadataFilter emptyArticle = new EmptyMetadataFilter(OnMatch.EXCLUDE,
                 ScraperFields.SCRAPED_ARTICLE,
                 ScraperFields.SCRAPED_DATE);
+
         filters.add(emptyArticle);
 
         if(from != null && to != null ) {
@@ -152,7 +159,7 @@ public class Crawl {
 //            filters.add(keywordFilter);
 
             // here use keywordTagger to write corresponding fields;
-            ExcludingKeywordTagger keywordTagger = keywordTagger(args.sourceList, source);
+            ExcludingKeywordTagger keywordTagger = keywordTagger(args.sourceLists.get(0), source);
             handlers.add(keywordTagger);
 
         }
@@ -199,13 +206,13 @@ public class Crawl {
             config.crawler().setReferenceFilters(filter);
         }
 
-        if(!sitemaps.isEmpty() && from != null) {
+        if(!args.ignoreSiteMap && from != null) {
             config.crawler().setMetadataFilters(new SiteMapLastModifiedMetadataFilter(from));
         }
 
         applySourceIdiosyncrasies(source, config);
 
-        config.crawler().setRecrawlableResolver(new DontRecrawlResolver(startURLs, Pattern.compile(source.get(Source.CRAWL_RECRAWL_PATTERN))));
+        config.crawler().setRecrawlableResolver(new DontRecrawlResolver(startURLs, source.hasValue(Source.CRAWL_RECRAWL_PATTERN)? Pattern.compile(source.get(Source.CRAWL_RECRAWL_PATTERN)) : null));
 
         config.crawler().setMaxDepth(args.depth);
 

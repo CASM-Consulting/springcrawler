@@ -1,14 +1,10 @@
 package com.casm.acled.crawler.springrunners;
 
 import com.beust.jcommander.JCommander;
-import com.beust.jcommander.Strings;
+import com.beust.jcommander.Parameter;
 import com.casm.acled.configuration.ObjectMapperConfiguration;
-import com.casm.acled.crawler.management.CheckListService;
-import com.casm.acled.crawler.management.CrawlArgs;
-import com.casm.acled.crawler.management.CrawlArgsService;
+import com.casm.acled.crawler.management.*;
 import com.casm.acled.crawler.reporting.Reporter;
-import com.google.common.collect.ImmutableList;
-import net.sf.extjwnl.data.Exc;
 import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
 import org.camunda.bpm.spring.boot.starter.rest.CamundaBpmRestJerseyAutoConfiguration;
 import org.slf4j.Logger;
@@ -25,33 +21,32 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
 
-import org.springframework.core.MethodParameter;
+import java.util.HashMap;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Random;
-import java.util.stream.Stream;
-
-
-
+/**
+ * Created by Andrew D. Robertson on 23/09/2020.
+ */
 @EnableAutoConfiguration(exclude={HibernateJpaAutoConfiguration.class, CamundaBpmAutoConfiguration.class, CamundaBpmRestJerseyAutoConfiguration.class, ValidationAutoConfiguration.class})
 // We need the special object mapper, though.
 //@Import({ObjectMapperConfiguration.class, CLIRunner.ShutdownConfig.class})
 @Import({ObjectMapperConfiguration.class})
 // And we also need the DAOs.
 @ComponentScan(basePackages={"com.casm.acled.dao", "com.casm.acled.crawler"})
-public class CheckListRunner implements CommandLineRunner{
+public class CrawlerScheduleRunner implements CommandLineRunner {
 
-    protected static final Logger logger = LoggerFactory.getLogger(CheckListRunner.class);
+    protected static final Logger logger = LoggerFactory.getLogger(CrawlerScheduleRunner.class);
 
     @Autowired
-    private CheckListService checkListService;
+    private SchedulerService schedulerService;
 
     @Autowired
     private Reporter reporter;
 
     @Autowired
     private CrawlArgsService argsService;
+
+    @Autowired
+    private PathService pathService;
 
     private CrawlArgs crawlArgs;
 
@@ -62,40 +57,24 @@ public class CheckListRunner implements CommandLineRunner{
 
         crawlArgs = argsService.get();
 
-        crawlArgs.raw.program = "check";
-        crawlArgs.raw.sourceLists = ImmutableList.of("fake-net");
-
         JCommander.newBuilder()
                 .addObject(crawlArgs.raw)
                 .build()
                 .parse(args);
 
+//        crawlArgs.workingDir = pathService.workingDir();
+//        crawlArgs.scrapersDir = pathService.scraperDir();
+
         crawlArgs.init();
 
-        switch(crawlArgs.program) {
-            case "import":
-                checkListService.importCrawlerSourceList(crawlArgs);
-                break;
-            case "export":
-                checkListService.exportCrawlerSourceList(crawlArgs);
-                break;
-            case "check":
-                checkListService.checkSourceList(crawlArgs);
-                break;
-            case "example-urls":
-                checkListService.outputExampleURLCheck(crawlArgs);
-                break;
-            default:
-                logger.error("program {} not recognised", crawlArgs.program);
-                break;
-        }
+        schedulerService.clearPIDs(crawlArgs);
+        schedulerService.schedule(crawlArgs);
 
         reporter.getRunReports().stream().forEach(r -> logger.info(r.toString()));
     }
 
-    public static void main(String[] args) {
-
-        SpringApplication app = new SpringApplication(CheckListRunner.class);
+    public static void main(String[] args){
+        SpringApplication app = new SpringApplication(CrawlerScheduleRunner.class);
         app.setBannerMode(Banner.Mode.OFF);
         app.setWebApplicationType(WebApplicationType.NONE);
         ConfigurableApplicationContext ctx = app.run(args);
@@ -103,4 +82,3 @@ public class CheckListRunner implements CommandLineRunner{
         ctx.close();
     }
 }
-

@@ -2,13 +2,15 @@ package com.casm.acled.crawler.management;
 
 import org.quartz.CronExpression;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 /**
  * Job's have conditional state (remains to be seen whether this is a good idea); the available state depends on how
  * the Job object was created:
  *   - If created by the JQM client, then only JobInstance will be populated
- *   - If created from Sources, then only JobRequest will be populated.
+ *   - If created from Sources, then only Source & CrawlArgs will be populated.
  */
 public interface Job {
 
@@ -25,7 +27,7 @@ public interface Job {
     int id();
 
     // PID of (maybe) running job
-    int pid();
+    Optional<Integer> pid();
 
     /**
      * Return Cron schedule, ensure that the Cron's timezone is appropriately contextualised to the Job's Source.
@@ -37,5 +39,13 @@ public interface Job {
     LocalDateTime getStarted();
 
     LocalDateTime getStopped();
+
+    void setFrom(LocalDate from);
+    void setTo(LocalDate to);
+
+    default void setFromTo(LocalDate from, LocalDate to){
+        setFrom(from);
+        setTo(to);
+    }
 
 }

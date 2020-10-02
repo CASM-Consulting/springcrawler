@@ -121,6 +121,7 @@ public class NorconexConfiguration {
         crawler.setImporterConfig(importer);
         // Basic crawler config
         crawler.setUserAgent(userAgent);
+        crawler.setOrphansStrategy(ICrawlerConfig.OrphansStrategy.IGNORE);
 //        crawler.setMaxDepth(depth); // -1 for inf
         crawler.setIgnoreRobotsMeta(ignoreRobots);
         crawler.setIgnoreRobotsTxt(ignoreRobots);
@@ -143,7 +144,9 @@ public class NorconexConfiguration {
 
         crawler.setWorkDir(workingDir.toFile());
 
-        crawler.setCrawlDataStoreFactory(new MVStoreCrawlDataStoreFactory());
+        MVStoreCrawlDataStoreFactory mvcdsf = new MVStoreCrawlDataStoreFactory();
+//        mvcdsf.getMVStoreConfig().setCompress(2);
+        crawler.setCrawlDataStoreFactory(mvcdsf);
 
         ExtensionReferenceFilter referenceFilter = new ExtensionReferenceFilter("jpeg,jpg,png,pdf,ico,mpg,mp4,avi,mp3,mov,dvi,gif,tiff,bmp,wav");
         referenceFilter.setOnMatch(OnMatch.EXCLUDE);
