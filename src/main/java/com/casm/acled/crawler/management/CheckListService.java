@@ -274,6 +274,12 @@ public class CheckListService {
 
     }
 
+
+    public static interface Check {
+        String header();
+        Object check();
+    }
+
     public String [] checkSourceStatus(CrawlArgs args, Source source)  {
 
         Object connection;
@@ -283,7 +289,7 @@ public class CheckListService {
         Object hasSiteMaps;
 
 
-        List<String> checkValue = new ArrayList<String>();
+        List<String> checkValue = new ArrayList<>();
 
         boolean passed = false;
 
@@ -546,6 +552,10 @@ public class CheckListService {
                 String field = row[headerMap.get(FIELD)];
                 String value = row[headerMap.get(VALUE)];
 
+                if(value == null || value.isEmpty()) {
+                    continue;
+                }
+
                 if(!allowedFields.contains(field)) {
                     logger.warn("{} not allowed", field);
                 }
@@ -592,7 +602,7 @@ public class CheckListService {
                 return s;
             }).collect(Collectors.toList());
 
-            sourceDAO.create(sources);
+            sourceDAO.upsert(sources);
         }
     }
 
