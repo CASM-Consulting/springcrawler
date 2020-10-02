@@ -115,7 +115,7 @@ public class Crawl {
 
         // as Simon mentioned before, want two different pipelines exist at the same time; so added to switch between them;
         // probably need to add a new parameter for it;
-        String processFlag = "norconex";
+        String processFlag = "scraper";
 
         List<AbstractDocumentFilter> filters = new ArrayList<>();
         List<IImporterHandler> handlers = new ArrayList<>();

@@ -125,8 +125,6 @@ public class CrawlerDirectRunner implements CommandLineRunner {
         crawlArgs.source = crawlArgs.source.put(Source.SCRAPER_RULE_ARTICLE, "[{\"field\":\"root/root\",\"tags\":[{\"tag\":\"div\",\"class\":\"siete60\"}]},{\"field\":\"field.name/article\",\"tags\":[{\"custom\":\"div#contenido\"}]}]");
         crawlArgs.source = crawlArgs.source.put(Source.SCRAPER_RULE_TITLE, "[{\"field\":\"root/root\",\"tags\":[{\"tag\":\"div\",\"class\":\"siete60\"}]},{\"field\":\"field.name/title\",\"tags\":[{\"tag\":\"div\",\"class\":\"SlaBLK22\"}]}]");
 
-
-
         crawlService.run(crawlArgs);
 //        collectExamples(1657,1);
 

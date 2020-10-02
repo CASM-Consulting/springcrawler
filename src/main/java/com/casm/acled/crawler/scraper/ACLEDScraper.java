@@ -87,6 +87,41 @@ public class ACLEDScraper implements IHttpDocumentProcessor {
 
         String processed = Util.processJSON(scraperPath.toFile());
         Map<String, List<Map<String, String>>> scraperDef = buildScraperDefinition(GeneralSplitterFactory.parseJsonTagSet(processed));
+
+        List<Map<String, String>> content = scraperDef.get("root/root");
+
+
+        // add article, title and date rules;
+        // a little bit tricky for ACLEDScraper, it won't affect ACLEDTagger to have different roots for different fields;
+        // I think we could just use the root that user input; so we should be sure that all roots user input are equal;
+        // the way the scraper works is that, it firstly extracted the content using root/root field, then search within this content using other fields;
+        // so basically we need a fixed root for all fields;;; which is hard to decide;
+        // current strategy.. also use the root that user defines;
+        String articleRule = source.get(Source.SCRAPER_RULE_ARTICLE);
+        String titleRule = source.get(Source.SCRAPER_RULE_TITLE);
+        String dateRule = source.get(Source.SCRAPER_RULE_DATE);
+
+        if (articleRule!=null) {
+            Map<String, List<Map<String, String>>> articleDef = buildScraperDefinition(GeneralSplitterFactory.parseJsonTagSet(articleRule));
+            List<Map<String, String>> articleContent = articleDef.get("root/root");
+            scraperDef.put("root/root", articleContent);
+            scraperDef.put(ARTICLE, articleDef.get(ARTICLE));
+        }
+
+        if (titleRule!=null) {
+            Map<String, List<Map<String, String>>> titleDef = buildScraperDefinition(GeneralSplitterFactory.parseJsonTagSet(titleRule));
+            List<Map<String, String>> titleContent = titleDef.get("root/root");
+            scraperDef.put("root/root", titleContent);
+            scraperDef.put(TITLE, titleDef.get(TITLE));
+        }
+
+        if (dateRule!=null) {
+            Map<String, List<Map<String, String>>> dateDef = buildScraperDefinition(GeneralSplitterFactory.parseJsonTagSet(dateRule));
+            List<Map<String, String>> dateContent = dateDef.get("root/root");
+            scraperDef.put("root/root", dateContent);
+            scraperDef.put(DATE, dateDef.get(DATE));
+        }
+
         scraper = new GeneralSplitterFactory(scraperDef);
         splitter = scraper.create();
     }
