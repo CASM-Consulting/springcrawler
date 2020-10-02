@@ -383,6 +383,10 @@ public class CheckListService {
         SourceList sourceList = args.sourceLists.get(0);
         String name = sourceList.get(SourceList.LIST_NAME);
 
+        if (args.workingDir == null){
+            throw new RuntimeException("Must specify a working directory (-wd) to find the source list import file.");
+        }
+
         importCrawlerSourcesFromCSV(args.workingDir.resolve(name+".csv"), EntityVersions.get(Source.class).current());
     }
 
@@ -558,36 +562,36 @@ public class CheckListService {
                     logger.warn("{} not allowed", field);
                 }
 
-                sourceMap.compute(id, (i, source)->{
-                    if(source == null) {
-                        source = defaultSource.put(Source.STANDARD_NAME, id);
-                    }
-
-                    if(isList(source, field)) {
-
-                        List<String> values;
-
-                        if(source.hasValue(field)) {
-                            values = source.get(field);
-                        } else {
-                            values = new ArrayList<>();
+                if (!value.isEmpty()){
+                    sourceMap.compute(id, (i, source)->{
+                        if(source == null) {
+                            source = defaultSource.put(Source.STANDARD_NAME, id);
                         }
-                        if(!value.isEmpty()) {
+
+                        if(isList(source, field)) {
+
+                            List<String> values;
+
+                            if(source.hasValue(field)) {
+                                values = source.get(field);
+                            } else {
+                                values = new ArrayList<>();
+                            }
+
                             values.add(value);
+                            return source.put(field, values);
+                        } else if (isBoolean(source, field)){
+
+                            return source.put(field, BooleanUtils.toBoolean(value));
+                        }   else if (isInt(source, field)){
+
+                            return source.put(field, Integer.parseInt(value));
+                        }  else {
+
+                            return source.put(field, value);
                         }
-
-                        return source.put(field, values);
-                    } else if (isBoolean(source, field)){
-
-                        return source.put(field, BooleanUtils.toBoolean(value));
-                    }   else if (isInt(source, field)){
-
-                        return source.put(field, Integer.parseInt(value));
-                    }  else {
-
-                        return source.put(field, value);
-                    }
-                });
+                    });
+                }
             }
 
             List<Source> sources = sourceMap.values().stream().map(s-> {
