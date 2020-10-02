@@ -129,6 +129,15 @@ public class ShellRunner {
         checkListService.linkSourceToSourceList(crawlArgs);
     }
 
+    @ShellMethod(value = "unlink a Source (-s) from a source list (-sl)", key="unlink")
+    public void unlinkSourceFromSourceList(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) throws Exception{
+        crawlArgs = argsService.get();
+        crawlArgs.raw = args;
+        crawlArgs.init();
+
+        checkListService.unlinkSourceFromSourceList(crawlArgs);
+    }
+
     @ShellMethod(value = "output example urls ", key = "output")
     public void outputExampleURLCheck(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) throws Exception{
         reporter.randomRunId();

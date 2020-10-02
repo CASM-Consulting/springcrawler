@@ -280,6 +280,8 @@ public class CheckListService {
 
     public String [] checkSourceStatus(CrawlArgs args, Source source)  {
 
+        System.out.println("Checking source: " + source.get(Source.STANDARD_NAME));
+
         Object connection;
         Object scraperExists;
         Object hasExamples;
@@ -691,6 +693,13 @@ public class CheckListService {
         for (SourceList sl : crawlArgs.sourceLists){
 
             sourceSourceListDAO.link(crawlArgs.source, sl);
+        }
+    }
+
+    public void unlinkSourceFromSourceList(CrawlArgs crawlArgs){
+        for (SourceList sl : crawlArgs.sourceLists){
+
+            sourceSourceListDAO.unlink(crawlArgs.source, sl);
         }
     }
 }
