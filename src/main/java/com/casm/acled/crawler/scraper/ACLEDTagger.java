@@ -103,25 +103,30 @@ public class ACLEDTagger {
         String titleRule = source.get(Source.SCRAPER_RULE_TITLE);
         String dateRule = source.get(Source.SCRAPER_RULE_DATE);
 
+
         if (articleRule!=null) {
-            Map<String, List<Map<String, String>>> articleDef = buildScraperDefinition(GeneralSplitterFactory.parseJsonTagSet(articleRule));
-            addDOMDetailsSingle(articleDef, ARTICLE, ScraperFields.SCRAPED_ARTICLE, t);
+//            Map<String, List<Map<String, String>>> articleDef = buildScraperDefinition(GeneralSplitterFactory.parseJsonTagSet(articleRule));
+//            addDOMDetailsSingle(articleDef, ARTICLE, ScraperFields.SCRAPED_ARTICLE, t);
+            addDOMDetailsSingleFromQuery(articleRule, ARTICLE, ScraperFields.SCRAPED_ARTICLE, t);
         }
         else {
             addDOMDetailsSingle(scraperDef, ARTICLE, ScraperFields.SCRAPED_ARTICLE, t);
         }
 
         if (titleRule!=null) {
-            Map<String, List<Map<String, String>>> titleDef = buildScraperDefinition(GeneralSplitterFactory.parseJsonTagSet(titleRule));
-            addDOMDetailsSingle(titleDef, TITLE, ScraperFields.SCRAPED_TITLE, t);
+//            Map<String, List<Map<String, String>>> titleDef = buildScraperDefinition(GeneralSplitterFactory.parseJsonTagSet(titleRule));
+//            addDOMDetailsSingle(titleDef, TITLE, ScraperFields.SCRAPED_TITLE, t);
+            addDOMDetailsSingleFromQuery(titleRule, TITLE, ScraperFields.SCRAPED_TITLE, t);
+
         }
         else {
             addDOMDetailsSingle(scraperDef, TITLE, ScraperFields.SCRAPED_TITLE, t);
         }
 
         if (dateRule!=null) {
-            Map<String, List<Map<String, String>>> dateDef = buildScraperDefinition(GeneralSplitterFactory.parseJsonTagSet(dateRule));
-            addDOMDetailsSingle(dateDef, DATE, ScraperFields.SCRAPED_DATE, t);
+//            Map<String, List<Map<String, String>>> dateDef = buildScraperDefinition(GeneralSplitterFactory.parseJsonTagSet(dateRule));
+//            addDOMDetailsSingle(dateDef, DATE, ScraperFields.SCRAPED_DATE, t);
+            addDOMDetailsSingleFromQuery(dateRule, DATE, ScraperFields.SCRAPED_DATE, t);
         }
         else {
             addDOMDetailsSingle(scraperDef, DATE, ScraperFields.SCRAPED_DATE, t);
@@ -273,6 +278,12 @@ public class ACLEDTagger {
         }
 
         tagger.addDOMExtractDetails(new DOMExtractDetails(rootSelector + selector, toField, true, "text"));
+
+    }
+
+    public void addDOMDetailsSingleFromQuery(String query, String fromField, String toField, DOMTagger tagger) {
+
+        tagger.addDOMExtractDetails(new DOMExtractDetails(query, toField, true, "text"));
 
     }
 
