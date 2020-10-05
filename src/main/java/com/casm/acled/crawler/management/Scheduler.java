@@ -13,10 +13,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+import java.io.Reader;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.text.ParseException;
 import java.time.*;
 import java.util.*;
-
 
 @Service
 public class Scheduler implements Runnable {
@@ -32,12 +35,22 @@ public class Scheduler implements Runnable {
 
     private final Map<Integer, JobInstance> jobs;
 
+
     private final JqmClient client;
 
+//    private final JobRunner jobRunner;
 
     public Scheduler() {
 
-        client = JqmClientFactory.getClient();
+        try (
+                Reader reader = Files.newBufferedReader(Paths.get("jqm.properties"))
+        ) {
+            Properties properties = new Properties();
+            properties.load(reader);
+            client = JqmClientFactory.getClient("acled-spring-jqm-scheduler", properties, true);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
         jobs = new HashMap<>();
 
@@ -97,18 +110,22 @@ public class Scheduler implements Runnable {
         }
     }
 
+    // TODO report to admin
     private Action checkStillRunningFromLastTime(JobInstance job, CronExpression cron, Date prevRun, Date nextRun) {
         return Action.PASS;
     }
 
+    // TODO scheduled to run again.
     private Action checkShouldRunAgain(JobInstance job, CronExpression cron, Date prevRun, Date nextRun) {
         return Action.PASS;
     }
 
+    // TODO send email to admin
     private void reportJob(JobInstance job) {
 
     }
 
+    // TODO
     private void checkTimeSinceSubmitted(JobInstance job) {
 
     }
@@ -117,6 +134,7 @@ public class Scheduler implements Runnable {
         RUN,
         PASS
     }
+
     public void ensureSchedule(Source source) {
 
         CronExpression cron = new CronExpression(defaultCronSchedule);
@@ -182,12 +200,12 @@ public class Scheduler implements Runnable {
 
     }
 
-
     private JobInstance runCrawl(Source source) {
 
         JobRequest jobRequest = JobRequest.create("","");
 
         jobRequest.addParameter( Crawl.SOURCE_ID, Integer.toString( source.id() ) );
+        // other information need : time span, and other things;
 
         int id = client.enqueue(jobRequest);
 
@@ -195,7 +213,7 @@ public class Scheduler implements Runnable {
 
         source.put(Source.CRAWL_JOB_ID, id);
 
-        sourceDAO.upsert(source);
+        sourceDAO.upsert(source); // should also save it;
 
         return job;
     }
@@ -207,6 +225,10 @@ public class Scheduler implements Runnable {
 
         for(SourceList list : lists) {
             List<Source> listSources = sourceDAO.byList(list);
+
+            // when the value of the crawl_active would be changed? I can't find the assigment thing for this.
+            // crawl_active returned null....
+            // SourceList has not been set the CRAWL_ACTIVE value anyway, and also lack many other entries; need to handle error here; if not active then not run
             if(list.get(SourceList.CRAWL_ACTIVE)) {
                 globalActiveSources.addAll(listSources);
             }
@@ -215,10 +237,18 @@ public class Scheduler implements Runnable {
         return globalActiveSources;
     }
 
-
     @Override
     public void run() {
 
         ensureSchedules();
     }
+
+    public static void main(String[] args) {
+
+        Scheduler sh = new Scheduler();
+        sh.run();
+
+    }
+
 }
+

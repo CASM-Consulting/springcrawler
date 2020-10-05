@@ -35,6 +35,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
+import java.util.regex.Pattern;
 
 public class Crawl {
 
@@ -71,14 +72,14 @@ public class Crawl {
         @Override
         public String normalizeURL(String url) {
 
-            LogManager.getRootLogger().removeAllAppenders();
+//            LogManager.getRootLogger().removeAllAppenders();
 
             return genericURLNormalizer.normalizeURL(url);
         }
     }
 
-    public Crawl(CrawlArgs args, ACLEDImporter importer, Reporter reporter, List<String> sitemaps) {
-        this.source = args.sources.get(0);
+    public Crawl(CrawlArgs args, ACLEDImporter importer, Reporter reporter) {
+        this.source = args.source;
         this.from = args.from;
         this.to = args.to;
         this.reporter = reporter;
@@ -92,10 +93,18 @@ public class Crawl {
 
         Path workingDir = args.workingDir;
 
+        boolean sitemapDiscoveryDisabled = source.isTrue(Source.CRAWL_DISABLE_SITEMAP_DISCOVERY);
+
+        args.ignoreSiteMap = source.isTrue(Source.CRAWL_DISABLE_SITEMAPS) || sitemapDiscoveryDisabled;
+
+
         config = new NorconexConfiguration(workingDir.resolve(scraperCachePath), args);
         config.crawler().setUrlNormalizer(new RootLogAppenderClearingURLNormaliser());
 
-        config.crawler().setStartSitemapURLs(sitemaps.toArray(new String[]{}));
+        if( source.isFalse(Source.CRAWL_DISABLE_SITEMAPS) ) {
+            List<String> sitemaps = source.get(Source.CRAWL_SITEMAP_LOCATIONS);
+            config.crawler().setStartSitemapURLs(sitemaps.toArray(new String[]{}));
+        }
 
         configureLogging(workingDir);
 
@@ -128,18 +137,26 @@ public class Crawl {
 
         if(!args.skipKeywords) {
 
-            ExcludingKeywordFilter keywordFilter = keywordFilter(args.sourceList, source);
+            ExcludingKeywordFilter keywordFilter = keywordFilter(args.sourceLists.get(0), source);
             filters.add(keywordFilter);
         }
 
         filters.forEach(config::addFilter);
 
-        String[] startURL =((String) source.get(Source.LINK)).split(",");
+        List<String> seedUrls = source.get(Source.SEED_URLS);
 
-//        String scraperName = Util.getID(startURL[0]);
+        String[] startURLs;
+
+        if(seedUrls != null && !seedUrls.isEmpty()) {
+            startURLs = seedUrls.toArray(new String[]{});
+        } else {
+            startURLs = ((String) source.get(Source.LINK)).split(",");
+        }
+
+//        String scraperName = Util.getID(startURLs[0]);
 
         ACLEDScraper scraper = ACLEDScraper.load(args.scrapersDir, source, reporter);
-        ACLEDMetadataPreProcessor metadata = new ACLEDMetadataPreProcessor(startURL[0]);
+        ACLEDMetadataPreProcessor metadata = new ACLEDMetadataPreProcessor(startURLs[0]);
 
         if(source.hasValue(Source.CRAWL_EXCLUDE_PATTERN)) {
             String pattern = source.get(Source.CRAWL_EXCLUDE_PATTERN);
@@ -147,14 +164,18 @@ public class Crawl {
             config.crawler().setReferenceFilters(filter);
         }
 
-        if(!sitemaps.isEmpty() && from != null) {
+        if(!args.ignoreSiteMap && from != null) {
             config.crawler().setMetadataFilters(new SiteMapLastModifiedMetadataFilter(from));
         }
 
         applySourceIdiosyncrasies(source, config);
 
+        config.crawler().setRecrawlableResolver(new DontRecrawlResolver(startURLs, source.hasValue(Source.CRAWL_RECRAWL_PATTERN)? Pattern.compile(source.get(Source.CRAWL_RECRAWL_PATTERN)) : null));
+
+        config.crawler().setMaxDepth(args.depth);
+
         config.setScraper(scraper, metadata);
-        config.crawler().setStartURLs(startURL);
+        config.crawler().setStartURLs(startURLs);
 //        config.collector();
         if(args.crawlId != null && !args.crawlId.isEmpty()) {
             config.setId(args.crawlId);

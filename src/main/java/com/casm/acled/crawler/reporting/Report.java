@@ -18,6 +18,7 @@ public class Report {
     public Report(String event, Integer id, String type, String message, String businessKey, String runId) {
         this(event, id, type, message, businessKey, runId, Instant.now());
     }
+
     public Report(String event, Integer id, String type, String message, String businessKey, String runId, Instant timestamp) {
         this.businessKey = businessKey;
         this.event = event;

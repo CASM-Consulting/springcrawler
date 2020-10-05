@@ -45,7 +45,7 @@ import java.util.stream.Collectors;
 @Import({ObjectMapperConfiguration.class})
 // And we also need the DAOs.
 @ComponentScan(basePackages={"com.casm.acled.dao", "com.casm.acled.crawler"})
-public class DateTimeServiceRunner implements CommandLineRunner {
+public class DateTimeServiceRunner {
 
     protected static final Logger logger = LoggerFactory.getLogger(DateTimeServiceRunner.class);
 
@@ -140,7 +140,6 @@ public class DateTimeServiceRunner implements CommandLineRunner {
         }
     }
 
-    @Override
     public void run(String... args) throws Exception {
         reporter.randomRunId();
 

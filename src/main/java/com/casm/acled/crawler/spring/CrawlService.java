@@ -6,6 +6,7 @@ import bithazard.sitemap.parser.model.UrlConnectionException;
 import com.casm.acled.crawler.Crawl;
 import com.casm.acled.crawler.management.CheckListService;
 import com.casm.acled.crawler.management.CrawlArgs;
+import com.casm.acled.crawler.management.CrawlArgsService;
 import com.casm.acled.crawler.scraper.ACLEDImporter;
 import com.casm.acled.crawler.reporting.Reporter;
 import com.casm.acled.crawler.util.Util;
@@ -15,6 +16,11 @@ import com.casm.acled.dao.entities.SourceListDAO;
 import com.casm.acled.entities.source.Source;
 import com.casm.acled.entities.sourcelist.SourceList;
 import com.google.common.collect.ImmutableList;
+import com.norconex.collector.http.robot.RobotsTxt;
+import com.norconex.collector.http.robot.impl.StandardRobotsTxtProvider;
+import org.apache.http.client.HttpClient;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.glassfish.jersey.client.ClientProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,14 +56,15 @@ public class CrawlService {
     @Autowired
     private Reporter reporter;
 
+//    private CrawlArgs args;
     @Autowired
-    private CrawlArgs args;
+    private CrawlArgsService argsService;
 
     @Autowired
     private CheckListService checkListService;
 
     public CrawlService() {
-
+//        args = argsService.get();
     }
 
     public void run(int sourceListId, int sourceId, boolean skipKeywords) {
@@ -78,11 +85,13 @@ public class CrawlService {
             ACLEDImporter importer = new ACLEDImporter(articleDAO, maybeSource.get(), sourceListDAO, true);
             importer.setMaxArticles(10);
 
-            args.sources = ImmutableList.of(maybeSource.get());
-            args.sourceList = maybesSourceList.get();
+            CrawlArgs args = argsService.get();
+
+            args.source = maybeSource.get();
+            args.sourceLists = ImmutableList.of(maybesSourceList.get());
             args.depth = 3;
 
-            Crawl crawl = new Crawl(args, importer, reporter, ImmutableList.of() );
+            Crawl crawl = new Crawl(args, importer, reporter);
 //            crawl.getConfig().crawler().setIgnoreSitemap(false);
             crawl.run();
         } else {
@@ -96,8 +105,10 @@ public class CrawlService {
         Optional<SourceList> maybesSourceList = sourceListDAO.getById(sourceListId);
         Optional<Source> maybeSource = sourceDAO.getById(sourceId);
 
-        args.sources = ImmutableList.of(maybeSource.get());
-        args.sourceList = maybesSourceList.get();
+        CrawlArgs args = argsService.get();
+
+        args.source = maybeSource.get();
+        args.sourceLists = ImmutableList.of(maybesSourceList.get());
         args.from = from;
         args.to = to;
         args.skipKeywords = skipKeywords;
@@ -107,49 +118,40 @@ public class CrawlService {
 
     public void run(CrawlArgs args) {
 
-        Source source = args.sources.get(0);
+        Source source = args.source;
 
-        if(args.onlySiteMap && ! checkListService.hasSiteMaps(source)) {
+        int sourceId = source.id();
 
-            logger.info("Quitting: only site maps requested - {} has no sitemap", (String) source.get(Source.STANDARD_NAME));
-
-        } else {
-
-            int sourceId = source.id();
-
-            //ThreadGroup required for logger context, see CustomLoggerRepository
-            ThreadGroup tg = new ThreadGroup(Integer.toString(sourceId));
+        //ThreadGroup required for logger context, see CustomLoggerRepository
+        ThreadGroup tg = new ThreadGroup(Integer.toString(sourceId));
 
 //            ExecutorService executor = Executors.newSingleThreadExecutor();
 //            Future<Void> future = executor.submit()
 
-            Thread thread = new Thread(tg, () -> {
+        Thread thread = new Thread(tg, () -> {
 
-                List<String> sitemaps = getSitemaps(source);
+            ACLEDImporter importer = new ACLEDImporter(articleDAO, source, sourceListDAO, true);
 
-                ACLEDImporter importer = new ACLEDImporter(articleDAO, source, sourceListDAO, true);
+            Crawl crawl = new Crawl(args, importer, reporter);
 
-                Crawl crawl = new Crawl(args, importer, reporter, sitemaps);
+            crawl.run();
+        });
 
-                crawl.run();
-            });
+        AtomicReference<Throwable> thrown = new AtomicReference<>();
 
-            AtomicReference<Throwable> thrown = new AtomicReference<>();
+        thread.setUncaughtExceptionHandler((Thread th, Throwable ex)->{
+            thrown.set(ex);
+        });
 
-            thread.setUncaughtExceptionHandler((Thread th, Throwable ex)->{
-                thrown.set(ex);
-            });
+        thread.start();
 
-            thread.start();
-
-            try {
-                thread.join();
-            } catch (InterruptedException e){
-                throw new RuntimeException(e);
-            }
-            if(thrown.get()!=null) {
-                throw new RuntimeException(thrown.get());
-            }
+        try {
+            thread.join();
+        } catch (InterruptedException e){
+            throw new RuntimeException(e);
+        }
+        if(thrown.get()!=null) {
+            throw new RuntimeException(thrown.get());
         }
 
     }
@@ -207,7 +209,7 @@ public class CrawlService {
     }
 
 
-    private static List<String> STANDARD_SITEMAP_LOCS = ImmutableList.of(
+    public static List<String> STANDARD_SITEMAP_LOCS = ImmutableList.of(
             "sitemap.xml",
             "sitemap_index.xml"
     );
@@ -245,37 +247,68 @@ public class CrawlService {
 
         String url = source.get(Source.LINK);
 
+        StandardRobotsTxtProvider srtp  = new StandardRobotsTxtProvider();
+
+        HttpClient httpClient = HttpClientBuilder.create().build();
+
+        RobotsTxt robotsTxt = srtp.getRobotsTxt(httpClient, url, "CASM Tech");
+
+        List<String> sitemaps = Arrays.asList(robotsTxt.getSitemapLocations());
+
+        return sitemaps;
+    }
+
+    /**
+     * TODO(andy) how do we use STANDARD_SITEMAP_LOCS - won't this mess with "hasSiteMaps()"?
+     */
+    public List<String> getSitemaps3(Source source) {
+
+        String url = source.get(Source.LINK);
+        List<String> predefinedSitemaps = source.get(Source.CRAWL_SITEMAP_LOCATIONS);
+
         url = Util.ensureHTTP(url, false);
 
-        List<String> sitemaps;
+        List<String> sitemaps = new ArrayList<>();
 
         if(url == null || url.isEmpty()) {
 
             logger.warn("empty URL {}", (String)source.get(Source.STANDARD_NAME));
-            sitemaps = new ArrayList<>();
+
         } else {
 
-            SitemapParser sitemapParser = new SitemapParser();
-            try {
+            if (source.isFalse(Source.CRAWL_DISABLE_SITEMAP_DISCOVERY)) {
 
-                Set<String> sitemapLocations = sitemapParser.getSitemapLocations(url);
-                sitemaps = new ArrayList<>(sitemapLocations);
-            } catch (InvalidSitemapUrlException e) {
+                // Add standard ones
+                sitemaps.addAll(STANDARD_SITEMAP_LOCS);
 
+                // Attempt to discover sitemap location from robots.txt
+
+                SitemapParser sitemapParser = new SitemapParser();
                 try {
 
-                    url = followRedirects(url);
                     Set<String> sitemapLocations = sitemapParser.getSitemapLocations(url);
-
                     sitemaps = new ArrayList<>(sitemapLocations);
-                } catch (InvalidSitemapUrlException | UrlConnectionException ee) {
+                } catch (InvalidSitemapUrlException e) {
 
-                    sitemaps = new ArrayList<>();
+                    // If this fails (connected but errored), ensure all redirects are followed, then try again
+                    try {
+
+                        url = followRedirects(url);
+                        Set<String> sitemapLocations = sitemapParser.getSitemapLocations(url);
+
+                        sitemaps = new ArrayList<>(sitemapLocations);
+                    } catch (InvalidSitemapUrlException | UrlConnectionException ee) {
+                        // give up
+                    }
+                } catch (UrlConnectionException e) {
+                    // give up
                 }
-            } catch (UrlConnectionException e) {
-
-                sitemaps = new ArrayList<>();
             }
+        }
+
+        if (predefinedSitemaps != null) {
+            // add in any locations that were pre-defined on the Source itself
+            sitemaps.addAll(predefinedSitemaps);
         }
 
         return sitemaps;
