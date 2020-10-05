@@ -6,8 +6,12 @@ import com.casm.acled.crawler.management.CheckListService;
 import com.casm.acled.crawler.management.CrawlArgs;
 import com.casm.acled.crawler.management.CrawlArgsService;
 import com.casm.acled.crawler.reporting.Reporter;
+import com.casm.acled.dao.entities.SourceDAO;
+import com.casm.acled.dao.entities.SourceListDAO;
+import com.casm.acled.dao.entities.SourceSourceListDAO;
 import com.casm.acled.entities.source.Source;
 import com.casm.acled.entities.sourcelist.SourceList;
+import com.casm.acled.entities.sourcesourcelist.SourceSourceList;
 import net.sf.extjwnl.data.Exc;
 import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
 import org.camunda.bpm.spring.boot.starter.rest.CamundaBpmRestJerseyAutoConfiguration;
@@ -62,7 +66,7 @@ public class ShellRunner {
 
     private CrawlArgs crawlArgs;
 
-    @ShellMethod(value = "run to check source list ", key = "check")
+    @ShellMethod(value = "check source list (-sl)", key = "check")
     // probably should give a hint of potential parameters;
     // the help command still not working:
     // Action: Correct the classpath of your application so that it contains a single, compatible version of com.beust.jcommander.JCommander
@@ -82,7 +86,7 @@ public class ShellRunner {
 
     }
 
-    @ShellMethod(value = "run to import source list", key = "import")
+    @ShellMethod(value = "import source list (-sl)", key = "import")
     public void importSourceList(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) throws Exception{
         reporter.randomRunId();
 
@@ -99,7 +103,7 @@ public class ShellRunner {
 
     }
 
-    @ShellMethod(value = "run to export source list", key = "export")
+    @ShellMethod(value = "export source list (-sl)", key = "export")
     public void exportSourceList(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) throws Exception{
         reporter.randomRunId();
 
@@ -116,7 +120,25 @@ public class ShellRunner {
 
     }
 
-    @ShellMethod(value = "run to output example url ", key = "output")
+    @ShellMethod(value = "link a Source (-s) to a source list (-sl)", key="link")
+    public void linkSourceToSourceList(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) throws Exception{
+        crawlArgs = argsService.get();
+        crawlArgs.raw = args;
+        crawlArgs.init();
+
+        checkListService.linkSourceToSourceList(crawlArgs);
+    }
+
+    @ShellMethod(value = "unlink a Source (-s) from a source list (-sl)", key="unlink")
+    public void unlinkSourceFromSourceList(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) throws Exception{
+        crawlArgs = argsService.get();
+        crawlArgs.raw = args;
+        crawlArgs.init();
+
+        checkListService.unlinkSourceFromSourceList(crawlArgs);
+    }
+
+    @ShellMethod(value = "output example urls ", key = "output")
     public void outputExampleURLCheck(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) throws Exception{
         reporter.randomRunId();
 

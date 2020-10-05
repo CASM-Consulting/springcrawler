@@ -141,7 +141,7 @@ public class CrawlArgs {
         if (sourceDAO != null && sourceListDAO != null) {
 
             if (raw.source != null) {
-                source = sourceDAO.byName(raw.source).get();
+                source = sourceDAO.byName(raw.source).orElseThrow(()->new RuntimeException("Source Name not found: " + raw.source));
             }
 
             if (raw.sourceLists == null && source != null) {
