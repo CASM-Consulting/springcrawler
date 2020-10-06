@@ -287,7 +287,7 @@ public class ShellRunner {
     }
 
     @ShellMethod(value = "show source/sourcelist names and entries, if sourcelist, will show all source names and ids under it. usage: show source/sourcelist NAME", key = "show")
-    public String addValue(@ShellOption({"-t", "--type"}) String type,
+    public String showValue(@ShellOption({"-t", "--type"}) String type,
                            @ShellOption({"-n", "--name"}) String name) {
 
         crawlArgs = argsService.get();
