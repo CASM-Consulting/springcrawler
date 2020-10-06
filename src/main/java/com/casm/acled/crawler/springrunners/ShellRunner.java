@@ -36,10 +36,7 @@ import org.springframework.shell.standard.ShellMethod;
 import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellOption;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.Random;
+import java.util.*;
 import java.util.stream.Stream;
 
 import javax.validation.Valid;
@@ -157,14 +154,14 @@ public class ShellRunner {
 
     // generic set / get commands for sources and source lists, in the form
     // generic, only handle single instance
-    @ShellMethod(value = "get specific value from the corresponding field; usage: get type id field", key = "get")
+    @ShellMethod(value = "get specific value from the corresponding field; usage: get type name field", key = "get")
     public String getField(@ShellOption({"-t", "--type"}) String type,
-                         @ShellOption({"-i", "--id"}) String id,
+                         @ShellOption({"-n", "--name"}) String name,
                          @ShellOption({"-f", "--field"}) String field) {
         crawlArgs = argsService.get();
 
         if (type.equals("source")) {
-            Optional<Source> maybeSource = crawlArgs.getSourceDAO().byName(id);
+            Optional<Source> maybeSource = crawlArgs.getSourceDAO().byName(name);
             if (maybeSource.isPresent()) {
                 Source source = maybeSource.get();
                 String value = source.get(field);
@@ -176,7 +173,7 @@ public class ShellRunner {
             }
         }
         else if (type.equals("sourcelist")){
-            Optional<SourceList> maybeSourceList = crawlArgs.getSourceListDAO().byName(id);
+            Optional<SourceList> maybeSourceList = crawlArgs.getSourceListDAO().byName(name);
             if(maybeSourceList.isPresent()) {
                 SourceList sourceList =  maybeSourceList.get();
                 String value = sourceList.get(field);
@@ -192,18 +189,18 @@ public class ShellRunner {
 
     }
 
-    @ShellMethod(value = "set specific value to the corresponding field; usage: set type id field [value]", key = "set")
+    @ShellMethod(value = "set specific value to the corresponding field; usage: set type name field [value]", key = "set")
     // generic, only handle single instance
     // in the set method, probably need to update DAO???
     public String setField(@ShellOption({"-t", "--type"}) String type,
-                         @ShellOption({"-i", "--id"}) String id,
+                         @ShellOption({"-n", "--name"}) String name,
                          @ShellOption({"-f", "--field"}) String field,
                          @ShellOption({"-v", "--value"}) String value) {
 
-            crawlArgs = argsService.get();
+        crawlArgs = argsService.get();
 
         if (type.equals("source")) {
-            Optional<Source> maybeSource = crawlArgs.getSourceDAO().byName(id);
+            Optional<Source> maybeSource = crawlArgs.getSourceDAO().byName(name);
             if(maybeSource.isPresent()) {
                 Source source =  maybeSource.get();
                 source = source.put(field, value);
@@ -217,7 +214,7 @@ public class ShellRunner {
             }
         }
         else if (type.equals("sourcelist")){
-            Optional<SourceList> maybeSourceList = crawlArgs.getSourceListDAO().byName(id);
+            Optional<SourceList> maybeSourceList = crawlArgs.getSourceListDAO().byName(name);
             if(maybeSourceList.isPresent()) {
                 SourceList sourceList =  maybeSourceList.get();
                 sourceList = sourceList.put(field, value);
@@ -233,6 +230,100 @@ public class ShellRunner {
         else {
             return String.format("wrong type value, should be source or sourcelist");
         }
+    }
+
+    @ShellMethod(value = "add field/property value to existing list; usage: add type name field [value]", key = "add")
+    public String addValue(@ShellOption({"-t", "--type"}) String type,
+                           @ShellOption({"-f", "--name"}) String name,
+                           @ShellOption({"-f", "--field"}) String field,
+                           @ShellOption({"-v", "--value"}) String value) {
+
+        crawlArgs = argsService.get();
+
+        // test command: add source "Imagen del Golfo" CRAWL_SCHEDULE "*"
+
+        if (type.equals("source")) {
+            Optional<Source> maybeSource = crawlArgs.getSourceDAO().byName(name);
+            if(maybeSource.isPresent()) {
+                Source source =  maybeSource.get();
+                Object fieldValue = source.get(field);
+                if (fieldValue instanceof List) {
+                    ((List) fieldValue).add(value);
+                    source = source.put(field, fieldValue);
+                    crawlArgs.getSourceDAO().upsert(source);
+                    return String.format("value added successfully");
+                }
+                else {
+                    return String.format("the field value is not a list object");
+                }
+            }
+            else {
+                return String.format("source name does not exist");
+
+            }
+        }
+        else if (type.equals("sourcelist")){
+            Optional<SourceList> maybeSourceList = crawlArgs.getSourceListDAO().byName(name);
+            if(maybeSourceList.isPresent()) {
+                SourceList sourceList =  maybeSourceList.get();
+                Object fieldValue = sourceList.get(field);
+                if (fieldValue instanceof List) {
+                    ((List) fieldValue).add(value);
+                    sourceList = sourceList.put(field, fieldValue);
+                    crawlArgs.getSourceListDAO().upsert(sourceList);
+                    return String.format("value added successfully");
+                }
+                else {
+                    return String.format("the field value is not a list object");
+                }
+            }
+            else {
+                return String.format("source list name does not exist");
+            }
+        }
+        else {
+            return String.format("wrong type value, should be source or sourcelist");
+        }
+    }
+
+    @ShellMethod(value = "show source/sourcelist names and entries, if sourcelist, will show all source names and ids under it. usage: show source/sourcelist NAME", key = "show")
+    public String addValue(@ShellOption({"-t", "--type"}) String type,
+                           @ShellOption({"-n", "--name"}) String name) {
+
+        crawlArgs = argsService.get();
+
+        if (type.equals("source")) {
+            Optional<Source> maybeSource = crawlArgs.getSourceDAO().byName(name);
+            if(maybeSource.isPresent()) {
+                Source source =  maybeSource.get();
+                return source.toString();
+            }
+            else {
+                return String.format("source name does not exist");
+
+            }
+        }
+        else if (type.equals("sourcelist")){
+            String printStr = "";
+            Optional<SourceList> maybeSourceList = crawlArgs.getSourceListDAO().byName(name);
+            if(maybeSourceList.isPresent()) {
+                SourceList sourceList =  maybeSourceList.get();
+                List<Source> sources = crawlArgs.getSourceDAO().byList(sourceList);
+                for (Source source: sources) {
+                    String str = String.format("Source Name: %s, Source ID: %s \n", source.get(Source.STANDARD_NAME), source.id());
+                    printStr += str;
+                }
+
+                return printStr;
+            }
+            else {
+                return String.format("source list name does not exist");
+            }
+        }
+        else {
+            return String.format("wrong type value, should be source or sourcelist");
+        }
+
     }
 
     @Bean
