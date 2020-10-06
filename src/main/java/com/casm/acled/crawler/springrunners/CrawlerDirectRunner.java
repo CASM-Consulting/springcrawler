@@ -123,7 +123,7 @@ public class CrawlerDirectRunner implements CommandLineRunner {
 
         // added here for testing; need to remove afterwards, probably should not assign it like this;
         crawlArgs.source = crawlArgs.source.put(Source.SCRAPER_RULE_ARTICLE, "div.siete60 div#contenido");
-        crawlArgs.source = crawlArgs.source.put(Source.SCRAPER_RULE_TITLE, "div.siete60 div.SlaBLK22");
+        crawlArgs.source = crawlArgs.source.put(Source.SCRAPER_RULE_TITLE, "div.siete60 div.SlaBLK22, div.siete60 div#contenido"); // multiple selectors;
 //        crawlArgs.source = crawlArgs.source.put(Source.SCRAPER_RULE_DATE, "div.siete60 div.RobBLK12");
 
         crawlService.run(crawlArgs);
