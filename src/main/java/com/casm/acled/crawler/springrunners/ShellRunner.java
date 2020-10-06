@@ -5,6 +5,7 @@ import com.casm.acled.configuration.ObjectMapperConfiguration;
 import com.casm.acled.crawler.management.CheckListService;
 import com.casm.acled.crawler.management.CrawlArgs;
 import com.casm.acled.crawler.management.CrawlArgsService;
+import com.casm.acled.crawler.management.SchedulerService;
 import com.casm.acled.crawler.reporting.Reporter;
 import com.casm.acled.dao.entities.SourceDAO;
 import com.casm.acled.dao.entities.SourceListDAO;
@@ -39,7 +40,10 @@ import org.springframework.shell.standard.ShellOption;
 import java.util.*;
 import java.util.stream.Stream;
 
+import javax.sound.sampled.Line;
 import javax.validation.Valid;
+import org.jline.reader.LineReader;
+
 
 @EnableAutoConfiguration(exclude={HibernateJpaAutoConfiguration.class, CamundaBpmAutoConfiguration.class, CamundaBpmRestJerseyAutoConfiguration.class, ValidationAutoConfiguration.class})
 // We need the special object mapper, though.
@@ -62,6 +66,12 @@ public class ShellRunner {
     private CrawlArgsService argsService;
 
     private CrawlArgs crawlArgs;
+
+    @Autowired
+    LineReader reader;
+
+    private SchedulerService schedulerService;
+
 
     @ShellMethod(value = "check source list (-sl)", key = "check")
     // probably should give a hint of potential parameters;
@@ -326,6 +336,84 @@ public class ShellRunner {
 
     }
 
+    @ShellMethod(value = "delete source/sourcelist field value. usage: delete source/sourcelist name field", key = "delete")
+    public String deleteValue(@ShellOption({"-t", "--type"}) String type,
+                            @ShellOption({"-n", "--name"}) String name,
+                             @ShellOption({"-f", "--field"}) String field) {
+
+        // test sample: delete source "Imagen del Golfo" WATER
+
+        // by saying clear, deleting the value, emm, does it mean to set it to null?
+        String question = "Confirm to delete? \nyes/no";
+        String result = ask(question);
+
+        if (result.equals("yes")) {
+
+            crawlArgs = argsService.get();
+
+            if (type.equals("source")) {
+                Optional<Source> maybeSource = crawlArgs.getSourceDAO().byName(name);
+                if(maybeSource.isPresent()) {
+                    Source source =  maybeSource.get();
+                    source = source.put(field, null);
+                    crawlArgs.getSourceDAO().upsert(source);
+
+                    return String.format("successfully delete value");
+                }
+                else {
+                    return String.format("source name does not exist");
+
+                }
+            }
+            else if (type.equals("sourcelist")){
+                String printStr = "";
+                Optional<SourceList> maybeSourceList = crawlArgs.getSourceListDAO().byName(name);
+                if(maybeSourceList.isPresent()) {
+                    SourceList sourceList =  maybeSourceList.get();
+                    sourceList = sourceList.put(field, null);
+                    crawlArgs.getSourceListDAO().upsert(sourceList);
+
+                    return String.format("successfully delete value");
+                }
+                else {
+                    return String.format("source list name does not exist");
+                }
+            }
+            else {
+                return String.format("wrong type value, should be source or sourcelist");
+            }
+
+        }
+        else {
+            return String.format("deletion stopped");
+        }
+    }
+
+
+    @ShellMethod(value = "batch update all source values via sourcelist, modify all source under given sourcelist. usage: update name field value", key = "update")
+    public String updateValue(@ShellOption({"-n", "--name"}) String name,
+                              @ShellOption({"-f", "--field"}) String field,
+                              @ShellOption({"-v","--value"}) String value) {
+
+        crawlArgs = argsService.get();
+
+        Optional<SourceList> maybeSourceList = crawlArgs.getSourceListDAO().byName(name);
+        if(maybeSourceList.isPresent()) {
+            SourceList sourceList = maybeSourceList.get();
+            List<Source> sources = crawlArgs.getSourceDAO().byList(sourceList);
+            for (Source source: sources) {
+                source = source.put(field, value);
+                crawlArgs.getSourceDAO().upsert(source);
+            }
+
+            return String.format("successfully update value for all sources under the given sourcelist");
+        }
+
+        else {
+            return String.format("source list name does not exist");
+        }
+    }
+
     @Bean
     public ParameterResolver commandParameterResolver() {
         return new ParameterResolver(){
@@ -354,6 +442,11 @@ public class ShellRunner {
                 return Collections.emptyList();
             }
         };
+    }
+
+    public String ask(String question) {
+        question = "\n" + question + " > ";
+        return this.reader.readLine(question);
     }
 
 
