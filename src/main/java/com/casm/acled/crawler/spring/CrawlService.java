@@ -93,7 +93,7 @@ public class CrawlService {
             args.sourceLists = ImmutableList.of(maybesSourceList.get());
             args.depth = 3;
 
-            Crawl crawl = new Crawl(args, importer, reporter);
+            Crawl crawl = new Crawl(args, importer, reporter, ImmutableList.of());
 //            crawl.getConfig().crawler().setIgnoreSitemap(false);
             crawl.run();
         } else {
@@ -134,7 +134,9 @@ public class CrawlService {
 
             ACLEDImporter importer = new ACLEDImporter(articleDAO, source, sourceListDAO, true);
 
-            Crawl crawl = new Crawl(args, importer, reporter);
+            List<String> discoveredSitemaps = getSitemaps(source);
+
+            Crawl crawl = new Crawl(args, importer, reporter, discoveredSitemaps);
 
             crawl.run();
         });
@@ -271,11 +273,11 @@ public class CrawlService {
 
         url = followRedirects(url);
 
-        List<String> sitemaps = new ArrayList<>();
+        Set<String> sitemaps = new HashSet<>();
 
         // Add standard ones
         String _url = url;
-        sitemaps.addAll(STANDARD_SITEMAP_LOCS.stream().map(s->_url+"/"+s).collect(Collectors.toList()));
+        sitemaps.addAll(STANDARD_SITEMAP_LOCS.stream().map(s->_url+(_url.endsWith("/")?"":"/")+s).collect(Collectors.toList()));
 
         // Attempt to discover sitemap location from robots.txt
         SitemapParser sitemapParser = new SitemapParser();
@@ -286,7 +288,7 @@ public class CrawlService {
             //pass
         }
 
-        List<String> contactableSitemaps = checkURLs(sitemaps);
+        List<String> contactableSitemaps = checkURLs(new ArrayList<>(sitemaps));
 
         return contactableSitemaps;
     }

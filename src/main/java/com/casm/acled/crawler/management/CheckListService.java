@@ -499,8 +499,8 @@ public class CheckListService {
     }
 
     private static final Set<String> importExportFields = ImmutableSet.of(Source.LINK, Source.EXAMPLE_URLS, Source.DATE_FORMAT,
-            Source.LOCALES, Source.CRAWL_DISABLE_SITEMAP_DISCOVERY, Source.CRAWL_SITEMAP_LOCATIONS, Source.SEED_URLS,
-            Source.CRAWL_SCHEDULE, Source.TIMEZONE, Source.CRAWL_DEPTH);
+            Source.LOCALES, Source.CRAWL_DISABLE_SITEMAPS, Source.CRAWL_DISABLE_SITEMAP_DISCOVERY, Source.CRAWL_SITEMAP_LOCATIONS,
+            Source.SEED_URLS, Source.CRAWL_SCHEDULE, Source.TIMEZONE, Source.CRAWL_DEPTH);
 
     public void exportCrawlerSourcesToCSV(Path outputDir, String fileName, List<Source> sources) throws IOException {
 
