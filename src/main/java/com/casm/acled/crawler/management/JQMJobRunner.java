@@ -68,6 +68,44 @@ public class JQMJobRunner implements JobRunner {
 
         // Save job PID
         jobProvider.setPID(job.id(), pid);
+
+        // Block until job is no longer in a starting state in order to deal with JQM concurrency issues
+        awaitStart(pid);
+    }
+
+    /**
+     * Block until job is no longer in a starting state.
+     * Return the state that permitted the function to stop polling.
+     */
+    private State awaitStart(int pid){
+        System.out.print("Awaiting start... ");
+        while (true){
+            // We have to re-get the job every time to get the updated state.
+            State state = client.getJob(pid).getState();
+            switch (state) {
+                case RUNNING:
+                case ENDED:
+                case KILLED:
+                case CRASHED:
+                case CANCELLED:
+                    // job is no longer waiting start, so we can stop blocking
+                    System.out.println(state);
+                    // a polite extra second
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                    return state;
+                default:
+                    // job still hasn't started so wait for a second and try again
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+            }
+        }
     }
 
 }
