@@ -26,9 +26,8 @@ import com.google.common.collect.ImmutableSet;
 import com.mchange.lang.IntegerUtils;
 import com.norconex.collector.http.doc.HttpDocument;
 import com.opencsv.CSVReader;
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVPrinter;
-import org.apache.commons.csv.QuoteMode;
+import com.opencsv.CSVWriter;
+import org.apache.commons.csv.*;
 import org.apache.commons.lang3.BooleanUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -510,10 +509,12 @@ public class CheckListService {
         try (
                 final OutputStream outputStream = java.nio.file.Files.newOutputStream(outputDir.resolve(fileName), StandardOpenOption.CREATE);
                 final PrintWriter writer = new PrintWriter(new BufferedWriter(new OutputStreamWriter(outputStream, StandardCharsets.UTF_8)), false);
-                final CSVPrinter csv = new CSVPrinter(writer, CSVFormat.EXCEL.withQuoteMode(QuoteMode.NON_NUMERIC))
+                final CSVPrinter csv = new CSVPrinter(writer, CSVFormat.EXCEL)
+//                CSVWriter csv = new CSVWriter(writer)
         ) {
 
             csv.printRecord(headers);
+//            csv.writeNext(headers.toArray(new String[]{}));
 
             for (Source source : sources) {
 
@@ -549,6 +550,7 @@ public class CheckListService {
                         row.add(field);
                         row.add(value.toString());
                         csv.printRecord( row );
+//                        csv.writeNext(row.toArray(new String[]{}));
                     }
                 }
             }
@@ -564,25 +566,33 @@ public class CheckListService {
 
         try (
                 Reader reader = java.nio.file.Files.newBufferedReader(seedsPath);
-                CSVReader csvReader = new CSVReader(reader);
+                CSVParser csvReader = new CSVParser(reader, CSVFormat.EXCEL.withFirstRecordAsHeader());
+//                CSVReader csvReader = new CSVReader(reader);
         ) {
-            Iterator<String[]> itr = csvReader.iterator();
-            String[] headers = itr.next();
+//            Iterator<String[]> itr = csvReader.iterator();
+//            String[] headers = itr.next();
+//            Map<String,Integer> headerMap = new HashMap<>();
+//            for(int i = 0; i < headers.stream(); ++i) {
+//                headerMap.put(headers[i], i);
+//            }
 
-            Map<String,Integer> headerMap = new HashMap<>();
+//            Map<String,Integer> headerMap = csvReader.getHeaderMap();
 
-            for(int i = 0; i < headers.length; ++i) {
-                headerMap.put(headers[i], i);
-            }
+            Iterator<CSVRecord> itr = csvReader.iterator();
 
             Map<String, Source> sourceMap = new HashMap<>();
 
             while(itr.hasNext()) {
-                String[] row = itr.next();
+//                String[] row = itr.next();
+//                List<String> row = itr.next();
+//                String id = row[headerMap.get(ID)];
+//                String field = row[headerMap.get(FIELD)];
+//                String value = row[headerMap.get(VALUE)];
+                CSVRecord record = itr.next();
 
-                String id = row[headerMap.get(ID)];
-                String field = row[headerMap.get(FIELD)];
-                String value = row[headerMap.get(VALUE)];
+                String id = record.get(ID);
+                String field = record.get(FIELD);
+                String value = record.isSet(VALUE) ? record.get(VALUE) : null;
 
                 if(value == null || value.isEmpty()) {
                     continue;
