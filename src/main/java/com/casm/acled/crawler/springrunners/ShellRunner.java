@@ -113,6 +113,12 @@ public class ShellRunner {
     @Autowired
     private ArticleDAO articleDAO;
 
+    @Autowired
+    private SourceDAO sourceDAO;
+
+    @Autowired
+    private SourceListDAO sourceListDAO;
+
     private SchedulerService schedulerService;
 
     @Autowired
@@ -217,7 +223,7 @@ public class ShellRunner {
         crawlArgs = argsService.get();
 
         if (type.equals("source")) {
-            Optional<Source> maybeSource = crawlArgs.getSourceDAO().byName(name);
+            Optional<Source> maybeSource = sourceDAO.byName(name);
             if (maybeSource.isPresent()) {
                 Source source = maybeSource.get();
                 String value = source.get(field);
@@ -229,7 +235,7 @@ public class ShellRunner {
             }
         }
         else if (type.equals("sourcelist")){
-            Optional<SourceList> maybeSourceList = crawlArgs.getSourceListDAO().byName(name);
+            Optional<SourceList> maybeSourceList = sourceListDAO.byName(name);
             if(maybeSourceList.isPresent()) {
                 SourceList sourceList =  maybeSourceList.get();
                 String value = sourceList.get(field);
@@ -256,11 +262,11 @@ public class ShellRunner {
         crawlArgs = argsService.get();
 
         if (type.equals("source")) {
-            Optional<Source> maybeSource = crawlArgs.getSourceDAO().byName(name);
+            Optional<Source> maybeSource = sourceDAO.byName(name);
             if(maybeSource.isPresent()) {
                 Source source =  maybeSource.get();
                 source = source.put(field, value);
-                crawlArgs.getSourceDAO().upsert(source);
+                sourceDAO.upsert(source);
 
                 return String.format("value set successfully");
             }
@@ -270,11 +276,11 @@ public class ShellRunner {
             }
         }
         else if (type.equals("sourcelist")){
-            Optional<SourceList> maybeSourceList = crawlArgs.getSourceListDAO().byName(name);
+            Optional<SourceList> maybeSourceList = sourceListDAO.byName(name);
             if(maybeSourceList.isPresent()) {
                 SourceList sourceList =  maybeSourceList.get();
                 sourceList = sourceList.put(field, value);
-                crawlArgs.getSourceListDAO().upsert(sourceList);
+                sourceListDAO.upsert(sourceList);
 
                 return String.format("value set successfully");
 
@@ -299,14 +305,14 @@ public class ShellRunner {
         // test command: add source "Imagen del Golfo" CRAWL_SCHEDULE "*"
 
         if (type.equals("source")) {
-            Optional<Source> maybeSource = crawlArgs.getSourceDAO().byName(name);
+            Optional<Source> maybeSource = sourceDAO.byName(name);
             if(maybeSource.isPresent()) {
                 Source source =  maybeSource.get();
                 Object fieldValue = source.get(field);
                 if (fieldValue instanceof List) {
                     ((List) fieldValue).add(value);
                     source = source.put(field, fieldValue);
-                    crawlArgs.getSourceDAO().upsert(source);
+                    sourceDAO.upsert(source);
                     return String.format("value added successfully");
                 }
                 else {
@@ -319,14 +325,14 @@ public class ShellRunner {
             }
         }
         else if (type.equals("sourcelist")){
-            Optional<SourceList> maybeSourceList = crawlArgs.getSourceListDAO().byName(name);
+            Optional<SourceList> maybeSourceList = sourceListDAO.byName(name);
             if(maybeSourceList.isPresent()) {
                 SourceList sourceList =  maybeSourceList.get();
                 Object fieldValue = sourceList.get(field);
                 if (fieldValue instanceof List) {
                     ((List) fieldValue).add(value);
                     sourceList = sourceList.put(field, fieldValue);
-                    crawlArgs.getSourceListDAO().upsert(sourceList);
+                    sourceListDAO.upsert(sourceList);
                     return String.format("value added successfully");
                 }
                 else {
@@ -352,7 +358,7 @@ public class ShellRunner {
         crawlArgs = argsService.get();
 
         if (type.equals("source")) {
-            Optional<Source> maybeSource = crawlArgs.getSourceDAO().byName(name);
+            Optional<Source> maybeSource = sourceDAO.byName(name);
             if(maybeSource.isPresent()) {
                 Source source =  maybeSource.get();
                 return source.toString();
@@ -364,10 +370,10 @@ public class ShellRunner {
         }
         else if (type.equals("sourcelist")){
             StringBuilder printStr = new StringBuilder(String.format("%-30.30s  %-30.30s%n", "Source Name", "ID"));
-            Optional<SourceList> maybeSourceList = crawlArgs.getSourceListDAO().byName(name);
+            Optional<SourceList> maybeSourceList = sourceListDAO.byName(name);
             if(maybeSourceList.isPresent()) {
                 SourceList sourceList =  maybeSourceList.get();
-                List<Source> sources = crawlArgs.getSourceDAO().byList(sourceList);
+                List<Source> sources = sourceDAO.byList(sourceList);
                 for (Source source: sources) {
 //                    String str = String.format("Source Name: %s, Source ID: %s \n", source.get(Source.STANDARD_NAME), source.id());
                     String str = String.format("%-30.30s  %-30.30s%n", source.get(Source.STANDARD_NAME), source.id());
@@ -402,11 +408,11 @@ public class ShellRunner {
             crawlArgs = argsService.get();
 
             if (type.equals("source")) {
-                Optional<Source> maybeSource = crawlArgs.getSourceDAO().byName(name);
+                Optional<Source> maybeSource = sourceDAO.byName(name);
                 if(maybeSource.isPresent()) {
                     Source source =  maybeSource.get();
                     source = source.put(field, null);
-                    crawlArgs.getSourceDAO().upsert(source);
+                    sourceDAO.upsert(source);
 
                     return String.format("successfully delete value");
                 }
@@ -417,11 +423,11 @@ public class ShellRunner {
             }
             else if (type.equals("sourcelist")){
                 String printStr = "";
-                Optional<SourceList> maybeSourceList = crawlArgs.getSourceListDAO().byName(name);
+                Optional<SourceList> maybeSourceList = sourceListDAO.byName(name);
                 if(maybeSourceList.isPresent()) {
                     SourceList sourceList =  maybeSourceList.get();
                     sourceList = sourceList.put(field, null);
-                    crawlArgs.getSourceListDAO().upsert(sourceList);
+                    sourceListDAO.upsert(sourceList);
 
                     return String.format("successfully delete value");
                 }
@@ -447,13 +453,13 @@ public class ShellRunner {
 
         crawlArgs = argsService.get();
 
-        Optional<SourceList> maybeSourceList = crawlArgs.getSourceListDAO().byName(name);
+        Optional<SourceList> maybeSourceList = sourceListDAO.byName(name);
         if(maybeSourceList.isPresent()) {
             SourceList sourceList = maybeSourceList.get();
-            List<Source> sources = crawlArgs.getSourceDAO().byList(sourceList);
+            List<Source> sources = sourceDAO.byList(sourceList);
             for (Source source: sources) {
                 source = source.put(field, value);
-                crawlArgs.getSourceDAO().upsert(source);
+                sourceDAO.upsert(source);
             }
 
             return String.format("successfully update value for all sources under the given sourcelist");
@@ -550,7 +556,7 @@ public class ShellRunner {
         List<String> columns = Arrays.asList("URL", "TEXT", "DATE", "TITLE");
 
         if (type.equals("source")) {
-            Optional<Source> maybeSource = crawlArgs.getSourceDAO().byName(name);
+            Optional<Source> maybeSource = sourceDAO.byName(name);
             if (maybeSource.isPresent()) {
                 List<Article> articles = articleDAO.bySource(maybeSource.get());
 
@@ -568,10 +574,10 @@ public class ShellRunner {
 
         }
         else if (type.equals("sourcelist")) {
-            Optional<SourceList> maybeSourceList = crawlArgs.getSourceListDAO().byName(name);
+            Optional<SourceList> maybeSourceList = sourceListDAO.byName(name);
             if (maybeSourceList.isPresent()) {
                 SourceList sourceList = maybeSourceList.get();
-                List<Source> sources = crawlArgs.getSourceDAO().byList(sourceList);
+                List<Source> sources = sourceDAO.byList(sourceList);
                 List<Article> allArticles = new ArrayList<>();;
                 for (Source source: sources) {
                     List<Article> articles = articleDAO.bySource(source);
@@ -608,7 +614,7 @@ public class ShellRunner {
         crawlArgs = argsService.get();
 
         if (type.equals("source")) {
-            Optional<Source> maybeSource = crawlArgs.getSourceDAO().byName(name);
+            Optional<Source> maybeSource = sourceDAO.byName(name);
             if (maybeSource.isPresent()) {
                 Source source = maybeSource.get();
                 Path outputPath = Paths.get(outputDir, Util.getID(source)+"-jef.xml");
@@ -625,10 +631,10 @@ public class ShellRunner {
 
         }
         else if (type.equals("sourcelist")) {
-            Optional<SourceList> maybeSourceList = crawlArgs.getSourceListDAO().byName(name);
+            Optional<SourceList> maybeSourceList = sourceListDAO.byName(name);
             if (maybeSourceList.isPresent()) {
                 SourceList sourceList = maybeSourceList.get();
-                List<Source> sources = crawlArgs.getSourceDAO().byList(sourceList);
+                List<Source> sources = sourceDAO.byList(sourceList);
                 Path outputPath = Paths.get(outputDir, name+"-jef.xml");
                 generateDom(workingDir, sources, outputPath.toString());
 
