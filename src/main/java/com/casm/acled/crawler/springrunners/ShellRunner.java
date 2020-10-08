@@ -2,6 +2,7 @@ package com.casm.acled.crawler.springrunners;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Strings;
 import com.casm.acled.configuration.ObjectMapperConfiguration;
+import com.casm.acled.crawler.Crawl;
 import com.casm.acled.crawler.management.CheckListService;
 import com.casm.acled.crawler.management.CrawlArgs;
 import com.casm.acled.crawler.management.CrawlArgsService;
@@ -605,8 +606,8 @@ public class ShellRunner {
     @ShellMethod(value = "generate JEF configuration for source/sourcelists. Usage: jef type name working_dir output_dir", key = "jef")
     public String jef(@ShellOption({"-t", "--t"}) String type,
                       @ShellOption({"-n","--name"}) String name,
-                      @ShellOption({"-wd", "--workingdir"}) String workingDir,
-                      @ShellOption({"-od","--output_dir"}) String outputDir) {
+                      @ShellOption({"-wd", "--working-dir"}) String workingDir,
+                      @ShellOption({"-od","--output-dir"}) String outputDir) {
 
         // test sample: jef sourcelist "mexico-1" "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports" "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports"
         // test sample: jef source "Imagen del Golfo" "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports" "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports"
@@ -718,7 +719,7 @@ public class ShellRunner {
 
             for (Source source: sources) {
                 Element path = doc.createElement("path");
-                Path combinedPath = Paths.get(dir, Util.getID(source), "progress", "latest");
+                Path combinedPath = Paths.get(dir, Crawl.id(source), "progress", "latest");
                 path.appendChild(doc.createTextNode(combinedPath.toString()));
                 paths.appendChild(path);
 
