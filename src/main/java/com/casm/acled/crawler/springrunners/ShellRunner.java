@@ -290,7 +290,7 @@ public class ShellRunner {
 
     @ShellMethod(value = "add field/property value to existing list; usage: add type name field [value]", key = "add")
     public String addValue(@ShellOption({"-t", "--type"}) String type,
-                           @ShellOption({"-f", "--name"}) String name,
+                           @ShellOption({"-n", "--name"}) String name,
                            @ShellOption({"-f", "--field"}) String field,
                            @ShellOption({"-v", "--value"}) String value) {
 
@@ -363,13 +363,14 @@ public class ShellRunner {
             }
         }
         else if (type.equals("sourcelist")){
-            String printStr = "";
+            String printStr = String.format("%-30.30s  %-30.30s%n", "Source Name", "ID");
             Optional<SourceList> maybeSourceList = crawlArgs.getSourceListDAO().byName(name);
             if(maybeSourceList.isPresent()) {
                 SourceList sourceList =  maybeSourceList.get();
                 List<Source> sources = crawlArgs.getSourceDAO().byList(sourceList);
                 for (Source source: sources) {
-                    String str = String.format("Source Name: %s, Source ID: %s \n", source.get(Source.STANDARD_NAME), source.id());
+//                    String str = String.format("Source Name: %s, Source ID: %s \n", source.get(Source.STANDARD_NAME), source.id());
+                    String str = String.format("%-30.30s  %-30.30s%n", source.get(Source.STANDARD_NAME), source.id());
                     printStr += str;
                 }
 
