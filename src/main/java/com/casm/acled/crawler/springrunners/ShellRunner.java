@@ -760,33 +760,18 @@ public class ShellRunner {
     public boolean inbetween(LocalDate articleDate, LocalDate from, LocalDate to) {
 
         if (from==null && to!=null) {
-            if ((articleDate.isBefore(to)) || articleDate.isEqual(to)) {
-                return true;
-            }
-            else {
-                return false;
-            }
+            return (articleDate.isBefore(to)) || articleDate.isEqual(to);
         }
 
         if (from!=null && to==null) {
-            if ((articleDate.isAfter(from)) || articleDate.isEqual(from)) {
-                return true;
-            }
-            else {
-                return false;
-            }
+            return (articleDate.isAfter(from)) || articleDate.isEqual(from);
         }
 
         if (from==null && to==null) {
             return true;
         }
 
-        if ((articleDate.isBefore(to) && articleDate.isAfter(from)) || (articleDate.isEqual(to) || articleDate.isEqual(from))) {
-            return true;
-        }
-        else {
-            return false;
-        }
+        return (articleDate.isBefore(to) && articleDate.isAfter(from)) || (articleDate.isEqual(to) || articleDate.isEqual(from));
     }
 
     @Bean
