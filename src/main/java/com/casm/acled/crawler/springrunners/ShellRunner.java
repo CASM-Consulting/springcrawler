@@ -506,7 +506,7 @@ public class ShellRunner {
         return String.format("PIDs have been cleared");
     }
 
-    @ShellMethod(value = "run scheduler, if no source list is specified, run all. Usage: schedule -sd SCRAPER-DIR -d DEPTH [-sl SOURCE-LIST]", key = "schedule")
+    @ShellMethod(value = "run scheduler, if no source list is specified, run all. Usage: schedule -wd WORKING-DIR -sd SCRAPER-DIR -d DEPTH [-sl SOURCE-LIST]", key = "schedule")
     public String schedule(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) throws Exception{
         reporter.randomRunId();
 
@@ -519,12 +519,12 @@ public class ShellRunner {
 
     }
 
-    @ShellMethod(value = "dump data to local csv file, need type, name, from date, to dates and path to folder. If not want to specify date, just put null to field. Usage: dump type name fromDate toDate path", key = "dump")
+    @ShellMethod(value = "dump articles to local csv file. Usage: dump -t TYPE -n NAME -f FROM-DATE -t TO-DATE -od OUTPUT-DIR", key = "dump")
     public String dump(@ShellOption({"-t", "--type"}) String type,
                        @ShellOption({"-n", "--name"}) String name,
-                       @ShellOption({"-fd", "--from-date"}) String from,
-                       @ShellOption({"-td", "--to-date"}) String to,
-                       @ShellOption({"-p", "--path"}) String dir) throws Exception{
+                       @ShellOption(value = {"-f", "--from-date"}, defaultValue = "null") String from,
+                       @ShellOption(value = {"-t", "--to-date"}, defaultValue = "null") String to,
+                       @ShellOption({"-od", "--output-dir"}) String dir) throws Exception{
 
         // test sample: dump source "Imagen del Golfo" "2020-09-01" "2020-09-24" "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports"
         // test sample: dump sourcelist "mexico-1" "2020-09-01" "2020-09-24" "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports"
@@ -532,30 +532,11 @@ public class ShellRunner {
         // test sample: dump sourcelist "mexico-1" null null "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports"
         // test sample: dump sourcelist "mexico-1" null "2020-09-24" "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports"
 
-        LocalDate fromDate;
-        LocalDate toDate;
-
         crawlArgs = argsService.get();
 
-        if (from.equals("null")) {
-            fromDate = null;
-        }
-        else {
-            fromDate = LocalDate.parse(from);
-        }
-        if (to.equals("null")) {
-            toDate = null;
-        }
-        else {
-            toDate = LocalDate.parse(to);
-        }
+        LocalDate fromDate = from.equals("null") ? null : LocalDate.parse(from);
+        LocalDate toDate = to.equals("null") ? null : LocalDate.parse(to);
 
-//        LocalDate fromDate = LocalDate.parse(from);
-//        LocalDate toDate = LocalDate.parse(to);
-//        from = from.equals("null") ? "" : "-"+from;
-//        to = to.equals("null") ? "" : "-"+to;
-
-//        Path path = Paths.get(dir, name+from+to+".csv");
         Path path = Paths.get(dir, name+"-"+from+"-"+to+".csv");
 
         List<String> columns = Arrays.asList("URL", "TEXT", "DATE", "TITLE");
