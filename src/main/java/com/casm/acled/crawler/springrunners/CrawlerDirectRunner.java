@@ -106,7 +106,6 @@ public class CrawlerDirectRunner implements CommandLineRunner {
 //        crawlArgs.raw.source = "Milenio";
 //        crawlArgs.raw.source = "MiMorelia";
 //        crawlArgs.raw.source = "nncMX";
-//        crawlArgs.raw.source = "nncMX";
 //        crawlArgs.raw.source = "El Sol de Sinaloa";
         crawlArgs.raw.sourceLists = ImmutableList.of("mexico-1");
 //        crawlArgs.raw.sourceList = "fake-net";
@@ -123,7 +122,7 @@ public class CrawlerDirectRunner implements CommandLineRunner {
 
 //        crawlArgs.raw.workingDir = "test";
 //        crawlArgs.raw.scrapersDir = "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/springcrawler/testscrapers/generic/";
-        crawlArgs.raw.depth = 1;
+        crawlArgs.raw.depth = 0;
 //        crawlArgs.raw.ignoreSiteMap = true;
 
         crawlArgs.init();
