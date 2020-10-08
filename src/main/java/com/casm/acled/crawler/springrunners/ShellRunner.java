@@ -506,10 +506,13 @@ public class ShellRunner {
         return String.format("PIDs have been cleared");
     }
 
-    @ShellMethod(value = "run scheduler for all sourcelists, usage: schedule", key = "schedule")
-    public String schedule() throws Exception{
+    @ShellMethod(value = "run scheduler, if no source list is specified, run all. Usage: schedule -sd SCRAPER-DIR -d DEPTH [-sl SOURCE-LIST]", key = "schedule")
+    public String schedule(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) throws Exception{
+        reporter.randomRunId();
 
         crawlArgs = argsService.get();
+        crawlArgs.raw = args;
+        crawlArgs.init();
         schedulerService.schedule(crawlArgs);
 
         return String.format("scheduling done");
@@ -519,8 +522,8 @@ public class ShellRunner {
     @ShellMethod(value = "dump data to local csv file, need type, name, from date, to dates and path to folder. If not want to specify date, just put null to field. Usage: dump type name fromDate toDate path", key = "dump")
     public String dump(@ShellOption({"-t", "--type"}) String type,
                        @ShellOption({"-n", "--name"}) String name,
-                       @ShellOption({"-fd", "--fromdate"}) String from,
-                       @ShellOption({"-td", "--todate"}) String to,
+                       @ShellOption({"-fd", "--from-date"}) String from,
+                       @ShellOption({"-td", "--to-date"}) String to,
                        @ShellOption({"-p", "--path"}) String dir) throws Exception{
 
         // test sample: dump source "Imagen del Golfo" "2020-09-01" "2020-09-24" "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports"
