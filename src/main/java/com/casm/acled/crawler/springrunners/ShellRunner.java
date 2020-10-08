@@ -7,15 +7,22 @@ import com.casm.acled.crawler.management.CrawlArgs;
 import com.casm.acled.crawler.management.CrawlArgsService;
 import com.casm.acled.crawler.management.SchedulerService;
 import com.casm.acled.crawler.reporting.Reporter;
+import com.casm.acled.dao.entities.ArticleDAO;
 import com.casm.acled.dao.entities.SourceDAO;
 import com.casm.acled.dao.entities.SourceListDAO;
 import com.casm.acled.dao.entities.SourceSourceListDAO;
+import com.casm.acled.dao.util.ExportCSV;
+import com.casm.acled.entities.article.Article;
 import com.casm.acled.entities.source.Source;
 import com.casm.acled.entities.sourcelist.SourceList;
 import com.casm.acled.entities.sourcesourcelist.SourceSourceList;
 import net.sf.extjwnl.data.Exc;
+import org.apache.commons.csv.QuoteMode;
 import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
 import org.camunda.bpm.spring.boot.starter.rest.CamundaBpmRestJerseyAutoConfiguration;
+import org.jsoup.select.Elements;
+import org.postgresql.copy.CopyManager;
+import org.postgresql.core.BaseConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,12 +44,45 @@ import org.springframework.shell.standard.ShellMethod;
 import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellOption;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.StandardOpenOption;
+import java.time.LocalDate;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.sound.sampled.Line;
 import javax.validation.Valid;
 import org.jline.reader.LineReader;
+
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.*;
+
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+import java.sql.*;
+import java.io.*;
+
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVPrinter;
+
+import org.w3c.dom.Attr;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import javax.xml.transform.OutputKeys;
+
+import com.casm.acled.crawler.util.Util;
 
 
 @EnableAutoConfiguration(exclude={HibernateJpaAutoConfiguration.class, CamundaBpmAutoConfiguration.class, CamundaBpmRestJerseyAutoConfiguration.class, ValidationAutoConfiguration.class})
@@ -70,7 +110,13 @@ public class ShellRunner {
     @Autowired
     LineReader reader;
 
+    @Autowired
+    private ArticleDAO articleDAO;
+
     private SchedulerService schedulerService;
+
+    @Autowired
+    private ExportCSV exportCSV;
 
 
     @ShellMethod(value = "check source list (-sl)", key = "check")
@@ -300,6 +346,9 @@ public class ShellRunner {
     public String showValue(@ShellOption({"-t", "--type"}) String type,
                            @ShellOption({"-n", "--name"}) String name) {
 
+        // test sample: show source "Imagen del Golfo"
+        // test sample: show sourcelist "mexico-1"
+
         crawlArgs = argsService.get();
 
         if (type.equals("source")) {
@@ -411,6 +460,325 @@ public class ShellRunner {
 
         else {
             return String.format("source list name does not exist");
+        }
+    }
+
+    @ShellMethod(value = "download html from link provided, run the Jsoup pattern and print the results. usage: jsoup -l LINK -p JSOUP_PATTERN", key = "jsoup")
+    public String jsoupSearch(@ShellOption({"-l","--link"}) String url,
+                              @ShellOption({"-p","--pattern"}) String pattern) {
+
+        // test sample: jsoup -l "https://imagendelgolfo.mx/xalapa/a-morena-en-veracruz-lo-persigue-fantasma-del-perredismo-aseveran/50047104" -p "div.siete60 div.SlaBLK22"
+        org.jsoup.nodes.Document doc;
+        try {
+            doc = Jsoup.connect(url).get();
+        }
+        catch (IOException e) {
+            return e.getMessage();
+        }
+
+        if (doc!=null) {
+            Elements matched = doc.select(pattern);
+            List<String> matchedText = matched.eachText();
+            return String.join("\n", matchedText);
+
+        }
+        else {
+            return String.format("doc is null");
+        }
+    }
+
+    @ShellMethod(value = "clear PIDs, usage: clear-pids", key = "clear-pids")
+    public String clearPIDs() {
+
+        crawlArgs = argsService.get();
+
+        schedulerService.clearPIDs(crawlArgs);
+
+        return String.format("PIDs have been cleared");
+    }
+
+    @ShellMethod(value = "run scheduler for all sourcelists, usage: schedule", key = "schedule")
+    public String schedule() throws Exception{
+
+        crawlArgs = argsService.get();
+        schedulerService.schedule(crawlArgs);
+
+        return String.format("scheduling done");
+
+    }
+
+    @ShellMethod(value = "dump data to local csv file, need type, name, from date, to dates and path to folder. If not want to specify date, just put null to field. Usage: dump type name fromDate toDate path", key = "dump")
+    public String dump(@ShellOption({"-t", "--type"}) String type,
+                       @ShellOption({"-n", "--name"}) String name,
+                       @ShellOption({"-fd", "--fromdate"}) String from,
+                       @ShellOption({"-td", "--todate"}) String to,
+                       @ShellOption({"-p", "--path"}) String dir) throws Exception{
+
+        // test sample: dump source "Imagen del Golfo" "2020-09-01" "2020-09-24" "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports"
+        // test sample: dump sourcelist "mexico-1" "2020-09-01" "2020-09-24" "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports"
+        // test sample: dump source "Imagen del Golfo" null null "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports"
+        // test sample: dump sourcelist "mexico-1" null null "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports"
+        // test sample: dump sourcelist "mexico-1" null "2020-09-24" "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports"
+
+        LocalDate fromDate;
+        LocalDate toDate;
+
+        crawlArgs = argsService.get();
+
+        if (from.equals("null")) {
+            fromDate = null;
+        }
+        else {
+            fromDate = LocalDate.parse(from);
+        }
+        if (to.equals("null")) {
+            toDate = null;
+        }
+        else {
+            toDate = LocalDate.parse(to);
+        }
+
+//        LocalDate fromDate = LocalDate.parse(from);
+//        LocalDate toDate = LocalDate.parse(to);
+//        from = from.equals("null") ? "" : "-"+from;
+//        to = to.equals("null") ? "" : "-"+to;
+
+//        Path path = Paths.get(dir, name+from+to+".csv");
+        Path path = Paths.get(dir, name+"-"+from+"-"+to+".csv");
+
+        List<String> columns = Arrays.asList("URL", "TEXT", "DATE", "TITLE");
+
+        if (type.equals("source")) {
+            Optional<Source> maybeSource = crawlArgs.getSourceDAO().byName(name);
+            if (maybeSource.isPresent()) {
+                List<Article> articles = articleDAO.bySource(maybeSource.get());
+
+                List<Map<String, String>> filteredArticles = articles.stream().filter(d -> inbetween(d.get("DATE"), fromDate, toDate)).map(d -> toMapWithColumn(d, columns)).collect(Collectors.toList());
+
+                mapToCSV(filteredArticles, path);
+
+                return String.format("export to %s successfully", path.toString());
+
+            }
+
+            else {
+                return String.format("source name does not exist");
+            }
+
+        }
+        else if (type.equals("sourcelist")) {
+            Optional<SourceList> maybeSourceList = crawlArgs.getSourceListDAO().byName(name);
+            if (maybeSourceList.isPresent()) {
+                SourceList sourceList = maybeSourceList.get();
+                List<Source> sources = crawlArgs.getSourceDAO().byList(sourceList);
+                List<Article> allArticles = new ArrayList<>();;
+                for (Source source: sources) {
+                    List<Article> articles = articleDAO.bySource(source);
+                    allArticles.addAll(articles);
+                }
+
+                List<Map<String, String>> filteredArticles = allArticles.stream().filter(d -> inbetween(d.get("DATE"), fromDate, toDate)).map(d -> toMapWithColumn(d, columns)).collect(Collectors.toList());
+                mapToCSV(filteredArticles, path);
+
+                return String.format("export to %s successfully", path.toString());
+
+            }
+            else {
+                return String.format("source list name does not exist");
+            }
+
+
+        }
+        else {
+            return String.format("wrong type value, should be source or sourcelist");
+        }
+
+    }
+
+    @ShellMethod(value = "generate JEF configuration for source/sourcelists. Usage: jef type name working_dir output_dir", key = "jef")
+    public String jef(@ShellOption({"-t", "--t"}) String type,
+                      @ShellOption({"-n","--name"}) String name,
+                      @ShellOption({"-wd", "--workingdir"}) String workingDir,
+                      @ShellOption({"-od","--output_dir"}) String outputDir) {
+
+        // test sample: jef sourcelist "mexico-1" "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports" "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports"
+        // test sample: jef source "Imagen del Golfo" "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports" "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports"
+
+        crawlArgs = argsService.get();
+
+        if (type.equals("source")) {
+            Optional<Source> maybeSource = crawlArgs.getSourceDAO().byName(name);
+            if (maybeSource.isPresent()) {
+                Source source = maybeSource.get();
+                Path outputPath = Paths.get(outputDir, Util.getID(source)+"-jef.xml");
+                generateDom(workingDir, Arrays.asList(source), outputPath.toString());
+
+                return String.format("JEF configuration generated to %s successfully", outputPath.toString());
+
+            }
+            else {
+
+                return String.format("source name does not exist");
+
+            }
+
+        }
+        else if (type.equals("sourcelist")) {
+            Optional<SourceList> maybeSourceList = crawlArgs.getSourceListDAO().byName(name);
+            if (maybeSourceList.isPresent()) {
+                SourceList sourceList = maybeSourceList.get();
+                List<Source> sources = crawlArgs.getSourceDAO().byList(sourceList);
+                Path outputPath = Paths.get(outputDir, name+"-jef.xml");
+                generateDom(workingDir, sources, outputPath.toString());
+
+                return String.format("JEF configuration generated to %s successfully", outputPath.toString());
+            }
+            else {
+                return String.format("source list name does not exist");
+            }
+
+        }
+        else {
+            return String.format("wrong type value, should be source or sourcelist");
+        }
+
+    }
+
+
+    public Map<String, String> toMapWithColumn (Article article, List<String> columns) {
+        Map<String, String> props = new LinkedHashMap();
+        for (String column: columns) {
+            Object value = article.get(column);
+            String finalValue = value == null ? "" : value.toString();
+//            if (column.equals("URL")) {
+//                column = "url";
+//            }
+            props.put(column, finalValue);
+        }
+        return props;
+    }
+
+    private static void mapToCSV(List<Map<String, String>> list, Path path){
+        try {
+
+            OutputStream outputStream = java.nio.file.Files.newOutputStream(path, StandardOpenOption.CREATE);
+            PrintWriter writer = new PrintWriter(new BufferedWriter(new OutputStreamWriter(outputStream, StandardCharsets.UTF_8)), false);
+            CSVPrinter csv = new CSVPrinter(writer, CSVFormat.EXCEL.withQuoteMode(QuoteMode.NON_NUMERIC));
+
+
+            List<String> headers = list.stream().flatMap(map -> map.keySet().stream()).distinct().collect(Collectors.toList());
+            csv.printRecord(headers);
+
+
+            for (Map<String, String> map: list) {
+                List<String> row = new ArrayList<>();
+                for (int i = 0; i < headers.size(); i++) {
+                    String value = map.get(headers.get(i));
+                    row.add(value);
+                }
+                csv.printRecord(row);
+
+            }
+
+            csv.close();
+
+        }
+        catch (Exception ex) {
+            ex.printStackTrace();
+        }
+
+    }
+
+    public void generateDom(String dir, List<Source> sources, String outputDir) {
+        try {
+            DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
+
+            Document doc = docBuilder.newDocument();
+
+            Element root = doc.createElement("jefmon-config");
+            doc.appendChild(root);
+
+            Element instanceName = doc.createElement("instance-name");
+            instanceName.appendChild(doc.createTextNode("ACLED"));
+            root.appendChild(instanceName);
+
+            Element interval = doc.createElement("default-refresh-interval");
+            interval.appendChild(doc.createTextNode("5"));
+            root.appendChild(interval);
+
+            Element paths = doc.createElement("monitored-paths");
+
+            for (Source source: sources) {
+                Element path = doc.createElement("path");
+                Path combinedPath = Paths.get(dir, Util.getID(source), "progress", "latest");
+                path.appendChild(doc.createTextNode(combinedPath.toString()));
+                paths.appendChild(path);
+
+            }
+
+            root.appendChild(paths);
+
+            Element jobActions = doc.createElement("job-actions");
+
+            Element action1 = doc.createElement("action");
+            action1.appendChild(doc.createTextNode("com.norconex.jefmon.instance.action.impl.ViewJobSuiteLogAction"));
+            Element action2 = doc.createElement("action");
+            action2.appendChild(doc.createTextNode("com.norconex.jefmon.instance.action.impl.ViewJobLogAction"));
+
+            jobActions.appendChild(action1);
+            jobActions.appendChild(action2);
+
+            root.appendChild(jobActions);
+
+            TransformerFactory transformerFactory =  TransformerFactory.newInstance();
+            Transformer transformer = transformerFactory.newTransformer();
+            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+//            transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+
+            DOMSource source = new DOMSource(doc);
+
+            StreamResult result =  new StreamResult(new File(outputDir));
+            transformer.transform(source, result);
+        }
+
+        catch (Exception ex) {
+            ex.printStackTrace();
+        }
+
+
+    }
+
+
+    public boolean inbetween(LocalDate articleDate, LocalDate from, LocalDate to) {
+
+        if (from==null && to!=null) {
+            if ((articleDate.isBefore(to)) || articleDate.isEqual(to)) {
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+
+        if (from!=null && to==null) {
+            if ((articleDate.isAfter(from)) || articleDate.isEqual(from)) {
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+
+        if (from==null && to==null) {
+            return true;
+        }
+
+        if ((articleDate.isBefore(to) && articleDate.isAfter(from)) || (articleDate.isEqual(to) || articleDate.isEqual(from))) {
+            return true;
+        }
+        else {
+            return false;
         }
     }
 
