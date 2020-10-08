@@ -92,7 +92,7 @@ public class JQMJobRunner implements JobRunner {
                     System.out.println(state);
                     // a polite extra second
                     try {
-                        Thread.sleep(1000);
+                        Thread.sleep(10000);
                     } catch (InterruptedException e) {
                         throw new RuntimeException(e);
                     }
