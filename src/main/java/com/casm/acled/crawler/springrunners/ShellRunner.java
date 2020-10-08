@@ -120,6 +120,7 @@ public class ShellRunner {
     @Autowired
     private SourceListDAO sourceListDAO;
 
+    @Autowired
     private SchedulerService schedulerService;
 
     @Autowired
