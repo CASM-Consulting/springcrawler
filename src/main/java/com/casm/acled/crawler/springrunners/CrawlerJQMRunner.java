@@ -84,7 +84,7 @@ public class CrawlerJQMRunner implements CommandLineRunner {
         crawlArgs.raw.skipKeywords = skipKeywords;
         crawlArgs.raw.program = app;
 
-        crawlArgs.depth = 1;
+        crawlArgs.depth = 0;
 
         crawlArgs.init();
 
@@ -137,7 +137,7 @@ public class CrawlerJQMRunner implements CommandLineRunner {
 //        sweepSourceList(JQMSpringCollectorV1, "fake-net", LocalDate.now().minusDays(10), LocalDate.now(), Boolean.TRUE);
 //        sweepSourceList(JQMSpringCollectorV1, "fake-net", LocalDate.of(2020, 8,21), LocalDate.of(2020, 8,28), Boolean.TRUE);
 
-        setCrawlArgs(JQMSpringCollectorV1, "mexico-1", LocalDate.of(2020, 9,14), LocalDate.of(2020, 9,17), Paths.get("text"), Boolean.TRUE);
+        setCrawlArgs(JQMSpringCollectorV1, "mexico-1", LocalDate.of(2020, 10,1), LocalDate.of(2020, 10,17), Paths.get("/home/sw206/jqm/jqm-2.2.5/test"), Boolean.FALSE);
 
         crawlerSweep.sweep(ImmutableList.of(crawlArgs));
 

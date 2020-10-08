@@ -34,9 +34,11 @@ import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 
 @Component
@@ -91,7 +93,7 @@ public class CrawlService {
             args.sourceLists = ImmutableList.of(maybesSourceList.get());
             args.depth = 3;
 
-            Crawl crawl = new Crawl(args, importer, reporter);
+            Crawl crawl = new Crawl(args, importer, reporter, ImmutableList.of());
 //            crawl.getConfig().crawler().setIgnoreSitemap(false);
             crawl.run();
         } else {
@@ -132,7 +134,9 @@ public class CrawlService {
 
             ACLEDImporter importer = new ACLEDImporter(articleDAO, source, sourceListDAO, true);
 
-            Crawl crawl = new Crawl(args, importer, reporter);
+            List<String> discoveredSitemaps = getSitemaps(source);
+
+            Crawl crawl = new Crawl(args, importer, reporter, discoveredSitemaps);
 
             crawl.run();
         });
@@ -243,7 +247,7 @@ public class CrawlService {
         return sitemaps;
     }
 
-    public List<String> getSitemaps(Source source) {
+    public List<String> getSitemaps3(Source source) {
 
         String url = source.get(Source.LINK);
 
@@ -261,57 +265,69 @@ public class CrawlService {
     /**
      * TODO(andy) how do we use STANDARD_SITEMAP_LOCS - won't this mess with "hasSiteMaps()"?
      */
-    public List<String> getSitemaps3(Source source) {
+    public List<String> getSitemaps(Source source) {
 
         String url = source.get(Source.LINK);
-        List<String> predefinedSitemaps = source.get(Source.CRAWL_SITEMAP_LOCATIONS);
 
         url = Util.ensureHTTP(url, false);
 
-        List<String> sitemaps = new ArrayList<>();
+        url = followRedirects(url);
 
-        if(url == null || url.isEmpty()) {
+        Set<String> sitemaps = new HashSet<>();
 
-            logger.warn("empty URL {}", (String)source.get(Source.STANDARD_NAME));
+        // Add standard ones
+        String _url = url;
+        sitemaps.addAll(STANDARD_SITEMAP_LOCS.stream().map(s->_url+(_url.endsWith("/")?"":"/")+s).collect(Collectors.toList()));
 
-        } else {
+        // Attempt to discover sitemap location from robots.txt
+        SitemapParser sitemapParser = new SitemapParser();
+        try {
+            Set<String> sitemapLocations = sitemapParser.getSitemapLocations(url);
+            sitemaps.addAll(sitemapLocations);
+        } catch (InvalidSitemapUrlException e) {
+            //pass
+        }
 
-            if (source.isFalse(Source.CRAWL_DISABLE_SITEMAP_DISCOVERY)) {
+        List<String> contactableSitemaps = checkURLs(new ArrayList<>(sitemaps));
 
-                // Add standard ones
-                sitemaps.addAll(STANDARD_SITEMAP_LOCS);
+        return contactableSitemaps;
+    }
 
-                // Attempt to discover sitemap location from robots.txt
 
-                SitemapParser sitemapParser = new SitemapParser();
-                try {
+    public List<String> checkURLs(List<String> urls) {
+        Client client = ClientBuilder.newClient();
 
-                    Set<String> sitemapLocations = sitemapParser.getSitemapLocations(url);
-                    sitemaps = new ArrayList<>(sitemapLocations);
-                } catch (InvalidSitemapUrlException e) {
+        List<String> pass = new ArrayList<>();
 
-                    // If this fails (connected but errored), ensure all redirects are followed, then try again
-                    try {
-
-                        url = followRedirects(url);
-                        Set<String> sitemapLocations = sitemapParser.getSitemapLocations(url);
-
-                        sitemaps = new ArrayList<>(sitemapLocations);
-                    } catch (InvalidSitemapUrlException | UrlConnectionException ee) {
-                        // give up
-                    }
-                } catch (UrlConnectionException e) {
-                    // give up
-                }
+        for (String url : urls ) {
+            if(checkURL(url, client)) {
+                pass.add(url);
             }
         }
 
-        if (predefinedSitemaps != null) {
-            // add in any locations that were pre-defined on the Source itself
-            sitemaps.addAll(predefinedSitemaps);
+        return pass;
+    }
+
+    public boolean checkURL(String url, Client client) {
+        WebTarget target = client.target(url);
+
+        try {
+            Invocation.Builder invocationBuilder = target.request();
+
+            invocationBuilder.get(String.class);
+
+        } catch (WebApplicationException e) {
+
+            return false;
         }
 
-        return sitemaps;
+        return true;
+    }
+
+    public boolean checkURL(String url) {
+        Client client = ClientBuilder.newClient();
+
+        return checkURL(url, client);
     }
 
     public List<String> getSitemaps2(Source source) {
@@ -346,7 +362,7 @@ public class CrawlService {
         WebTarget target = client.target(url);
 //        target.property(ClientProperties.FOLLOW_REDIRECTS, Boolean.TRUE);
         try {
-            Invocation.Builder invocationBuilder = target.request(MediaType.TEXT_HTML);
+            Invocation.Builder invocationBuilder = target.request();
 
             invocationBuilder.get(String.class);
 
