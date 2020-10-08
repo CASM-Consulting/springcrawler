@@ -363,7 +363,7 @@ public class ShellRunner {
             }
         }
         else if (type.equals("sourcelist")){
-            String printStr = String.format("%-30.30s  %-30.30s%n", "Source Name", "ID");
+            StringBuilder printStr = new StringBuilder(String.format("%-30.30s  %-30.30s%n", "Source Name", "ID"));
             Optional<SourceList> maybeSourceList = crawlArgs.getSourceListDAO().byName(name);
             if(maybeSourceList.isPresent()) {
                 SourceList sourceList =  maybeSourceList.get();
@@ -371,10 +371,10 @@ public class ShellRunner {
                 for (Source source: sources) {
 //                    String str = String.format("Source Name: %s, Source ID: %s \n", source.get(Source.STANDARD_NAME), source.id());
                     String str = String.format("%-30.30s  %-30.30s%n", source.get(Source.STANDARD_NAME), source.id());
-                    printStr += str;
+                    printStr.append(str);
                 }
 
-                return printStr;
+                return printStr.toString();
             }
             else {
                 return String.format("source list name does not exist");
