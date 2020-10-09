@@ -128,6 +128,12 @@ public class CrawlerJQMRunner implements CommandLineRunner {
     public void run(String... args) throws Exception {
 
 //        crawlerSweep.sweepAvailableScrapers(Paths.get("allscrapers"));
+        Path scraperDir = Paths.get("/home/sw206/git/acled-scrapers");
+
+        crawlArgs = argsService.get();
+
+        crawlArgs.raw.sourceLists = ImmutableList.of("mexico-1");
+        crawlArgs.raw.source = "8 Columnas";
 
 //        sweepSourceList("balkans", LocalDate.of(2020, 5,3), LocalDate.of(2020, 5,9), Boolean.FALSE);
 //        sweepSourceList(JQMSpringCollectorV1, "Balkans", LocalDate.of(2020, 5,3), LocalDate.of(2020, 5,16), Boolean.FALSE);
