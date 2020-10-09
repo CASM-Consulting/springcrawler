@@ -85,6 +85,10 @@ import javax.xml.transform.OutputKeys;
 
 import com.casm.acled.crawler.util.Util;
 
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+import java.util.function.Predicate;
+
 
 @EnableAutoConfiguration(exclude={HibernateJpaAutoConfiguration.class, CamundaBpmAutoConfiguration.class, CamundaBpmRestJerseyAutoConfiguration.class, ValidationAutoConfiguration.class})
 // We need the special object mapper, though.
@@ -526,11 +530,12 @@ public class ShellRunner {
                        @ShellOption(value = {"-t", "--to-date"}, defaultValue = "null") String to,
                        @ShellOption({"-od", "--output-dir"}) String dir) throws Exception{
 
-        // test sample: dump source "Imagen del Golfo" "2020-09-01" "2020-09-24" "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports"
+        // test sample: dump source "Imagen del Golfo" "2020-09-01" "2020-09-24" "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports/compare"
         // test sample: dump sourcelist "mexico-1" "2020-09-01" "2020-09-24" "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports"
         // test sample: dump source "Imagen del Golfo" null null "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports"
         // test sample: dump sourcelist "mexico-1" null null "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports"
         // test sample: dump sourcelist "mexico-1" null "2020-09-24" "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports"
+
 
         crawlArgs = argsService.get();
 
@@ -546,7 +551,7 @@ public class ShellRunner {
             if (maybeSource.isPresent()) {
                 List<Article> articles = articleDAO.bySource(maybeSource.get());
 
-                List<Map<String, String>> filteredArticles = articles.stream().filter(d -> inbetween(d.get("DATE"), fromDate, toDate)).map(d -> toMapWithColumn(d, columns)).collect(Collectors.toList());
+                List<Map<String, String>> filteredArticles = articles.stream().filter(distinctByKey(d->d.get("URL"))).filter(d -> inbetween(d.get("DATE"), fromDate, toDate)).map(d -> toMapWithColumn(d, columns)).collect(Collectors.toList());
 
                 mapToCSV(filteredArticles, path);
 
@@ -570,7 +575,7 @@ public class ShellRunner {
                     allArticles.addAll(articles);
                 }
 
-                List<Map<String, String>> filteredArticles = allArticles.stream().filter(d -> inbetween(d.get("DATE"), fromDate, toDate)).map(d -> toMapWithColumn(d, columns)).collect(Collectors.toList());
+                List<Map<String, String>> filteredArticles = allArticles.stream().filter(distinctByKey(d->d.get("URL"))).filter(d -> inbetween(d.get("DATE"), fromDate, toDate)).map(d -> toMapWithColumn(d, columns)).collect(Collectors.toList());
                 mapToCSV(filteredArticles, path);
 
                 return String.format("export to %s successfully", path.toString());
@@ -758,6 +763,13 @@ public class ShellRunner {
         }
 
         return (articleDate.isBefore(to) && articleDate.isAfter(from)) || (articleDate.isEqual(to) || articleDate.isEqual(from));
+    }
+
+    public static <T> Predicate<T> distinctByKey(
+            Function<? super T, ?> keyExtractor) {
+
+        Map<Object, Boolean> seen = new ConcurrentHashMap<>();
+        return t -> seen.putIfAbsent(keyExtractor.apply(t), Boolean.TRUE) == null;
     }
 
     @Bean
