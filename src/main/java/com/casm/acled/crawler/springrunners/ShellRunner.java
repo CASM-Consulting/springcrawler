@@ -551,7 +551,7 @@ public class ShellRunner {
             if (maybeSource.isPresent()) {
                 List<Article> articles = articleDAO.bySource(maybeSource.get());
 
-                List<Map<String, String>> filteredArticles = articles.stream().filter(distinctByKey(d->d.get("URL"))).filter(d -> inbetween(d.get("DATE"), fromDate, toDate)).map(d -> toMapWithColumn(d, columns)).collect(Collectors.toList());
+                List<Map<String, String>> filteredArticles = articles.stream().filter(d -> inbetween(d.get("DATE"), fromDate, toDate)).filter(distinctByKey(d->d.get("URL"))).map(d -> toMapWithColumn(d, columns)).collect(Collectors.toList());
 
                 mapToCSV(filteredArticles, path);
 
@@ -575,7 +575,7 @@ public class ShellRunner {
                     allArticles.addAll(articles);
                 }
 
-                List<Map<String, String>> filteredArticles = allArticles.stream().filter(distinctByKey(d->d.get("URL"))).filter(d -> inbetween(d.get("DATE"), fromDate, toDate)).map(d -> toMapWithColumn(d, columns)).collect(Collectors.toList());
+                List<Map<String, String>> filteredArticles = allArticles.stream().filter(d -> inbetween(d.get("DATE"), fromDate, toDate)).filter(distinctByKey(d->d.get("URL"))).map(d -> toMapWithColumn(d, columns)).collect(Collectors.toList());
                 mapToCSV(filteredArticles, path);
 
                 return String.format("export to %s successfully", path.toString());
