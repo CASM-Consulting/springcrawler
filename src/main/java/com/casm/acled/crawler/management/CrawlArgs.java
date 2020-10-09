@@ -47,7 +47,7 @@ public class CrawlArgs {
         public Integer maxArticles = -1;
 
         @Parameter(names = "-d", description = "Crawl depth")
-        public Integer depth = 5;
+        public Integer depth = 0;
 
         @Parameter(names = "-pl", description = "Politeness delay")
         public Integer politeness = 100;
