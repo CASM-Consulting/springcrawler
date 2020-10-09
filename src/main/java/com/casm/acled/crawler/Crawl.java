@@ -244,7 +244,15 @@ public class Crawl {
 //        if(source.get(Source.))
     }
 
-    public String id(boolean withDates) {
+    public String id(boolean withDates){
+        return id(source, from, to, withDates);
+    }
+
+    public static String id(Source source){
+        return id(source, null, null, false);
+    }
+
+    public static String id(Source source, LocalDate from, LocalDate to, boolean withDates) {
         StringBuilder sb = new StringBuilder();
         String standardName = source.get(Source.STANDARD_NAME);
         standardName = standardName.toLowerCase().replaceAll(" ", "-");
@@ -257,6 +265,7 @@ public class Crawl {
         }
         return sb.toString();
     }
+
 
     private String resolveQuery(SourceList sourceList, Source list) {
         
