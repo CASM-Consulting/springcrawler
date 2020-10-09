@@ -420,12 +420,16 @@ public class CheckListService {
 //        String [] header = {"Source ID", "hasSiteMaps"};
         String [][] content = new String[][] {header};
 
-        if (args.sourceLists == null || args.sourceLists.isEmpty()){
-            throw new RuntimeException("No source list specified.");
+        List<Source> sources = new ArrayList<>();
+        if (args.source != null){
+            sources.add(args.source);
+        } else if (args.sourceLists != null && !args.sourceLists.isEmpty()) {
+            SourceList sourceList = args.sourceLists.get(0);
+            sources.addAll(sourceDAO.byList(sourceList));
         }
-
-        SourceList sourceList = args.sourceLists.get(0);
-        List<Source> sources = sourceDAO.byList(sourceList);
+        if (sources.isEmpty()){
+            throw new RuntimeException("No source list or source specified.");
+        }
 
         for(Source source : sources) {
 
