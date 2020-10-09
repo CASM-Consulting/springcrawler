@@ -67,7 +67,7 @@ public class CrawlerScheduleRunner implements CommandLineRunner {
 
         crawlArgs.init();
 
-        schedulerService.clearPIDs(crawlArgs);
+        //schedulerService.clearPIDs(crawlArgs);
         schedulerService.schedule(crawlArgs);
 
         reporter.getRunReports().stream().forEach(r -> logger.info(r.toString()));
