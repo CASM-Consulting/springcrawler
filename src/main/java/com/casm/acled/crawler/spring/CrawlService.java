@@ -220,8 +220,10 @@ public class CrawlService {
         SitemapURLAdder adder = new SitemapURLAdder() {
             @Override
             public void add(HttpCrawlData baseURL) {
-
-                urls.add( baseURL.getReference( ) );
+                String url = baseURL.getReference( );
+                if(!url.isEmpty() ) {
+                    urls.add( baseURL.getReference( ) );
+                }
             }
         };
 
