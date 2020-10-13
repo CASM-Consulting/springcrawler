@@ -545,7 +545,7 @@ public class ShellRunner {
         Path path = Paths.get(dir, name+"-"+from+"-"+to+".csv");
 
         List<String> columns = Arrays.asList(Source.STANDARD_NAME,
-                Article.URL, Article.TEXT, Article.DATE, Article.TITLE);
+                Article.URL, Article.TEXT, Article.DATE, Article.TITLE, Article.SCRAPE_KEYWORD_HIGHLIGHT);
 
         if (type.equals("source")) {
             Optional<Source> maybeSource = sourceDAO.byName(name);
