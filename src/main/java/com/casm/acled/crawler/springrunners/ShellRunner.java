@@ -497,9 +497,11 @@ public class ShellRunner {
     }
 
     @ShellMethod(value = "clear PIDs, usage: clear-pids", key = "clear-pids")
-    public String clearPIDs() {
+    public String clearPIDs(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) {
 
         crawlArgs = argsService.get();
+        crawlArgs.raw = args;
+        crawlArgs.init();
 
         schedulerService.clearPIDs(crawlArgs);
 
