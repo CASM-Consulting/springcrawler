@@ -111,7 +111,6 @@ public class Crawl {
             config.crawler().setStartSitemapURLs(sitemaps.toArray(new String[]{}));
         }
 
-        configureLogging(workingDir);
 
         List<AbstractDocumentFilter> filters = new ArrayList<>();
         filters.add(new AcceptFilter());
@@ -192,24 +191,6 @@ public class Crawl {
 
     public NorconexConfiguration getConfig() {
         return config;
-    }
-
-    private void configureLogging(Path workingDir){
-
-        try {
-            Object guard = new Object();
-
-            LoggerRepository rs = new CustomLoggerRepository(new RootLogger((Level) Level.DEBUG), workingDir);
-            LogManager.setRepositorySelector(new DefaultRepositorySelector(rs), guard);
-        } catch (IllegalArgumentException e) {
-            //pass already installed
-            int x = 0;
-        }
-        ThreadGroup threadGroup = Thread.currentThread().getThreadGroup();
-        String name = threadGroup.getName();
-
-        CustomLoggerRepository.register(name, id(false));
-
     }
 
     private ExcludingKeywordFilter keywordFilter(SourceList sourceList, Source source) {

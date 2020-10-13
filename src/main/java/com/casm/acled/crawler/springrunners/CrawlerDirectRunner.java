@@ -99,7 +99,8 @@ public class CrawlerDirectRunner implements CommandLineRunner {
         crawlArgs.raw.skipKeywords = false;
         crawlArgs.raw.program = "crawl";
 
-        crawlArgs.raw.source = "8 Columnas";
+        crawlArgs.raw.source = "Sintesis";
+//        crawlArgs.raw.source = "8 Columnas";
 //        crawlArgs.raw.source = "El Sol de Acapulco";
 //        crawlArgs.raw.source = "Siglo de Durango";
 //        crawlArgs.raw.source = "Imagen del Golfo";
@@ -109,7 +110,7 @@ public class CrawlerDirectRunner implements CommandLineRunner {
 //        crawlArgs.raw.source = "El Sol de Sinaloa";
         crawlArgs.raw.sourceLists = ImmutableList.of("mexico-1");
 //        crawlArgs.raw.sourceList = "fake-net";
-        crawlArgs.raw.from = "2020-01-01";
+        crawlArgs.raw.from = "2020-10-01";
         crawlArgs.raw.to =  "2021-01-20";
 
         // ANDY CONFIG

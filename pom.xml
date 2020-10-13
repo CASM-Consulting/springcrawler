@@ -18,6 +18,7 @@
         <m52norconex.version>1.5.14-SNAPSHOT</m52norconex.version>
         <casm.acled.version>1.5.7</casm.acled.version>
         <lucene.version>8.5.1</lucene.version>
+        <collector-http-casm.version>2.9.11</collector-http-casm.version>
     </properties>
 
     <parent>
@@ -235,7 +236,7 @@
         <dependency>
             <groupId>com.norconex.collectors</groupId>
             <artifactId>norconex-collector-http-casm</artifactId>
-            <version>2.9.10</version>
+            <version>${collector-http-casm.version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.slf4j</groupId>

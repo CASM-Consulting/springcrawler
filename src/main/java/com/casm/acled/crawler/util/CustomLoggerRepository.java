@@ -4,6 +4,7 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.norconex.jef4.log.FileLogManager;
 import org.apache.log4j.Appender;
+import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Hierarchy;
 import org.apache.log4j.Logger;
 
@@ -52,8 +53,7 @@ public class CustomLoggerRepository extends Hierarchy {
 
 
     @Override
-    public
-    Logger getLogger(String name) {
+    public Logger getLogger(String name) {
         String threadGroup = Thread.currentThread().getThreadGroup().getName();
 
         String appenderName = name + "-" + threadGroup;
@@ -81,6 +81,7 @@ public class CustomLoggerRepository extends Hierarchy {
                     });
 
                     logger.addAppender(appender);
+
                     loggerCache.put(appenderName, logger);
 
                 } catch (ExecutionException e) {

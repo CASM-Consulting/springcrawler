@@ -23,10 +23,7 @@ import com.casm.acled.entities.sourcelist.SourceList;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.mchange.lang.IntegerUtils;
 import com.norconex.collector.http.doc.HttpDocument;
-import com.opencsv.CSVReader;
-import com.opencsv.CSVWriter;
 import org.apache.commons.csv.*;
 import org.apache.commons.lang3.BooleanUtils;
 import org.slf4j.Logger;
@@ -51,7 +48,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.casm.acled.crawler.scraper.ScraperFields.*;
-import static com.casm.acled.crawler.spring.CrawlService.STANDARD_SITEMAP_LOCS;
 
 import org.springframework.shell.table.ArrayTableModel;
 import org.springframework.shell.table.BorderStyle;
@@ -225,18 +221,6 @@ public class CheckListService {
         return dateTimeService.checkExistingPasses(source, exampleGetter(scraper));
     }
 
-    public boolean hasSiteMaps(Source source) {
-        List<String> siteMaps = crawlService.getSitemaps(source);
-
-        siteMaps.removeAll(STANDARD_SITEMAP_LOCS);
-
-        if(siteMaps.isEmpty()) {
-            reporter.report(Report.of(Event.NO_SITE_MAPS).id(source.id()).message(source.get(Source.STANDARD_NAME)));
-            return false;
-        } else {
-            return true;
-        }
-    }
 
     public void checkSource(CrawlArgs args, Source source)  {
 
@@ -246,10 +230,10 @@ public class CheckListService {
         boolean scraperExists = scraperExists(args, source);
         boolean hasExamples = hasExamples(source);
         boolean hasDateFormat = hasDateFormat(source);
-        boolean hasSiteMaps = hasSiteMaps(source);
+        List<String> sitemaps = crawlService.getSitemaps(source);
 
 
-        if(hasSiteMaps) {
+        if(!sitemaps.isEmpty()) {
             reporter.report(Report.of(Event.HAS_SITE_MAPS).id(source.id()).message(source.get(Source.STANDARD_NAME)));
 
         }
@@ -279,10 +263,11 @@ public class CheckListService {
 
     }
 
-    public static interface Check {
+    public interface Check {
         String header();
         Object check();
-}
+    }
+
     public static boolean passed(Object maybeBoolean){
         try {
             Boolean b = (Boolean)maybeBoolean;
@@ -301,6 +286,7 @@ public class CheckListService {
         Object hasExamples;
         Object hasDateFormat;
         Object hasSiteMaps;
+        Object hasRecentSiteMaps = "N/A";
         Object dateParsed;
 
         Object titleScraped;
@@ -338,7 +324,16 @@ public class CheckListService {
         }
 
         try {
-            hasSiteMaps = hasSiteMaps(source);
+            List<String> sitemaps = crawlService.getSitemaps(source);
+            hasSiteMaps = !sitemaps.isEmpty();
+            if((boolean)hasSiteMaps) {
+                try {
+                    Set<String> recent = crawlService.recentSitemapURLs(source.get(Source.LINK), sitemaps);
+                    hasRecentSiteMaps = !recent.isEmpty();
+                } catch (Exception e) {
+                    hasRecentSiteMaps = e.getMessage();
+                }
+            }
         }
         catch (Exception e) {
             hasSiteMaps = e.getMessage();
@@ -384,6 +379,7 @@ public class CheckListService {
         checkValue.add(String.valueOf(hasExamples));
         checkValue.add(String.valueOf(hasDateFormat));
         checkValue.add(String.valueOf(hasSiteMaps));
+        checkValue.add(String.valueOf(hasRecentSiteMaps));
         checkValue.add(String.valueOf(dateScraped));
         checkValue.add(String.valueOf(dateParsed));
         checkValue.add(String.valueOf(titleScraped));
@@ -416,7 +412,8 @@ public class CheckListService {
     }
 
     public void checkSourceList(CrawlArgs args) {
-        String [] header = {"Source ID", "connection", "scraperExists", "hasExamples", "hasDateFormat", "hasSiteMaps", "dateScraped", "dateParsed", "titleScraped", "articleScraped"};
+        String [] header = {"Source ID", "connection", "scraperExists", "hasExamples", "hasDateFormat", "hasSiteMaps",
+                "hasRecentSitemaps", "dateScraped", "dateParsed", "titleScraped", "articleScraped"};
 //        String [] header = {"Source ID", "hasSiteMaps"};
         String [][] content = new String[][] {header};
 
@@ -671,19 +668,16 @@ public class CheckListService {
 
             if(scraperExists(args, source)) {
 
-                if(args.ignoreSiteMap || hasSiteMaps(source)) {
+                List<HttpDocument> docs = scraperService.checkExampleURLs(args.scrapersDir, source);
 
-                    List<HttpDocument> docs = scraperService.checkExampleURLs(args.scrapersDir, source);
+                List<List<String>> lines = docs.stream().map(d -> ImmutableList.of(
+                        d.getMetadata().getString(SCRAPED_TITLE, ""),
+                        d.getMetadata().getString(ScraperFields.SCRAPED_ARTICLE, ""),
+                        d.getMetadata().getString(ScraperFields.SCRAPED_DATE, ""),
+                        d.getMetadata().getString("collector.url", "")
+                )).collect(Collectors.toList());
 
-                    List<List<String>> lines = docs.stream().map(d -> ImmutableList.of(
-                            d.getMetadata().getString(SCRAPED_TITLE, ""),
-                            d.getMetadata().getString(ScraperFields.SCRAPED_ARTICLE, ""),
-                            d.getMetadata().getString(ScraperFields.SCRAPED_DATE, ""),
-                            d.getMetadata().getString("collector.url", "")
-                    )).collect(Collectors.toList());
-
-                    data.put(source, lines);
-                }
+                data.put(source, lines);
             }
         }
 

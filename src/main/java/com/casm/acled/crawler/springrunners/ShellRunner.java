@@ -544,14 +544,19 @@ public class ShellRunner {
 
         Path path = Paths.get(dir, name+"-"+from+"-"+to+".csv");
 
-        List<String> columns = Arrays.asList("URL", "TEXT", "DATE", "TITLE");
+        List<String> columns = Arrays.asList(Source.STANDARD_NAME,
+                Article.URL, Article.TEXT, Article.DATE, Article.TITLE);
 
         if (type.equals("source")) {
             Optional<Source> maybeSource = sourceDAO.byName(name);
             if (maybeSource.isPresent()) {
                 List<Article> articles = articleDAO.bySource(maybeSource.get());
 
-                List<Map<String, String>> filteredArticles = articles.stream().filter(d -> inbetween(d.get("DATE"), fromDate, toDate)).filter(distinctByKey(d->d.get("URL"))).map(d -> toMapWithColumn(d, columns)).collect(Collectors.toList());
+                List<Map<String, String>> filteredArticles = articles.stream()
+                        .filter(d -> inbetween(d.get(Article.DATE), fromDate, toDate))
+                        .filter(distinctByKey(d->d.get(Article.URL)))
+                        .map(d -> toMapWithColumn(d, columns))
+                        .collect(Collectors.toList());
 
                 mapToCSV(filteredArticles, path);
 
@@ -646,11 +651,13 @@ public class ShellRunner {
     public Map<String, String> toMapWithColumn (Article article, List<String> columns) {
         Map<String, String> props = new LinkedHashMap();
         for (String column: columns) {
-            Object value = article.get(column);
+            Object value;
+            if(column.equals(Source.STANDARD_NAME)) {
+                value = sourceDAO.getById(article.get(Article.SOURCE_ID)).get().get(Source.STANDARD_NAME);
+            } else {
+                value = article.get(column);
+            }
             String finalValue = value == null ? "" : value.toString();
-//            if (column.equals("URL")) {
-//                column = "url";
-//            }
             props.put(column, finalValue);
         }
         return props;
