@@ -224,6 +224,10 @@ public class CrawlService {
                 if(!url.isEmpty() ) {
                     urls.add( baseURL.getReference( ) );
                 }
+                if(urls.size() > 10) {
+
+                    resolver.stop();
+                }
             }
         };
 

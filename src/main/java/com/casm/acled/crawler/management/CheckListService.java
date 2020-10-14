@@ -393,22 +393,32 @@ public class CheckListService {
 
     public void exportCrawlerSourceList(CrawlArgs args) throws IOException {
 
-        SourceList sourceList = args.sourceLists.get(0);
-        String name = sourceList.get(SourceList.LIST_NAME);
+        if (args.workingDir == null || args.path == null){
+            throw new RuntimeException("Must specify a working directory (-wd) and path (-P) to export a SourceList.");
+        }
 
-        exportCrawlerSourcesToCSV(args.workingDir, name+".csv", sourceList);
+        SourceList sourceList = args.sourceLists.get(0);
+
+        Path path = args.workingDir.resolve(args.path);
+
+        exportCrawlerSourcesToCSV(args.workingDir.resolve(path), sourceList);
     }
 
     public void importCrawlerSourceList(CrawlArgs args) throws IOException {
 
-        SourceList sourceList = args.sourceLists.get(0);
-        String name = sourceList.get(SourceList.LIST_NAME);
-
-        if (args.workingDir == null){
-            throw new RuntimeException("Must specify a working directory (-wd) to find the source list import file.");
+        if (args.workingDir == null || args.path == null){
+            throw new RuntimeException("Must specify a working directory (-wd) and path (-P) to find the source list import file.");
         }
 
-        importCrawlerSourcesFromCSV(args.workingDir.resolve(name+".csv"), EntityVersions.get(Source.class).current());
+        Path path = args.workingDir.resolve(args.path);
+
+        List<Source> sources = importCrawlerSourcesFromCSV(path, EntityVersions.get(Source.class).current());
+
+        for(SourceList list : args.sourceLists) {
+            for(Source source : sources) {
+                sourceSourceListDAO.link(source, list);
+            }
+        }
     }
 
     public void checkSourceList(CrawlArgs args) {
@@ -468,9 +478,9 @@ public class CheckListService {
         return out;
     }
 
-    public void exportCrawlerSourcesToCSV(Path outputDir, String fileName, SourceList sourceList) throws IOException {
+    public void exportCrawlerSourcesToCSV(Path path, SourceList sourceList) throws IOException {
         List<Source> sources = sourceDAO.byList(sourceList);
-        exportCrawlerSourcesToCSV(outputDir, fileName, sources);
+        exportCrawlerSourcesToCSV(path, sources);
     }
 
 
@@ -502,13 +512,13 @@ public class CheckListService {
             Source.LOCALES, Source.CRAWL_DISABLE_SITEMAPS, Source.CRAWL_DISABLE_SITEMAP_DISCOVERY, Source.CRAWL_SITEMAP_LOCATIONS,
             Source.SEED_URLS, Source.CRAWL_SCHEDULE, Source.TIMEZONE, Source.CRAWL_DEPTH);
 
-    public void exportCrawlerSourcesToCSV(Path outputDir, String fileName, List<Source> sources) throws IOException {
+    public void exportCrawlerSourcesToCSV(Path path, List<Source> sources) throws IOException {
 
         List<String> headers = ImmutableList.of("id", "field", "value");
         Set<String> fields = importExportFields;
 
         try (
-                final OutputStream outputStream = java.nio.file.Files.newOutputStream(outputDir.resolve(fileName), StandardOpenOption.CREATE);
+                final OutputStream outputStream = java.nio.file.Files.newOutputStream(path, StandardOpenOption.CREATE);
                 final PrintWriter writer = new PrintWriter(new BufferedWriter(new OutputStreamWriter(outputStream, StandardCharsets.UTF_8)), false);
                 final CSVPrinter csv = new CSVPrinter(writer, CSVFormat.EXCEL)
 //                CSVWriter csv = new CSVWriter(writer)
@@ -558,7 +568,7 @@ public class CheckListService {
         }
     }
 
-    public void importCrawlerSourcesFromCSV(Path seedsPath, Source defaultSource) throws IOException {
+    public List<Source> importCrawlerSourcesFromCSV(Path seedsPath, Source defaultSource) throws IOException {
         String ID = "id";
         String FIELD = "field";
         String VALUE = "value";
@@ -646,6 +656,8 @@ public class CheckListService {
             }).collect(Collectors.toList());
 
             sourceDAO.upsert(sources);
+
+            return sources;
         }
     }
 
