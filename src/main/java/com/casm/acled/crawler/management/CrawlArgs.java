@@ -7,6 +7,7 @@ import com.casm.acled.dao.entities.SourceListDAO;
 import com.casm.acled.entities.source.Source;
 import com.casm.acled.entities.sourcelist.SourceList;
 import com.enioka.jqm.api.JobRequest;
+import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
@@ -39,6 +40,9 @@ public class CrawlArgs {
 
         @Parameter(names = "-sl", description = "Source lists")
         public List<String> sourceLists;
+
+        @Parameter(names = "-P", description = "Path")
+        public String path;
 
         @Parameter(names = "-cid", description = "Crawl ID override")
         public String crawlId;
@@ -90,6 +94,9 @@ public class CrawlArgs {
     public List<SourceList> sourceLists;
     public static final String SOURCE_LISTS = "SOURCE_LISTS";
 
+    public Path path;
+    public static final String PATH = "PATH";
+
     public String crawlId;
     public static final String CRAWL_ID = "CRAWL_ID";
 
@@ -127,14 +134,11 @@ public class CrawlArgs {
     public Set<String> flagSet;
     public static final String FLAGS = "FLAGS";
 
-
     public CrawlArgs(SourceDAO sourceDAO, SourceListDAO sourceListDAO) {
         raw = new Raw();
         this.sourceDAO = sourceDAO;
         this.sourceListDAO = sourceListDAO;
     }
-
-
 
     public void init() {
 
@@ -159,7 +163,10 @@ public class CrawlArgs {
                         .filter(Objects::nonNull)
                         .collect(Collectors.toList());
             }
+        }
 
+        if(sourceLists == null) {
+            sourceLists = ImmutableList.of();
         }
 
         crawlId = raw.crawlId;
@@ -194,6 +201,9 @@ public class CrawlArgs {
         }
         flagSet = new HashSet<>(flags);
 
+        if(raw.path != null) {
+            path = Paths.get(raw.path);
+        }
 
         program = raw.program;
         jqmProgram = raw.jqmProgram;
@@ -251,6 +261,10 @@ public class CrawlArgs {
         jobRequest.addParameter( WORKING_DIR, workingDir.toString() );
         jobRequest.addParameter( SCRAPERS_DIR, scrapersDir.toString() );
 
+        if( path != null ) {
+            jobRequest.addParameter( PATH, path.toString() );
+        }
+
         if( flags != null ) {
             Gson gson = new Gson();
             String encoded = gson.toJson(flags);
@@ -289,6 +303,7 @@ public class CrawlArgs {
         raw.to = runtimeParameters.get(TO);
         raw.workingDir = runtimeParameters.get(WORKING_DIR);
         raw.scrapersDir = runtimeParameters.get(SCRAPERS_DIR);
+        raw.path = runtimeParameters.get(PATH);
 
         if(runtimeParameters.containsKey(FLAGS)) {
             Gson gson = new Gson();
