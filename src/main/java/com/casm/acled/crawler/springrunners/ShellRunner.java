@@ -716,7 +716,7 @@ public class ShellRunner {
 
             for (Source source: sources) {
                 Element path = doc.createElement("path");
-                Path combinedPath = Paths.get(dir, Crawl.id(source), "progress", "latest");
+                Path combinedPath = Paths.get(dir, Util.getID(source), "progress", "latest");
                 path.appendChild(doc.createTextNode(combinedPath.toString()));
                 paths.appendChild(path);
 
