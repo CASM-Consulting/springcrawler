@@ -41,6 +41,9 @@ public class CrawlArgs {
         @Parameter(names = "-sl", description = "Source lists")
         public List<String> sourceLists;
 
+        @Parameter(names = "-N", description = "Name")
+        public String name;
+
         @Parameter(names = "-P", description = "Path")
         public String path;
 
@@ -96,6 +99,9 @@ public class CrawlArgs {
 
     public Path path;
     public static final String PATH = "PATH";
+
+    public String name;
+    public static final String NAME = "NAME";
 
     public String crawlId;
     public static final String CRAWL_ID = "CRAWL_ID";
@@ -205,6 +211,7 @@ public class CrawlArgs {
             path = Paths.get(raw.path);
         }
 
+        name = raw.name;
         program = raw.program;
         jqmProgram = raw.jqmProgram;
 
@@ -263,6 +270,10 @@ public class CrawlArgs {
 
         if( path != null ) {
             jobRequest.addParameter( PATH, path.toString() );
+        }
+
+        if( name != null ) {
+            jobRequest.addParameter( NAME, name );
         }
 
         if( flags != null ) {
