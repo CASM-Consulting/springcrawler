@@ -110,7 +110,7 @@ public class ShellRunner {
     @Autowired
     private CrawlArgsService argsService;
 
-    private CrawlArgs crawlArgs;
+//    private CrawlArgs crawlArgs;
 
     @Autowired
     LineReader reader;
@@ -131,6 +131,21 @@ public class ShellRunner {
     private ExportCSV exportCSV;
 
 
+    @ShellMethod(value = "Copy a Source (-s) or SourceList (-sl) to a with a new name (-N)")
+    public void copy(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) {
+        CrawlArgs crawlArgs = argsService.get(args);
+        crawlArgs.init();
+
+        if( crawlArgs.source != null ) {
+            Source copy = crawlArgs.source.put(Source.STANDARD_NAME, crawlArgs.name);
+            sourceDAO.create(copy);
+        } else if( !crawlArgs.sourceLists.isEmpty() ) {
+            SourceList list = crawlArgs.sourceLists.get(0).put(SourceList.LIST_NAME, crawlArgs.name);
+            sourceListDAO.create(list);
+        }
+    }
+
+
     @ShellMethod(value = "check source list (-sl)", key = "check")
     // probably should give a hint of potential parameters;
     // the help command still not working:
@@ -138,7 +153,7 @@ public class ShellRunner {
     public void checkSourceList(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) {
         reporter.randomRunId();
 
-        crawlArgs = argsService.get();
+        CrawlArgs crawlArgs = argsService.get();
         crawlArgs.raw = args;
 
         crawlArgs.raw.program = "check";
@@ -155,7 +170,7 @@ public class ShellRunner {
     public void importSourceList(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) throws Exception{
         reporter.randomRunId();
 
-        crawlArgs = argsService.get();
+        CrawlArgs crawlArgs = argsService.get();
         crawlArgs.raw = args;
 
         crawlArgs.raw.program = "import";
@@ -172,7 +187,7 @@ public class ShellRunner {
     public void exportSourceList(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) throws Exception{
         reporter.randomRunId();
 
-        crawlArgs = argsService.get();
+        CrawlArgs crawlArgs = argsService.get();
         crawlArgs.raw = args;
 
         crawlArgs.raw.program = "export";
@@ -187,7 +202,7 @@ public class ShellRunner {
 
     @ShellMethod(value = "link a Source (-s) to a source list (-sl)", key="link")
     public void linkSourceToSourceList(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) throws Exception{
-        crawlArgs = argsService.get();
+        CrawlArgs crawlArgs = argsService.get();
         crawlArgs.raw = args;
         crawlArgs.init();
 
@@ -196,7 +211,7 @@ public class ShellRunner {
 
     @ShellMethod(value = "unlink a Source (-s) from a source list (-sl)", key="unlink")
     public void unlinkSourceFromSourceList(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) throws Exception{
-        crawlArgs = argsService.get();
+        CrawlArgs crawlArgs = argsService.get();
         crawlArgs.raw = args;
         crawlArgs.init();
 
@@ -207,7 +222,7 @@ public class ShellRunner {
     public void outputExampleURLCheck(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) throws Exception{
         reporter.randomRunId();
 
-        crawlArgs = argsService.get();
+        CrawlArgs crawlArgs = argsService.get();
         crawlArgs.raw = args;
 
         crawlArgs.raw.program = "example-urls";
@@ -226,7 +241,6 @@ public class ShellRunner {
     public String getField(@ShellOption({"-t", "--type"}) String type,
                          @ShellOption({"-n", "--name"}) String name,
                          @ShellOption({"-f", "--field"}) String field) {
-        crawlArgs = argsService.get();
 
         if (type.equals("source")) {
             Optional<Source> maybeSource = sourceDAO.byName(name);
@@ -265,7 +279,7 @@ public class ShellRunner {
                          @ShellOption({"-f", "--field"}) String field,
                          @ShellOption({"-v", "--value"}) String value) {
 
-        crawlArgs = argsService.get();
+        CrawlArgs crawlArgs = argsService.get();
 
         if (type.equals("source")) {
             Optional<Source> maybeSource = sourceDAO.byName(name);
@@ -306,7 +320,7 @@ public class ShellRunner {
                            @ShellOption({"-f", "--field"}) String field,
                            @ShellOption({"-v", "--value"}) String value) {
 
-        crawlArgs = argsService.get();
+        CrawlArgs crawlArgs = argsService.get();
 
         // test command: add source "Imagen del Golfo" CRAWL_SCHEDULE "*"
 
@@ -361,7 +375,7 @@ public class ShellRunner {
         // test sample: show source "Imagen del Golfo"
         // test sample: show sourcelist "mexico-1"
 
-        crawlArgs = argsService.get();
+        CrawlArgs crawlArgs = argsService.get();
 
         if (type.equals("source")) {
             Optional<Source> maybeSource = sourceDAO.byName(name);
@@ -411,7 +425,7 @@ public class ShellRunner {
 
         if (result.equals("yes")) {
 
-            crawlArgs = argsService.get();
+            CrawlArgs crawlArgs = argsService.get();
 
             if (type.equals("source")) {
                 Optional<Source> maybeSource = sourceDAO.byName(name);
@@ -457,7 +471,7 @@ public class ShellRunner {
                               @ShellOption({"-f", "--field"}) String field,
                               @ShellOption({"-v","--value"}) String value) {
 
-        crawlArgs = argsService.get();
+        CrawlArgs crawlArgs = argsService.get();
 
         Optional<SourceList> maybeSourceList = sourceListDAO.byName(name);
         if(maybeSourceList.isPresent()) {
@@ -503,7 +517,7 @@ public class ShellRunner {
     @ShellMethod(value = "clear PIDs, usage: clear-pids", key = "clear-pids")
     public String clearPIDs() {
 
-        crawlArgs = argsService.get();
+        CrawlArgs crawlArgs = argsService.get();
 
         schedulerService.clearPIDs(crawlArgs);
 
@@ -514,7 +528,7 @@ public class ShellRunner {
     public String schedule(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) throws Exception{
         reporter.randomRunId();
 
-        crawlArgs = argsService.get();
+        CrawlArgs crawlArgs = argsService.get();
         crawlArgs.raw = args;
         crawlArgs.init();
         schedulerService.schedule(crawlArgs);
@@ -537,7 +551,7 @@ public class ShellRunner {
         // test sample: dump sourcelist "mexico-1" null "2020-09-24" "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports"
 
 
-        crawlArgs = argsService.get();
+        CrawlArgs crawlArgs = argsService.get();
 
         LocalDate fromDate = from.equals("null") ? null : LocalDate.parse(from);
         LocalDate toDate = to.equals("null") ? null : LocalDate.parse(to);
@@ -607,7 +621,7 @@ public class ShellRunner {
         // test sample: jef sourcelist "mexico-1" "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports" "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports"
         // test sample: jef source "Imagen del Golfo" "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports" "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports"
 
-        crawlArgs = argsService.get();
+        CrawlArgs crawlArgs = argsService.get();
 
         if (type.equals("source")) {
             Optional<Source> maybeSource = sourceDAO.byName(name);
@@ -716,7 +730,7 @@ public class ShellRunner {
 
             for (Source source: sources) {
                 Element path = doc.createElement("path");
-                Path combinedPath = Paths.get(dir, Util.getID(source), "progress", "latest");
+                Path combinedPath = Paths.get(dir, Crawl.id(source), "progress", "latest");
                 path.appendChild(doc.createTextNode(combinedPath.toString()));
                 paths.appendChild(path);
 
