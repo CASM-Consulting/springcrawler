@@ -113,8 +113,8 @@ public class ACLEDCommitter implements ICommitter {
                 String url = properties.getString("document.reference");
                 throw new RuntimeException("ERROR: Failed to retrieve web content for url: " + url);
             }
-            String theString = writer.toString();
 
+            String rawHtml = writer.toString();
 
             String articleText = properties.getString( ScraperFields.SCRAPED_ARTICLE);
             String title = properties.getString( ScraperFields.SCRAPED_TITLE);
@@ -157,7 +157,8 @@ public class ACLEDCommitter implements ICommitter {
             }
 
             // qiwei added for testing output
-            saveToLocal(article, Paths.get("/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports/test_scraper_tagger/test.csv"));
+            saveToLocal(article, Paths.get("/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports/test_scraper_tagger/nncMX_scraper.csv"));
+//            saveHtmlToLocal(rawHtml, url, Paths.get("/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports/test_scraper_tagger/Milenio_htmls.csv"));
         }
 
     }
@@ -181,6 +182,25 @@ public class ACLEDCommitter implements ICommitter {
             ex.printStackTrace();
 
         }
+    }
+
+    public void saveHtmlToLocal(String str, String url, Path path) {
+        try {
+
+            OutputStream outputStream = java.nio.file.Files.newOutputStream(path, StandardOpenOption.APPEND, StandardOpenOption.CREATE);
+            PrintWriter writer = new PrintWriter(new BufferedWriter(new OutputStreamWriter(outputStream, StandardCharsets.UTF_8)), false);
+            CSVPrinter csv = new CSVPrinter(writer, CSVFormat.EXCEL.withQuoteMode(QuoteMode.NON_NUMERIC));
+
+            List<String> list = Arrays.asList(url, str);
+            csv.printRecord(list);
+            csv.close();
+        }
+
+        catch (Exception ex){
+            ex.printStackTrace();
+
+        }
+
     }
 
     // qiwei added for testing output
