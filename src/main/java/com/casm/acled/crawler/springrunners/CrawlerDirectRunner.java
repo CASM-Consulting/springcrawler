@@ -104,8 +104,8 @@ public class CrawlerDirectRunner implements CommandLineRunner {
 //        crawlArgs.raw.source = "1";
 //        crawlArgs.raw.source = "Imagen del Golfo";
 //        crawlArgs.raw.source = "Milenio";
-//        crawlArgs.raw.source = "MiMorelia";
-        crawlArgs.raw.source = "nncMX";
+        crawlArgs.raw.source = "MiMorelia";
+//        crawlArgs.raw.source = "nncMX";
         crawlArgs.raw.sourceLists = ImmutableList.of("mexico-1");
 //        crawlArgs.raw.sourceLists = ImmutableList.of("fake-net");
         crawlArgs.raw.from = "2020-09-27";

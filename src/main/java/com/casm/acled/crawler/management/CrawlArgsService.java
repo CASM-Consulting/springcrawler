@@ -18,4 +18,10 @@ public class CrawlArgsService {
     public CrawlArgs get() {
         return new CrawlArgs(sourceDAO, sourceListDAO);
     }
+
+    public CrawlArgs get(CrawlArgs.Raw raw) {
+        CrawlArgs args = new CrawlArgs(sourceDAO, sourceListDAO);
+        args.raw = raw;
+        return args;
+    }
 }

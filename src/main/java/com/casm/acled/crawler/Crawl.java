@@ -83,7 +83,7 @@ public class Crawl {
         }
     }
 
-    public Crawl(CrawlArgs args, ACLEDCommitter importer, Reporter reporter) {
+    public Crawl(CrawlArgs args, ACLEDCommitter committer, Reporter reporter, List<String> discoveredSitemaps) {
         this.source = args.source;
         this.from = args.from;
         this.to = args.to;
@@ -92,26 +92,30 @@ public class Crawl {
         String id = id(false);
         Path scraperCachePath = Paths.get(id);
 
-        importer.setCollectorSupplier(collectorSupplier);
+        committer.setCollectorSupplier(collectorSupplier);
 
-        importer.setMaxArticles(args.maxArticle);
+        committer.setMaxArticles(args.maxArticle);
 
         Path workingDir = args.workingDir;
 
-        boolean sitemapDiscoveryDisabled = source.isTrue(Source.CRAWL_DISABLE_SITEMAP_DISCOVERY);
-
-        args.ignoreSiteMap = source.isTrue(Source.CRAWL_DISABLE_SITEMAPS) || sitemapDiscoveryDisabled;
-
+        //force always true as this only switches off norconex sitemap discovery and we're doing this ourselves
+        args.ignoreSiteMap = true;
 
         config = new NorconexConfiguration(workingDir.resolve(scraperCachePath), args);
         config.crawler().setUrlNormalizer(new RootLogAppenderClearingURLNormaliser());
 
-        if( source.isFalse(Source.CRAWL_DISABLE_SITEMAPS) ) {
-            List<String> sitemaps = source.get(Source.CRAWL_SITEMAP_LOCATIONS);
+        List<String> sitemaps = new ArrayList<>();
+
+        if(source.isFalse(Source.CRAWL_DISABLE_SITEMAPS)) {
+            if(source.isFalse(Source.CRAWL_DISABLE_SITEMAP_DISCOVERY)) {
+                sitemaps.addAll(discoveredSitemaps);
+            }
+            if(source.hasValue(Source.CRAWL_SITEMAP_LOCATIONS)) {
+                sitemaps.addAll(source.get(Source.CRAWL_SITEMAP_LOCATIONS));
+            }
             config.crawler().setStartSitemapURLs(sitemaps.toArray(new String[]{}));
         }
 
-        configureLogging(workingDir);
 
         // as Simon mentioned before, want two different pipelines exist at the same time; so added to switch between them;
         // probably need to add a new parameter for it;
@@ -217,7 +221,6 @@ public class Crawl {
         config.crawler().setMaxDepth(args.depth);
 
         config.crawler().setStartURLs(startURLs);
-
 //        config.collector();
         if(args.crawlId != null && !args.crawlId.isEmpty()) {
             config.setId(args.crawlId);
@@ -226,29 +229,11 @@ public class Crawl {
         }
 //        config.crawler().setPostImportProcessors(importer);
         // use committer for testing
-        config.crawler().setCommitter(importer);
+        config.crawler().setCommitter(committer);
     }
 
     public NorconexConfiguration getConfig() {
         return config;
-    }
-
-    private void configureLogging(Path workingDir){
-
-        try {
-            Object guard = new Object();
-
-            LoggerRepository rs = new CustomLoggerRepository(new RootLogger((Level) Level.DEBUG), workingDir);
-            LogManager.setRepositorySelector(new DefaultRepositorySelector(rs), guard);
-        } catch (IllegalArgumentException e) {
-            //pass already installed
-            int x = 0;
-        }
-        ThreadGroup threadGroup = Thread.currentThread().getThreadGroup();
-        String name = threadGroup.getName();
-
-        CustomLoggerRepository.register(name, id(false));
-
     }
 
     private ExcludingKeywordFilter keywordFilter(SourceList sourceList, Source source) {
@@ -303,7 +288,15 @@ public class Crawl {
 //        if(source.get(Source.))
     }
 
-    public String id(boolean withDates) {
+    public String id(boolean withDates){
+        return id(source, from, to, withDates);
+    }
+
+    public static String id(Source source){
+        return id(source, null, null, false);
+    }
+
+    public static String id(Source source, LocalDate from, LocalDate to, boolean withDates) {
         StringBuilder sb = new StringBuilder();
         String standardName = source.get(Source.STANDARD_NAME);
         standardName = standardName.toLowerCase().replaceAll(" ", "-");
@@ -316,6 +309,7 @@ public class Crawl {
         }
         return sb.toString();
     }
+
 
     private String resolveQuery(SourceList sourceList, Source list) {
         

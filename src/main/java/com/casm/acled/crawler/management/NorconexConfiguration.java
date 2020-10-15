@@ -11,6 +11,7 @@ import com.norconex.collector.http.crawler.URLCrawlScopeStrategy;
 import com.norconex.collector.http.delay.impl.GenericDelayResolver;
 import com.norconex.collector.http.sitemap.impl.StandardSitemapResolverFactory;
 import com.norconex.collector.http.url.impl.GenericLinkExtractor;
+import com.norconex.collector.http.url.impl.XMLFeedLinkExtractor;
 import com.norconex.importer.ImporterConfig;
 import com.norconex.importer.handler.IImporterHandler;
 import com.norconex.importer.handler.filter.AbstractDocumentFilter;
@@ -164,6 +165,7 @@ public class NorconexConfiguration {
         }
 
         ssrf.setLenient(true);
+        ssrf.setEscalateErrors(true);
 
         crawler.setSitemapResolverFactory(ssrf);
 
@@ -177,7 +179,8 @@ public class NorconexConfiguration {
         GenericLinkExtractor gle = new GenericLinkExtractor();
         gle.setIgnoreNofollow(ignoreRobots);
         gle.setCharset(StandardCharsets.UTF_8.toString());
-        crawler.setLinkExtractors(gle);
+        XMLFeedLinkExtractor xmlfle = new XMLFeedLinkExtractor();
+        crawler.setLinkExtractors(gle, xmlfle);
 
         // create the url filters - e.g. regex filters
         // url regex match

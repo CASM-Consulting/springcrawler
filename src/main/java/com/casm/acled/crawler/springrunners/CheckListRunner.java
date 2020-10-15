@@ -63,7 +63,7 @@ public class CheckListRunner implements CommandLineRunner{
         crawlArgs = argsService.get();
 
         crawlArgs.raw.program = "check";
-        crawlArgs.raw.sourceLists = ImmutableList.of("fake-net");
+        crawlArgs.raw.sourceLists = ImmutableList.of("mexico-1");
 
         JCommander.newBuilder()
                 .addObject(crawlArgs.raw)

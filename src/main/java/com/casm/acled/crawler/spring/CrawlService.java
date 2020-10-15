@@ -10,6 +10,7 @@ import com.casm.acled.crawler.management.CrawlArgsService;
 import com.casm.acled.crawler.scraper.ACLEDCommitter;
 import com.casm.acled.crawler.scraper.ACLEDImporter;
 import com.casm.acled.crawler.reporting.Reporter;
+import com.casm.acled.crawler.util.CustomLoggerRepository;
 import com.casm.acled.crawler.util.Util;
 import com.casm.acled.dao.entities.ArticleDAO;
 import com.casm.acled.dao.entities.SourceDAO;
@@ -17,11 +18,21 @@ import com.casm.acled.dao.entities.SourceListDAO;
 import com.casm.acled.entities.source.Source;
 import com.casm.acled.entities.sourcelist.SourceList;
 import com.google.common.collect.ImmutableList;
+import com.norconex.collector.http.crawler.HttpCrawlerConfig;
+import com.norconex.collector.http.data.HttpCrawlData;
 import com.norconex.collector.http.robot.RobotsTxt;
 import com.norconex.collector.http.robot.impl.StandardRobotsTxtProvider;
+import com.norconex.collector.http.sitemap.ISitemapResolver;
+import com.norconex.collector.http.sitemap.SitemapURLAdder;
+import com.norconex.collector.http.sitemap.impl.StandardSitemapResolverFactory;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.log4j.Level;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.spi.DefaultRepositorySelector;
+import org.apache.log4j.spi.LoggerRepository;
+import org.apache.log4j.spi.RootLogger;
 import org.glassfish.jersey.client.ClientProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,9 +46,18 @@ import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalUnit;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 
 @Component
@@ -83,9 +103,6 @@ public class CrawlService {
 
         if(maybesSourceList.isPresent() && maybeSource.isPresent()) {
 
-//            ACLEDImporter importer = new ACLEDImporter(articleDAO, maybeSource.get(), sourceListDAO, true);
-//            importer.setMaxArticles(10);
-
             ACLEDCommitter committer = new ACLEDCommitter(articleDAO, maybeSource.get(), sourceListDAO, true);
             committer.setMaxArticles(10);
 
@@ -95,10 +112,7 @@ public class CrawlService {
             args.sourceLists = ImmutableList.of(maybesSourceList.get());
             args.depth = 3;
 
-            Crawl crawl = new Crawl(args, committer, reporter);
-//            Crawl crawl = new Crawl(args, importer, reporter, ImmutableList.of() );
-//            Crawl crawl = new Crawl(args, importer, reporter);
-//            crawl.getConfig().crawler().setIgnoreSitemap(false);
+            Crawl crawl = new Crawl(args, committer, reporter, ImmutableList.of());
             crawl.run();
         } else {
 
@@ -136,10 +150,14 @@ public class CrawlService {
 
         Thread thread = new Thread(tg, () -> {
 
+            configureLogging(args.workingDir, Crawl.id(args.source));
+
 //            ACLEDImporter importer = new ACLEDImporter(articleDAO, source, sourceListDAO, true);
             ACLEDCommitter committer = new ACLEDCommitter(articleDAO, source, sourceListDAO, true);
 
-            Crawl crawl = new Crawl(args, committer, reporter);
+            List<String> discoveredSitemaps = getSitemaps(source);
+
+            Crawl crawl = new Crawl(args, committer, reporter, discoveredSitemaps);
 
             crawl.run();
         });
@@ -161,6 +179,64 @@ public class CrawlService {
             throw new RuntimeException(thrown.get());
         }
 
+    }
+
+    private void configureLogging(Path workingDir, String id){
+
+        try {
+            Object guard = new Object();
+
+            LoggerRepository rs = new CustomLoggerRepository(new RootLogger((Level) Level.DEBUG), workingDir);
+            LogManager.setRepositorySelector(new DefaultRepositorySelector(rs), guard);
+        } catch (IllegalArgumentException e) {
+            //pass already installed
+            int x = 0;
+        }
+        ThreadGroup threadGroup = Thread.currentThread().getThreadGroup();
+        String name = threadGroup.getName();
+
+        CustomLoggerRepository.register(name, id);
+
+    }
+
+    public Set<String> recentSitemapURLs(String urlRoot, List<String> sitemaps) {
+        StandardSitemapResolverFactory ssrf = new StandardSitemapResolverFactory();
+        ssrf.setLenient(true);
+
+        long recently = LocalDateTime.now().minus(3, ChronoUnit.DAYS)
+                .toInstant(ZoneOffset.UTC).toEpochMilli();
+
+        ssrf.setFrom(recently);
+
+        HttpCrawlerConfig hcc = new HttpCrawlerConfig();
+
+        hcc.setId(Util.getID(urlRoot));
+        hcc.setWorkDir(Paths.get("sitemap-check").toFile());
+
+        ISitemapResolver resolver = ssrf.createSitemapResolver(hcc, false);
+        HttpClient httpClient = HttpClientBuilder.create().build();
+
+        final Set<String> urls = new HashSet<>();
+
+        SitemapURLAdder adder = new SitemapURLAdder() {
+            @Override
+            public void add(HttpCrawlData baseURL) {
+                String url = baseURL.getReference( );
+                if(!url.isEmpty() ) {
+                    urls.add( baseURL.getReference( ) );
+                }
+                if(urls.size() > 10) {
+
+                    resolver.stop();
+                }
+            }
+        };
+
+        resolver.resolveSitemaps(httpClient, urlRoot, sitemaps.toArray(new String[]{}), adder,true);
+
+        resolver.stop();
+
+        return urls;
     }
 
     public Map<String,String> getRobots(String url) {
@@ -250,7 +326,7 @@ public class CrawlService {
         return sitemaps;
     }
 
-    public List<String> getSitemaps(Source source) {
+    public List<String> getSitemaps3(Source source) {
 
         String url = source.get(Source.LINK);
 
@@ -268,57 +344,69 @@ public class CrawlService {
     /**
      * TODO(andy) how do we use STANDARD_SITEMAP_LOCS - won't this mess with "hasSiteMaps()"?
      */
-    public List<String> getSitemaps3(Source source) {
+    public List<String> getSitemaps(Source source) {
 
         String url = source.get(Source.LINK);
-        List<String> predefinedSitemaps = source.get(Source.CRAWL_SITEMAP_LOCATIONS);
 
         url = Util.ensureHTTP(url, false);
 
-        List<String> sitemaps = new ArrayList<>();
+        url = followRedirects(url);
 
-        if(url == null || url.isEmpty()) {
+        Set<String> sitemaps = new HashSet<>();
 
-            logger.warn("empty URL {}", (String)source.get(Source.STANDARD_NAME));
+        // Add standard ones
+        String _url = url;
+        sitemaps.addAll(STANDARD_SITEMAP_LOCS.stream().map(s->_url+(_url.endsWith("/")?"":"/")+s).collect(Collectors.toList()));
 
-        } else {
+        // Attempt to discover sitemap location from robots.txt
+        SitemapParser sitemapParser = new SitemapParser();
+        try {
+            Set<String> sitemapLocations = sitemapParser.getSitemapLocations(url);
+            sitemaps.addAll(sitemapLocations);
+        } catch (InvalidSitemapUrlException e) {
+            //pass
+        }
 
-            if (source.isFalse(Source.CRAWL_DISABLE_SITEMAP_DISCOVERY)) {
+        List<String> contactableSitemaps = checkURLs(new ArrayList<>(sitemaps));
 
-                // Add standard ones
-                sitemaps.addAll(STANDARD_SITEMAP_LOCS);
+        return contactableSitemaps;
+    }
 
-                // Attempt to discover sitemap location from robots.txt
 
-                SitemapParser sitemapParser = new SitemapParser();
-                try {
+    public List<String> checkURLs(List<String> urls) {
+        Client client = ClientBuilder.newClient();
 
-                    Set<String> sitemapLocations = sitemapParser.getSitemapLocations(url);
-                    sitemaps = new ArrayList<>(sitemapLocations);
-                } catch (InvalidSitemapUrlException e) {
+        List<String> pass = new ArrayList<>();
 
-                    // If this fails (connected but errored), ensure all redirects are followed, then try again
-                    try {
-
-                        url = followRedirects(url);
-                        Set<String> sitemapLocations = sitemapParser.getSitemapLocations(url);
-
-                        sitemaps = new ArrayList<>(sitemapLocations);
-                    } catch (InvalidSitemapUrlException | UrlConnectionException ee) {
-                        // give up
-                    }
-                } catch (UrlConnectionException e) {
-                    // give up
-                }
+        for (String url : urls ) {
+            if(checkURL(url, client)) {
+                pass.add(url);
             }
         }
 
-        if (predefinedSitemaps != null) {
-            // add in any locations that were pre-defined on the Source itself
-            sitemaps.addAll(predefinedSitemaps);
+        return pass;
+    }
+
+    public boolean checkURL(String url, Client client) {
+        WebTarget target = client.target(url);
+
+        try {
+            Invocation.Builder invocationBuilder = target.request();
+
+            invocationBuilder.get(String.class);
+
+        } catch (WebApplicationException e) {
+
+            return false;
         }
 
-        return sitemaps;
+        return true;
+    }
+
+    public boolean checkURL(String url) {
+        Client client = ClientBuilder.newClient();
+
+        return checkURL(url, client);
     }
 
     public List<String> getSitemaps2(Source source) {
@@ -353,7 +441,7 @@ public class CrawlService {
         WebTarget target = client.target(url);
 //        target.property(ClientProperties.FOLLOW_REDIRECTS, Boolean.TRUE);
         try {
-            Invocation.Builder invocationBuilder = target.request(MediaType.TEXT_HTML);
+            Invocation.Builder invocationBuilder = target.request();
 
             invocationBuilder.get(String.class);
 
