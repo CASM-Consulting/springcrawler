@@ -21,6 +21,20 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.function.Supplier;
 
+
+// qiwei added for testing, delete later:
+import java.nio.file.StandardOpenOption;
+import java.util.*;
+import java.io.*;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVPrinter;
+import org.apache.commons.csv.QuoteMode;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import org.apache.commons.io.IOUtils;
+
+
 public class ACLEDCommitter implements ICommitter {
 
     protected static final Logger logger = LoggerFactory.getLogger(ACLEDImporter.class);
@@ -90,6 +104,18 @@ public class ACLEDCommitter implements ICommitter {
                 return;
             }
 
+            // qiwei added for record writing
+            StringWriter writer = new StringWriter();
+            try {
+                IOUtils.copy(inputStream, writer, properties.getString("document.contentEncoding"));
+            }
+            catch (Exception ex) {
+                String url = properties.getString("document.reference");
+                throw new RuntimeException("ERROR: Failed to retrieve web content for url: " + url);
+            }
+            String theString = writer.toString();
+
+
             String articleText = properties.getString( ScraperFields.SCRAPED_ARTICLE);
             String title = properties.getString( ScraperFields.SCRAPED_TITLE);
             String date = properties.getString( ScraperFields.SCRAPED_DATE);
@@ -129,8 +155,44 @@ public class ACLEDCommitter implements ICommitter {
                 article = article.put(Article.SOURCE_ID, source.id());
                 articleDAO.create(article);
             }
+
+            // qiwei added for testing output
+            saveToLocal(article, Paths.get("/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports/test_scraper_tagger/test.csv"));
         }
 
+    }
+
+    // qiwei added for testing output
+    public void saveToLocal(Article article, Path path) {
+        try {
+
+            OutputStream outputStream = java.nio.file.Files.newOutputStream(path, StandardOpenOption.APPEND, StandardOpenOption.CREATE);
+            PrintWriter writer = new PrintWriter(new BufferedWriter(new OutputStreamWriter(outputStream, StandardCharsets.UTF_8)), false);
+            CSVPrinter csv = new CSVPrinter(writer, CSVFormat.EXCEL.withQuoteMode(QuoteMode.NON_NUMERIC));
+
+            Map<String, String> map = toMapWithColumn(article, Arrays.asList("URL", "TEXT", "DATE", "TITLE"));
+            List<String> list = new ArrayList<String>(map.values());
+            csv.printRecord(list);
+            csv.close();
+
+        }
+
+        catch (Exception ex){
+            ex.printStackTrace();
+
+        }
+    }
+
+    // qiwei added for testing output
+    public Map<String, String> toMapWithColumn (Article article, List<String> columns) {
+        Map<String, String> props = new LinkedHashMap();
+        for (String column: columns) {
+            Object value = article.get(column);
+            String finalValue = value == null ? "" : value.toString();
+            props.put(column, finalValue);
+        }
+
+        return props;
     }
 
     @Override
