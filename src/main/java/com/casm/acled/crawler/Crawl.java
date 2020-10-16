@@ -185,7 +185,7 @@ public class Crawl {
         }
 
         if (processFlag.equals("norconex")) {
-            DOMTagger documentTagger = ACLEDTagger.load(args.scrapersDir, source);
+            DOMTagger documentTagger = new ACLEDTagger(args.scrapersDir, source).get();
             Map<String, String> replacementParams = new HashMap<String, String>();
             replacementParams.put("<script.*?>.*?<\\/script>", "");
             ACLEDTransformer tempTransformer = new ACLEDTransformer(replacementParams);
