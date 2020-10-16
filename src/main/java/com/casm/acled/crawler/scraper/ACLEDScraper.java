@@ -35,6 +35,7 @@ import uk.ac.susx.tag.norconex.scraping.GeneralSplitterFactory;
 import uk.ac.susx.tag.norconex.scraping.IForumSplitter;
 import uk.ac.susx.tag.norconex.scraping.POJOHTMLMatcherDefinition;
 import uk.ac.susx.tag.norconex.scraping.Post;
+import uk.ac.susx.tag.norconex.utils.InvalidCSSQueryException;
 
 public class ACLEDScraper implements IHttpDocumentProcessor {
 
@@ -90,6 +91,7 @@ public class ACLEDScraper implements IHttpDocumentProcessor {
         scraper = new GeneralSplitterFactory(scraperDef);
         splitter = scraper.create();
     }
+
 
     private Optional<String> maybeGet(Post post, String key) {
         if(post.containsKey(key) &&

@@ -105,6 +105,7 @@ public class CrawlerDirectRunner implements CommandLineRunner {
         crawlArgs.raw.source = "Imagen del Golfo";
 //        crawlArgs.raw.source = "Milenio";
 //        crawlArgs.raw.source = "MiMorelia";
+//        crawlArgs.raw.source = "Sintesis";
         crawlArgs.raw.sourceLists = ImmutableList.of("mexico-1");
 //        crawlArgs.raw.sourceLists = ImmutableList.of("fake-net");
         crawlArgs.raw.from = "2020-09-27";
@@ -122,12 +123,9 @@ public class CrawlerDirectRunner implements CommandLineRunner {
         crawlArgs.init();
 
         // added here for testing; need to remove afterwards, probably should not assign it like this;
-//        crawlArgs.source = crawlArgs.source.put(Source.SCRAPER_RULE_ARTICLE, "[{\"field\":\"root/root\",\"tags\":[{\"tag\":\"div\",\"class\":\"siete60\"}]},{\"field\":\"field.name/article\",\"tags\":[{\"custom\":\"div#contenido\"}]}]");
-//        crawlArgs.source = crawlArgs.source.put(Source.SCRAPER_RULE_TITLE, "[{\"field\":\"root/root\",\"tags\":[{\"tag\":\"div\",\"class\":\"siete60\"}]},{\"field\":\"field.name/title\",\"tags\":[{\"tag\":\"div\",\"class\":\"SlaBLK22\"}]}]");
-        crawlArgs.source = crawlArgs.source.put(Source.SCRAPER_RULE_ARTICLE, "div.siete60 div#contenido");
-        crawlArgs.source = crawlArgs.source.put(Source.SCRAPER_RULE_TITLE, "div.siete60 div.SlaBLK22, div.siete60 div#contenido"); // test multiple selectors;
-        crawlArgs.source = crawlArgs.source.put(Source.SCRAPER_RULE_DATE, "div.siete60 div.RobBLK12");
-
+//        crawlArgs.source = crawlArgs.source.put(Source.SCRAPER_RULE_ARTICLE, "div.siete60 div#contenido");
+//        crawlArgs.source = crawlArgs.source.put(Source.SCRAPER_RULE_TITLE, "div.siete60 div.SlaBLK22, div.siete60 div#contenido"); // multiple selectors;
+//        crawlArgs.source = crawlArgs.source.put(Source.SCRAPER_RULE_DATE, "div.siete60 div.RobBLK12");
 
         crawlService.run(crawlArgs);
 //        collectExamples(1657,1);

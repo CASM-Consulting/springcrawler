@@ -5,6 +5,7 @@ import com.casm.acled.crawler.reporting.Event;
 import com.casm.acled.crawler.reporting.Report;
 import com.casm.acled.crawler.reporting.Reporter;
 
+import com.casm.acled.entities.source.Source;
 import com.enioka.jqm.api.*;
 
 import org.quartz.CronExpression;
@@ -108,7 +109,6 @@ public class SchedulerService {
         Date date = Date.from(zonedNow.toInstant());
 
         return date;
-
     }
 
     private CronExpression cron(String expression) {

@@ -280,7 +280,6 @@ public class ACLEDTagger {
 
     }
 
-
     public void addDOMDetailsSingleFromQuery(String query, String fromField, String toField, DOMTagger tagger) {
 
         tagger.addDOMExtractDetails(new DOMExtractDetails(query, toField, true, "text"));
