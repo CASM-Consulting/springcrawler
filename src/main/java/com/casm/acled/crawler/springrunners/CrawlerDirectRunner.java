@@ -3,9 +3,11 @@ package com.casm.acled.crawler.springrunners;
 import com.casm.acled.configuration.ObjectMapperConfiguration;
 import com.casm.acled.crawler.management.CrawlArgs;
 import com.casm.acled.crawler.management.CrawlArgsService;
+import com.casm.acled.crawler.management.CrawlerSweep;
 import com.casm.acled.crawler.reporting.Reporter;
 import com.casm.acled.crawler.spring.CrawlService;
 import com.casm.acled.dao.entities.SourceListDAO;
+import com.casm.acled.entities.source.Source;
 import com.google.common.collect.ImmutableList;
 import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
 import org.camunda.bpm.spring.boot.starter.rest.CamundaBpmRestJerseyAutoConfiguration;
@@ -99,34 +101,37 @@ public class CrawlerDirectRunner implements CommandLineRunner {
         crawlArgs.raw.skipKeywords = false;
         crawlArgs.raw.program = "crawl";
 
-        crawlArgs.raw.source = "Sintesis";
+//        crawlArgs.raw.source = "1";
+//        crawlArgs.raw.source = "Imagen del Golfo";
+        crawlArgs.raw.source = "La Silla Rota";
+//        crawlArgs.raw.source = "Sintesis";
 //        crawlArgs.raw.source = "8 Columnas";
 //        crawlArgs.raw.source = "El Sol de Acapulco";
 //        crawlArgs.raw.source = "Siglo de Durango";
 //        crawlArgs.raw.source = "Imagen del Golfo";
 //        crawlArgs.raw.source = "Milenio";
 //        crawlArgs.raw.source = "MiMorelia";
-//        crawlArgs.raw.source = "nncMX";
-//        crawlArgs.raw.source = "El Sol de Sinaloa";
+//        crawlArgs.raw.source = "Sintesis";
         crawlArgs.raw.sourceLists = ImmutableList.of("mexico-1");
-//        crawlArgs.raw.sourceList = "fake-net";
+//        crawlArgs.raw.sourceLists = ImmutableList.of("fake-net");
         crawlArgs.raw.from = "2020-10-01";
-        crawlArgs.raw.to =  "2021-01-20";
-
-        // ANDY CONFIG
-//        crawlArgs.raw.workingDir = "/Users/adr27/Documents/git/springcrawler/test";
-//        crawlArgs.raw.scrapersDir = "/Users/adr27/Documents/git/acled-scrapers/";
-
-        // SIMON CONFIG
-        crawlArgs.raw.workingDir = "/home/sw206/jqm/jqm-2.2.5/test";
+        crawlArgs.raw.to =  "2021-01-01";
+        crawlArgs.raw.workingDir = "test";
+//        crawlArgs.raw.workingDir = "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/JQM_ROOT/test";
         crawlArgs.raw.scrapersDir = "/home/sw206/git/acled-scrapers/";
-
-//        crawlArgs.raw.workingDir = "test";
+//        crawlArgs.raw.scrapersDir = "/Users/adr27/Documents/git/acled-scrapers/";
 //        crawlArgs.raw.scrapersDir = "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/springcrawler/testscrapers/generic/";
+//        crawlArgs.raw.scrapersDir = "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/acled-scrapers/";
+
         crawlArgs.raw.depth = 0;
 //        crawlArgs.raw.ignoreSiteMap = true;
 
         crawlArgs.init();
+
+        // added here for testing; need to remove afterwards, probably should not assign it like this;
+//        crawlArgs.source = crawlArgs.source.put(Source.SCRAPER_RULE_ARTICLE, "div.siete60 div#contenido");
+//        crawlArgs.source = crawlArgs.source.put(Source.SCRAPER_RULE_TITLE, "div.siete60 div.SlaBLK22, div.siete60 div#contenido"); // multiple selectors;
+//        crawlArgs.source = crawlArgs.source.put(Source.SCRAPER_RULE_DATE, "div.siete60 div.RobBLK12");
 
         crawlService.run(crawlArgs);
 //        collectExamples(1657,1);

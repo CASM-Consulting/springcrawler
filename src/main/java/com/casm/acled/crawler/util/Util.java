@@ -148,9 +148,14 @@ public class Util implements CommandLineRunner {
     }
 
     // returns a web scraper based on a job spect of last_scrape file
-    public static String processJSON(File scraperLocation) throws IOException {
-        String json = Files.asCharSource(scraperLocation, Charset.defaultCharset()).read();
-        return processJobJSON(json);
+    public static String processJSON(File scraperLocation)  {
+        try {
+
+            String json = Files.asCharSource(scraperLocation, Charset.defaultCharset()).read();
+            return processJobJSON(json);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     // returns a web scraper based on a job spect of last_scrape file
@@ -741,7 +746,7 @@ public class Util implements CommandLineRunner {
             String url = "http://www."+i+".com:5000";
             Source source = base.put(Source.LINK, url)
                     .put(Source.STANDARD_NAME, Integer.toString(i))
-                    .put(Source.CRAWL_SCRAPER_PATH, "testscrapers/generic")
+                    .put(Source.CRAWL_SCRAPER_PATH, "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/springcrawler/testscrapers/generic")
                     .put(Source.TIMEZONE, "Europe/London")
                     .put(Source.LOCALES, ImmutableList.of("en"))
                     .put(Source.DATE_FORMAT, ImmutableList.of("ISO:/yyyy-MM-dd"))
