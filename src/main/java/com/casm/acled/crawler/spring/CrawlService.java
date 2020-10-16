@@ -353,10 +353,6 @@ public class CrawlService {
 
         Set<String> sitemaps = new HashSet<>();
 
-        // Add standard ones
-        String _url = url;
-        sitemaps.addAll(STANDARD_SITEMAP_LOCS.stream().map(s->_url+(_url.endsWith("/")?"":"/")+s).collect(Collectors.toList()));
-
         // Attempt to discover sitemap location from robots.txt
         SitemapParser sitemapParser = new SitemapParser();
         try {
@@ -364,6 +360,12 @@ public class CrawlService {
             sitemaps.addAll(sitemapLocations);
         } catch (InvalidSitemapUrlException e) {
             //pass
+        }
+
+        if(sitemaps.isEmpty()) {
+            // Try standard ones
+            String _url = url;
+            sitemaps.addAll(STANDARD_SITEMAP_LOCS.stream().map(s->_url+(_url.endsWith("/")?"":"/")+s).collect(Collectors.toList()));
         }
 
         List<String> contactableSitemaps = checkURLs(new ArrayList<>(sitemaps));

@@ -99,7 +99,8 @@ public class CrawlerDirectRunner implements CommandLineRunner {
         crawlArgs.raw.skipKeywords = false;
         crawlArgs.raw.program = "crawl";
 
-        crawlArgs.raw.source = "Sintesis";
+        crawlArgs.raw.source = "La Silla Rota";
+//        crawlArgs.raw.source = "Sintesis";
 //        crawlArgs.raw.source = "8 Columnas";
 //        crawlArgs.raw.source = "El Sol de Acapulco";
 //        crawlArgs.raw.source = "Siglo de Durango";
