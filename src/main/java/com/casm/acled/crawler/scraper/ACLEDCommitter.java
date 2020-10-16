@@ -44,18 +44,20 @@ public class ACLEDCommitter implements ICommitter {
     private Integer maxArticles;
     private final SourceListDAO sourceListDAO;
     private final boolean sourceRequired;
+    private final boolean recordRaw;
 
     private Supplier<HttpCollector> collectorSupplier;
 
 
     public ACLEDCommitter(ArticleDAO articleDAO, Source source,
-                         SourceListDAO sourceListDAO, boolean sourceRequired) {
+                         SourceListDAO sourceListDAO, boolean sourceRequired, boolean recordRaw) {
 
         this.articleDAO = articleDAO;
         this.source = source;
         this.sourceListDAO = sourceListDAO;
         this.sourceRequired = sourceRequired;
         maxArticles = null;
+        this.recordRaw = recordRaw;
     }
 
     public void setCollectorSupplier(Supplier<HttpCollector> collectorSupplier) {
@@ -144,6 +146,10 @@ public class ACLEDCommitter implements ICommitter {
                 article = article.put(Article.DATE, parsedDate.toLocalDate());
             }
 
+            if (recordRaw) {
+                article = article.put(Article.SCRAPE_RAW_HTML, rawHtml);
+            }
+
             int depth = properties.getInt("collector.depth");
             article = article.put(Article.CRAWL_DEPTH, depth);
 
@@ -157,10 +163,9 @@ public class ACLEDCommitter implements ICommitter {
             }
 
             // qiwei added for testing output
-            saveToLocal(article, Paths.get("/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports/test_scraper_tagger/test_nnorconex.csv"));
+            saveToLocal(article, Paths.get("/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports/test_scraper_tagger/Imagen del Golfo_scraper_test.csv"));
 //            saveHtmlToLocal(rawHtml, url, Paths.get("/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports/test_scraper_tagger/Milenio_htmls.csv"));
         }
-
     }
 
     // qiwei added for testing output
@@ -171,7 +176,7 @@ public class ACLEDCommitter implements ICommitter {
             PrintWriter writer = new PrintWriter(new BufferedWriter(new OutputStreamWriter(outputStream, StandardCharsets.UTF_8)), false);
             CSVPrinter csv = new CSVPrinter(writer, CSVFormat.EXCEL.withQuoteMode(QuoteMode.NON_NUMERIC));
 
-            Map<String, String> map = toMapWithColumn(article, Arrays.asList("URL", "TEXT", "DATE", "TITLE"));
+            Map<String, String> map = toMapWithColumn(article, Arrays.asList("URL", "TEXT", "DATE", "TITLE","SCRAPE_RAW_HTML"));
             List<String> list = new ArrayList<String>(map.values());
             csv.printRecord(list);
             csv.close();
