@@ -1,12 +1,8 @@
 package com.casm.acled.crawler.scraper;
 
-import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.StringReader;
 import java.nio.file.Path;
 import java.util.*;
 
@@ -14,31 +10,22 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 
 import com.casm.acled.crawler.ScraperNotFoundException;
-import com.casm.acled.crawler.reporting.Reporter;
 import com.casm.acled.crawler.util.Util;
-import com.casm.acled.entities.EntityVersions;
 import com.casm.acled.entities.source.Source;
-import com.google.common.collect.ImmutableList;
-import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.StringUtils;
 
-import com.norconex.commons.lang.config.XMLConfigurationUtil;
 import com.norconex.importer.doc.ImporterMetadata;
 import com.norconex.importer.handler.ImporterHandlerException;
 import com.norconex.importer.handler.tagger.impl.DOMTagger.DOMExtractDetails;
 import com.norconex.importer.util.DOMUtil;
 
 import com.norconex.importer.handler.tagger.impl.*;
-import com.norconex.importer.handler.tagger.impl.DOMTagger.DOMExtractDetails;
-import org.apache.xalan.xsltc.DOM;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.ac.susx.tag.norconex.scraping.GeneralSplitterFactory;
 import uk.ac.susx.tag.norconex.scraping.POJOHTMLMatcherDefinition;
 
 /**
- * @author Pascal Essiembre
- * @since 2.4.0
+ *
  */
 public class ACLEDTagger {
     // should be initialised by scraperPath, Source source, Reporter reporter(no need),
@@ -50,15 +37,13 @@ public class ACLEDTagger {
     // html file used for testing;
     String xmlstr;
 
-    private final Path scraperPath;
     public static final String JOB_JSON = "job.json";
     public static final String ARTICLE = "field.name/article";
     public static final String TITLE = "field.name/title";
     public static final String DATE = "field.name/date";
+
     private final Source source;
-
-
-    public static DOMTagger tagger;
+    private final Path scraperPath;
 
 
     public ACLEDTagger(Path path, Source source) {
@@ -92,58 +77,43 @@ public class ACLEDTagger {
         return fields;
     }
 
-    public void load() throws IOException {
-        // hoow to separate them.. all from file; all from source; part from file and part from source;
-        DOMTagger t = new DOMTagger();
+    private Map<String, List<Map<String, String>>> getDef() {
 
         String processed = Util.processJSON(scraperPath.toFile());
-        Map<String, List<Map<String, String>>> scraperDef = buildScraperDefinition(GeneralSplitterFactory.parseJsonTagSet(processed));
 
-        String articleRule = source.get(Source.SCRAPER_RULE_ARTICLE);
-        String titleRule = source.get(Source.SCRAPER_RULE_TITLE);
-        String dateRule = source.get(Source.SCRAPER_RULE_DATE);
-
-
-        if (articleRule!=null) {
-//            Map<String, List<Map<String, String>>> articleDef = buildScraperDefinition(GeneralSplitterFactory.parseJsonTagSet(articleRule));
-//            addDOMDetailsSingle(articleDef, ARTICLE, ScraperFields.SCRAPED_ARTICLE, t);
-            addDOMDetailsSingleFromQuery(articleRule, ARTICLE, ScraperFields.SCRAPED_ARTICLE, t);
-        }
-        else {
-            addDOMDetailsSingle(scraperDef, ARTICLE, ScraperFields.SCRAPED_ARTICLE, t);
-        }
-
-        if (titleRule!=null) {
-//            Map<String, List<Map<String, String>>> titleDef = buildScraperDefinition(GeneralSplitterFactory.parseJsonTagSet(titleRule));
-//            addDOMDetailsSingle(titleDef, TITLE, ScraperFields.SCRAPED_TITLE, t);
-            addDOMDetailsSingleFromQuery(titleRule, TITLE, ScraperFields.SCRAPED_TITLE, t);
-
-        }
-        else {
-            addDOMDetailsSingle(scraperDef, TITLE, ScraperFields.SCRAPED_TITLE, t);
-        }
-
-        if (dateRule!=null) {
-//            Map<String, List<Map<String, String>>> dateDef = buildScraperDefinition(GeneralSplitterFactory.parseJsonTagSet(dateRule));
-//            addDOMDetailsSingle(dateDef, DATE, ScraperFields.SCRAPED_DATE, t);
-            addDOMDetailsSingleFromQuery(dateRule, DATE, ScraperFields.SCRAPED_DATE, t);
-        }
-        else {
-            addDOMDetailsSingle(scraperDef, DATE, ScraperFields.SCRAPED_DATE, t);
-        }
-//        addDOMDetailsAll(scraperDef, t);
-        tagger = t;
-    }
-
-    public static DOMTagger load(Path path, Source source) {
-        ACLEDTagger acledTagger = new ACLEDTagger(path, source);
         try {
-             acledTagger.load();
-            return tagger;
+
+            Map<String, List<Map<String, String>>> scraperDef = buildScraperDefinition(GeneralSplitterFactory.parseJsonTagSet(processed));
+            return scraperDef;
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
+
+    private void loadRule(Source source, Map<String, List<Map<String, String>>> scraperDef, DOMTagger tagger, String sourceField, String prop, String pipelineField) {
+        if (source.hasValue(sourceField)) {
+            String articleRule = source.get(sourceField);
+            addDOMDetailsSingleFromQuery(articleRule, prop, pipelineField, tagger);
+        } else {
+            addDOMDetailsSingle(scraperDef, prop, pipelineField, tagger);
+        }
+
+    }
+
+    public DOMTagger get()  {
+        // hoow to separate them.. all from file; all from source; part from file and part from source;
+        DOMTagger tagger = new DOMTagger();
+
+        Map<String, List<Map<String, String>>> scraperDef = getDef();
+
+        loadRule(source, scraperDef, tagger, Source.SCRAPER_RULE_ARTICLE, ARTICLE, ScraperFields.SCRAPED_ARTICLE);
+        loadRule(source, scraperDef, tagger, Source.SCRAPER_RULE_TITLE, TITLE, ScraperFields.SCRAPED_TITLE);
+        loadRule(source, scraperDef, tagger, Source.SCRAPER_RULE_DATE, DATE, ScraperFields.SCRAPED_DATE);
+
+        return tagger;
+    }
+
+
 
     public static String constructRoot(Map<String, List<Map<String, String>>> entry) {
         String rootSelector = "";
@@ -284,7 +254,6 @@ public class ACLEDTagger {
     public void addDOMDetailsSingleFromQuery(String query, String fromField, String toField, DOMTagger tagger) {
 
         tagger.addDOMExtractDetails(new DOMExtractDetails(query, toField, true, "text"));
-
     }
 
     // used for testing;
@@ -338,8 +307,8 @@ public class ACLEDTagger {
         ACLEDTransformer transformer = new ACLEDTransformer(params);
 
         ACLEDTagger a = new ACLEDTagger("/Users/pengqiwei/Downloads/My/PhDs/acled_thing/acled-scrapers/24chasabg");
-        a.load();
-        DOMTagger t = a.tagger;
+        a.get();
+        DOMTagger t = a.get();
 
         a.setXML();
         // test transformer here, replace all scripts in the source html and return the replaced string to tagger;

@@ -88,68 +88,10 @@ public class ACLEDScraper implements IHttpDocumentProcessor {
 
         String processed = Util.processJSON(scraperPath.toFile());
         Map<String, List<Map<String, String>>> scraperDef = buildScraperDefinition(GeneralSplitterFactory.parseJsonTagSet(processed));
-
-        List<Map<String, String>> content = scraperDef.get("root/root");
-
-        // the body scope for user input queries;
-        // in order to make it compatible to use the mix of both user input query and query loaded from job.json file.
-        // I fixed the scope to be body and added root/root's value to corresponding field's list for job.json loaded instances;
-        List<Map<String, String>> scopeList = new ArrayList<>();
-        Map<String, String> scope = new HashMap<String, String>() {{ put("custom", "body");}};
-        scopeList.add(scope);
-        scraperDef.put("root/root", scopeList);
-
-        // add article, title and date rules;
-        String articleRule = source.get(Source.SCRAPER_RULE_ARTICLE);
-        String titleRule = source.get(Source.SCRAPER_RULE_TITLE);
-        String dateRule = source.get(Source.SCRAPER_RULE_DATE);
-
-        if (articleRule!=null) {
-            List<Map<String, String>> articleList = new ArrayList<>();
-            Map<String, String> articleContent = new HashMap<String, String>() {{ put("custom", articleRule);}};
-            articleList.add(articleContent);
-//            scraperDef.put("root/root", scopeList);
-            scraperDef.put(ARTICLE, articleList);
-        }
-        else {
-            List<Map<String, String>> newArticle = new ArrayList();
-            newArticle.addAll(content);
-            newArticle.addAll(scraperDef.get(ARTICLE));
-            scraperDef.put(ARTICLE, newArticle);
-        }
-
-        if (titleRule!=null) {
-            List<Map<String, String>> titleList = new ArrayList<>();
-            Map<String, String> titleContent = new HashMap<String, String>() {{ put("custom", titleRule);}};
-            titleList.add(titleContent);
-//            scraperDef.put("root/root", scopeList);
-            scraperDef.put(TITLE, titleList);
-        }
-        else {
-            List<Map<String, String>> newTitle = new ArrayList();
-            newTitle.addAll(content);
-            newTitle.addAll(scraperDef.get(TITLE));
-            scraperDef.put(TITLE, newTitle);
-        }
-//
-        if (dateRule!=null) {
-            List<Map<String, String>> dateList = new ArrayList<>();
-            Map<String, String> dateContent = new HashMap<String, String>() {{ put("custom", dateRule);}};
-            dateList.add(dateContent);
-//            scraperDef.put("root/root", scopeList);
-            scraperDef.put(DATE, dateList);
-        }
-        else {
-            List<Map<String, String>> newDate = new ArrayList();
-            newDate.addAll(content);
-            newDate.addAll(scraperDef.get(DATE));
-            scraperDef.put(DATE, newDate);
-
-        }
-
         scraper = new GeneralSplitterFactory(scraperDef);
         splitter = scraper.create();
     }
+
 
     private Optional<String> maybeGet(Post post, String key) {
         if(post.containsKey(key) &&

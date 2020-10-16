@@ -20,7 +20,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 
-public class ExcludingCustomDateMetadataTagger implements IDocumentTagger{
+public class DateTagger implements IDocumentTagger{
 
     private final String field;
     private final DateParser dateParser;
@@ -38,7 +38,7 @@ public class ExcludingCustomDateMetadataTagger implements IDocumentTagger{
     private LocalDateTime to;
 
 
-    public ExcludingCustomDateMetadataTagger(Source source, String field, DateParser dateParser, Reporter report) {
+    public DateTagger(Source source, String field, DateParser dateParser, Reporter report) {
 
         this.dateParser = dateParser.locale(getLocales(source));
         this.field = field;

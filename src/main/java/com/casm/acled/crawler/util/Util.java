@@ -148,9 +148,14 @@ public class Util implements CommandLineRunner {
     }
 
     // returns a web scraper based on a job spect of last_scrape file
-    public static String processJSON(File scraperLocation) throws IOException {
-        String json = Files.asCharSource(scraperLocation, Charset.defaultCharset()).read();
-        return processJobJSON(json);
+    public static String processJSON(File scraperLocation)  {
+        try {
+
+            String json = Files.asCharSource(scraperLocation, Charset.defaultCharset()).read();
+            return processJobJSON(json);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     // returns a web scraper based on a job spect of last_scrape file

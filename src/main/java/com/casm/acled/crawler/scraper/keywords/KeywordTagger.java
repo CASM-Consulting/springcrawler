@@ -9,14 +9,14 @@ import java.io.InputStream;
 import java.util.Objects;
 
 
-public class ExcludingKeywordTagger implements IDocumentTagger{
+public class KeywordTagger implements IDocumentTagger{
 
     private String queryConfig;
     private String field;
 
     private final LuceneMatcher matcher;
 
-    public ExcludingKeywordTagger (String field, String queryConfig) {
+    public KeywordTagger(String field, String queryConfig) {
 
         this.queryConfig = queryConfig;
         this.field = field;

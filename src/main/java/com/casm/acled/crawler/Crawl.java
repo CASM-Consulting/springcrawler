@@ -6,8 +6,7 @@ import com.casm.acled.crawler.scraper.*;
 import com.casm.acled.crawler.reporting.Reporter;
 import com.casm.acled.crawler.scraper.dates.*;
 import com.casm.acled.crawler.scraper.keywords.ExcludingKeywordFilter;
-import com.casm.acled.crawler.scraper.keywords.ExcludingKeywordTagger;
-import com.casm.acled.crawler.util.CustomLoggerRepository;
+import com.casm.acled.crawler.scraper.keywords.KeywordTagger;
 import com.casm.acled.entities.source.Source;
 import com.casm.acled.entities.sourcelist.SourceList;
 import com.norconex.collector.core.filter.impl.RegexReferenceFilter;
@@ -20,11 +19,6 @@ import com.norconex.importer.handler.filter.OnMatch;
 import com.norconex.importer.handler.filter.impl.DateMetadataFilter;
 import com.norconex.importer.handler.filter.impl.EmptyMetadataFilter;
 import com.norconex.importer.handler.transformer.impl.ReplaceTransformer;
-import org.apache.log4j.Level;
-import org.apache.log4j.LogManager;
-import org.apache.log4j.spi.DefaultRepositorySelector;
-import org.apache.log4j.spi.LoggerRepository;
-import org.apache.log4j.spi.RootLogger;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -119,7 +113,7 @@ public class Crawl {
 
         // as Simon mentioned before, want two different pipelines exist at the same time; so added to switch between them;
         // probably need to add a new parameter for it;
-        String processFlag = "scraper";
+        String processFlag = "norconex";
 
         List<AbstractDocumentFilter> filters = new ArrayList<>();
         List<IImporterHandler> handlers = new ArrayList<>();
@@ -151,7 +145,7 @@ public class Crawl {
 
 
             // here we use dateMetadataTagger
-            ExcludingCustomDateMetadataTagger dateTagger = dateTagger(source,
+            DateTagger dateTagger = dateTagger(source,
                     ZonedDateTime.of(from.atTime(0,0,0), zoneId),
                     ZonedDateTime.of(to.atTime(0,0,0), zoneId));
             handlers.add(dateTagger);
@@ -163,7 +157,7 @@ public class Crawl {
 //            filters.add(keywordFilter);
 
             // here use keywordTagger to write corresponding fields;
-            ExcludingKeywordTagger keywordTagger = keywordTagger(args.sourceLists.get(0), source);
+            KeywordTagger keywordTagger = keywordTagger(args.sourceLists.get(0), source);
             handlers.add(keywordTagger);
 
         }
@@ -191,7 +185,7 @@ public class Crawl {
         }
 
         if (processFlag.equals("norconex")) {
-            DOMTagger documentTagger = ACLEDTagger.load(args.scrapersDir, source);
+            DOMTagger documentTagger = new ACLEDTagger(args.scrapersDir, source).get();
             Map<String, String> replacementParams = new HashMap<String, String>();
             replacementParams.put("<script.*?>.*?<\\/script>", "");
             ACLEDTransformer tempTransformer = new ACLEDTransformer(replacementParams);
@@ -245,10 +239,10 @@ public class Crawl {
         return keywordFilter;
     }
 
-    private ExcludingKeywordTagger keywordTagger(SourceList sourceList, Source source) {
+    private KeywordTagger keywordTagger(SourceList sourceList, Source source) {
 
         String query = resolveQuery(sourceList, source);
-        ExcludingKeywordTagger keywordTagger = new ExcludingKeywordTagger(ScraperFields.SCRAPED_ARTICLE, query);
+        KeywordTagger keywordTagger = new KeywordTagger(ScraperFields.SCRAPED_ARTICLE, query);
 
         return keywordTagger;
     }
@@ -267,12 +261,12 @@ public class Crawl {
         return dateMetadataFilter;
     }
 
-    private ExcludingCustomDateMetadataTagger dateTagger(Source source, ZonedDateTime from, ZonedDateTime to) {
+    private DateTagger dateTagger(Source source, ZonedDateTime from, ZonedDateTime to) {
         List<String> dateFormatSpecs = source.get(Source.DATE_FORMAT);
 
         DateParser dateParser = CompositeDateParser.of(dateFormatSpecs);
 
-        ExcludingCustomDateMetadataTagger dateMetadataTagger = new ExcludingCustomDateMetadataTagger(source, ScraperFields.SCRAPED_DATE, dateParser, reporter);
+        DateTagger dateMetadataTagger = new DateTagger(source, ScraperFields.SCRAPED_DATE, dateParser, reporter);
         dateMetadataTagger.setFromTime(from);
         dateMetadataTagger.setToTime(to);
 
