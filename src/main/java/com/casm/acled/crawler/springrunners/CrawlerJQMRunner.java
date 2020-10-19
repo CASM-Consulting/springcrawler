@@ -1,5 +1,6 @@
 package com.casm.acled.crawler.springrunners;
 
+import com.beust.jcommander.JCommander;
 import com.casm.acled.configuration.ObjectMapperConfiguration;
 import com.casm.acled.crawler.management.CrawlArgs;
 import com.casm.acled.crawler.management.CrawlArgsService;
@@ -30,6 +31,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+
 //import org.springframework.shell.standard.ShellMethod;
 //import org.springframework.shell.standard.ShellComponent;
 
@@ -41,7 +45,6 @@ import java.time.LocalDate;
 // And we also need the DAOs.
 @ComponentScan(basePackages={"com.casm.acled.dao", "com.casm.acled.crawler"})
 
-//@ShellComponent
 public class CrawlerJQMRunner implements CommandLineRunner {
 
     protected static final Logger logger = LoggerFactory.getLogger(CrawlerJQMRunner.class);
@@ -123,27 +126,26 @@ public class CrawlerJQMRunner implements CommandLineRunner {
         crawlerSweep.submitJob(JQMSpringExampleCollectorV1, source, sourceList.id(), null,null, Boolean.TRUE);
     }
 
-//    @Override
-//    @ShellMethod("Translate text from one language to another.")
     public void run(String... args) throws Exception {
+        reporter.randomRunId();
 
-//        crawlerSweep.sweepAvailableScrapers(Paths.get("allscrapers"));
+        crawlArgs = argsService.get();
 
-//        sweepSourceList("balkans", LocalDate.of(2020, 5,3), LocalDate.of(2020, 5,9), Boolean.FALSE);
-//        sweepSourceList(JQMSpringCollectorV1, "Balkans", LocalDate.of(2020, 5,3), LocalDate.of(2020, 5,16), Boolean.FALSE);
-        //sweepSourceListCollectExamples(JQMSpringExampleCollectorV1, "Balkans");
+        JCommander.newBuilder()
+                .addObject(crawlArgs.raw)
+                .build()
+                .parse(args);
 
-//        sweepSourceList(JQMSpringCollectorV1, "mexico-back-code-2018", LocalDate.of(2018, 1,1), LocalDate.of(2018, 12,31), Boolean.FALSE);
-//        sweepSourceList(JQMSpringCollectorV1, "fake-net", LocalDate.now().minusDays(10), LocalDate.now(), Boolean.TRUE);
-//        sweepSourceList(JQMSpringCollectorV1, "fake-net", LocalDate.of(2020, 8,21), LocalDate.of(2020, 8,28), Boolean.TRUE);
+//        crawlArgs.workingDir = pathService.workingDir();
+//        crawlArgs.scrapersDir = pathService.scraperDir();
 
-        setCrawlArgs(JQMSpringCollectorV1, "mexico-1", LocalDate.of(2020, 10,1), LocalDate.of(2020, 10,17), Paths.get("/home/sw206/jqm/jqm-2.2.5/test"), Boolean.FALSE);
+        crawlArgs.init();
 
         crawlerSweep.sweep(ImmutableList.of(crawlArgs));
 
 //        sweepSourceList(JQMSpringCollectorV1, "fake-net", LocalDate.of(2020, 8,21), LocalDate.of(2020, 8,28), Boolean.TRUE);
 
-        //        sweepSourceCollectExamples("HRW", "Balkans");
+//        sweepSourceCollectExamples("HRW", "Balkans");
 
 //        singleSource(args[0], args[1]);
     }
