@@ -109,7 +109,6 @@ public class SchedulerService {
         Date date = Date.from(zonedNow.toInstant());
 
         return date;
-
     }
 
     private CronExpression cron(String expression) {

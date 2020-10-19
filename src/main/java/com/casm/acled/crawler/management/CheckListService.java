@@ -23,10 +23,7 @@ import com.casm.acled.entities.sourcelist.SourceList;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.mchange.lang.IntegerUtils;
 import com.norconex.collector.http.doc.HttpDocument;
-import com.opencsv.CSVReader;
-import com.opencsv.CSVWriter;
 import org.apache.commons.csv.*;
 import org.apache.commons.lang3.BooleanUtils;
 import org.slf4j.Logger;
@@ -51,7 +48,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.casm.acled.crawler.scraper.ScraperFields.*;
-import static com.casm.acled.crawler.spring.CrawlService.STANDARD_SITEMAP_LOCS;
 
 import org.springframework.shell.table.ArrayTableModel;
 import org.springframework.shell.table.BorderStyle;
@@ -225,18 +221,6 @@ public class CheckListService {
         return dateTimeService.checkExistingPasses(source, exampleGetter(scraper));
     }
 
-    public boolean hasSiteMaps(Source source) {
-        List<String> siteMaps = crawlService.getSitemaps(source);
-
-        siteMaps.removeAll(STANDARD_SITEMAP_LOCS);
-
-        if(siteMaps.isEmpty()) {
-            reporter.report(Report.of(Event.NO_SITE_MAPS).id(source.id()).message(source.get(Source.STANDARD_NAME)));
-            return false;
-        } else {
-            return true;
-        }
-    }
 
     public void checkSource(CrawlArgs args, Source source)  {
 
@@ -246,10 +230,10 @@ public class CheckListService {
         boolean scraperExists = scraperExists(args, source);
         boolean hasExamples = hasExamples(source);
         boolean hasDateFormat = hasDateFormat(source);
-        boolean hasSiteMaps = hasSiteMaps(source);
+        List<String> sitemaps = crawlService.getSitemaps(source);
 
 
-        if(hasSiteMaps) {
+        if(!sitemaps.isEmpty()) {
             reporter.report(Report.of(Event.HAS_SITE_MAPS).id(source.id()).message(source.get(Source.STANDARD_NAME)));
 
         }
@@ -279,10 +263,11 @@ public class CheckListService {
 
     }
 
-    public static interface Check {
+    public interface Check {
         String header();
         Object check();
-}
+    }
+
     public static boolean passed(Object maybeBoolean){
         try {
             Boolean b = (Boolean)maybeBoolean;
@@ -301,6 +286,7 @@ public class CheckListService {
         Object hasExamples;
         Object hasDateFormat;
         Object hasSiteMaps;
+        Object hasRecentSiteMaps = "N/A";
         Object dateParsed;
 
         Object titleScraped;
@@ -338,7 +324,16 @@ public class CheckListService {
         }
 
         try {
-            hasSiteMaps = hasSiteMaps(source);
+            List<String> sitemaps = crawlService.getSitemaps(source);
+            hasSiteMaps = !sitemaps.isEmpty();
+            if((boolean)hasSiteMaps) {
+                try {
+                    Set<String> recent = crawlService.recentSitemapURLs(source.get(Source.LINK), sitemaps);
+                    hasRecentSiteMaps = !recent.isEmpty();
+                } catch (Exception e) {
+                    hasRecentSiteMaps = e.getMessage();
+                }
+            }
         }
         catch (Exception e) {
             hasSiteMaps = e.getMessage();
@@ -384,6 +379,7 @@ public class CheckListService {
         checkValue.add(String.valueOf(hasExamples));
         checkValue.add(String.valueOf(hasDateFormat));
         checkValue.add(String.valueOf(hasSiteMaps));
+        checkValue.add(String.valueOf(hasRecentSiteMaps));
         checkValue.add(String.valueOf(dateScraped));
         checkValue.add(String.valueOf(dateParsed));
         checkValue.add(String.valueOf(titleScraped));
@@ -397,26 +393,37 @@ public class CheckListService {
 
     public void exportCrawlerSourceList(CrawlArgs args) throws IOException {
 
-        SourceList sourceList = args.sourceLists.get(0);
-        String name = sourceList.get(SourceList.LIST_NAME);
+        if (args.workingDir == null || args.path == null){
+            throw new RuntimeException("Must specify a working directory (-wd) and path (-P) to export a SourceList.");
+        }
 
-        exportCrawlerSourcesToCSV(args.workingDir, name+".csv", sourceList);
+        SourceList sourceList = args.sourceLists.get(0);
+
+        Path path = args.workingDir.resolve(args.path);
+
+        exportCrawlerSourcesToCSV(args.workingDir.resolve(path), sourceList);
     }
 
     public void importCrawlerSourceList(CrawlArgs args) throws IOException {
 
-        SourceList sourceList = args.sourceLists.get(0);
-        String name = sourceList.get(SourceList.LIST_NAME);
-
-        if (args.workingDir == null){
-            throw new RuntimeException("Must specify a working directory (-wd) to find the source list import file.");
+        if (args.workingDir == null || args.path == null){
+            throw new RuntimeException("Must specify a working directory (-wd) and path (-P) to find the source list import file.");
         }
 
-        importCrawlerSourcesFromCSV(args.workingDir.resolve(name+".csv"), EntityVersions.get(Source.class).current());
+        Path path = args.workingDir.resolve(args.path);
+
+        List<Source> sources = importCrawlerSourcesFromCSV(path, EntityVersions.get(Source.class).current());
+
+        for(SourceList list : args.sourceLists) {
+            for(Source source : sources) {
+                sourceSourceListDAO.link(source, list);
+            }
+        }
     }
 
     public void checkSourceList(CrawlArgs args) {
-        String [] header = {"Source ID", "connection", "scraperExists", "hasExamples", "hasDateFormat", "hasSiteMaps", "dateScraped", "dateParsed", "titleScraped", "articleScraped"};
+        String [] header = {"Source ID", "connection", "scraperExists", "hasExamples", "hasDateFormat", "hasSiteMaps",
+                "hasRecentSitemaps", "dateScraped", "dateParsed", "titleScraped", "articleScraped"};
 //        String [] header = {"Source ID", "hasSiteMaps"};
         String [][] content = new String[][] {header};
 
@@ -471,9 +478,9 @@ public class CheckListService {
         return out;
     }
 
-    public void exportCrawlerSourcesToCSV(Path outputDir, String fileName, SourceList sourceList) throws IOException {
+    public void exportCrawlerSourcesToCSV(Path path, SourceList sourceList) throws IOException {
         List<Source> sources = sourceDAO.byList(sourceList);
-        exportCrawlerSourcesToCSV(outputDir, fileName, sources);
+        exportCrawlerSourcesToCSV(path, sources);
     }
 
 
@@ -505,13 +512,13 @@ public class CheckListService {
             Source.LOCALES, Source.CRAWL_DISABLE_SITEMAPS, Source.CRAWL_DISABLE_SITEMAP_DISCOVERY, Source.CRAWL_SITEMAP_LOCATIONS,
             Source.SEED_URLS, Source.CRAWL_SCHEDULE, Source.TIMEZONE, Source.CRAWL_DEPTH);
 
-    public void exportCrawlerSourcesToCSV(Path outputDir, String fileName, List<Source> sources) throws IOException {
+    public void exportCrawlerSourcesToCSV(Path path, List<Source> sources) throws IOException {
 
         List<String> headers = ImmutableList.of("id", "field", "value");
         Set<String> fields = importExportFields;
 
         try (
-                final OutputStream outputStream = java.nio.file.Files.newOutputStream(outputDir.resolve(fileName), StandardOpenOption.CREATE);
+                final OutputStream outputStream = java.nio.file.Files.newOutputStream(path, StandardOpenOption.CREATE);
                 final PrintWriter writer = new PrintWriter(new BufferedWriter(new OutputStreamWriter(outputStream, StandardCharsets.UTF_8)), false);
                 final CSVPrinter csv = new CSVPrinter(writer, CSVFormat.EXCEL)
 //                CSVWriter csv = new CSVWriter(writer)
@@ -561,7 +568,7 @@ public class CheckListService {
         }
     }
 
-    public void importCrawlerSourcesFromCSV(Path seedsPath, Source defaultSource) throws IOException {
+    public List<Source> importCrawlerSourcesFromCSV(Path seedsPath, Source defaultSource) throws IOException {
         String ID = "id";
         String FIELD = "field";
         String VALUE = "value";
@@ -649,6 +656,8 @@ public class CheckListService {
             }).collect(Collectors.toList());
 
             sourceDAO.upsert(sources);
+
+            return sources;
         }
     }
 
@@ -671,19 +680,16 @@ public class CheckListService {
 
             if(scraperExists(args, source)) {
 
-                if(args.ignoreSiteMap || hasSiteMaps(source)) {
+                List<HttpDocument> docs = scraperService.checkExampleURLs(args.scrapersDir, source);
 
-                    List<HttpDocument> docs = scraperService.checkExampleURLs(args.scrapersDir, source);
+                List<List<String>> lines = docs.stream().map(d -> ImmutableList.of(
+                        d.getMetadata().getString(SCRAPED_TITLE, ""),
+                        d.getMetadata().getString(ScraperFields.SCRAPED_ARTICLE, ""),
+                        d.getMetadata().getString(ScraperFields.SCRAPED_DATE, ""),
+                        d.getMetadata().getString("collector.url", "")
+                )).collect(Collectors.toList());
 
-                    List<List<String>> lines = docs.stream().map(d -> ImmutableList.of(
-                            d.getMetadata().getString(SCRAPED_TITLE, ""),
-                            d.getMetadata().getString(ScraperFields.SCRAPED_ARTICLE, ""),
-                            d.getMetadata().getString(ScraperFields.SCRAPED_DATE, ""),
-                            d.getMetadata().getString("collector.url", "")
-                    )).collect(Collectors.toList());
-
-                    data.put(source, lines);
-                }
+                data.put(source, lines);
             }
         }
 

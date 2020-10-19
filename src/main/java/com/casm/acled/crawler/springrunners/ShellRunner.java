@@ -83,6 +83,10 @@ import javax.xml.transform.OutputKeys;
 
 import com.casm.acled.crawler.util.Util;
 
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+import java.util.function.Predicate;
+
 
 @EnableAutoConfiguration(exclude={HibernateJpaAutoConfiguration.class, CamundaBpmAutoConfiguration.class, CamundaBpmRestJerseyAutoConfiguration.class, ValidationAutoConfiguration.class})
 // We need the special object mapper, though.
@@ -104,7 +108,7 @@ public class ShellRunner {
     @Autowired
     private CrawlArgsService argsService;
 
-    private CrawlArgs crawlArgs;
+//    private CrawlArgs crawlArgs;
 
     @Autowired
     LineReader reader;
@@ -125,6 +129,21 @@ public class ShellRunner {
     private ExportCSV exportCSV;
 
 
+    @ShellMethod(value = "Copy a Source (-s) or SourceList (-sl) to a with a new name (-N)")
+    public void copy(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) {
+        CrawlArgs crawlArgs = argsService.get(args);
+        crawlArgs.init();
+
+        if( crawlArgs.source != null ) {
+            Source copy = crawlArgs.source.put(Source.STANDARD_NAME, crawlArgs.name);
+            sourceDAO.create(copy);
+        } else if( !crawlArgs.sourceLists.isEmpty() ) {
+            SourceList list = crawlArgs.sourceLists.get(0).put(SourceList.LIST_NAME, crawlArgs.name);
+            sourceListDAO.create(list);
+        }
+    }
+
+
     @ShellMethod(value = "check source list (-sl)", key = "check")
     // probably should give a hint of potential parameters;
     // the help command still not working:
@@ -132,7 +151,7 @@ public class ShellRunner {
     public void checkSourceList(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) {
         reporter.randomRunId();
 
-        crawlArgs = argsService.get();
+        CrawlArgs crawlArgs = argsService.get();
         crawlArgs.raw = args;
 
         crawlArgs.raw.program = "check";
@@ -149,7 +168,7 @@ public class ShellRunner {
     public void importSourceList(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) throws Exception{
         reporter.randomRunId();
 
-        crawlArgs = argsService.get();
+        CrawlArgs crawlArgs = argsService.get();
         crawlArgs.raw = args;
 
         crawlArgs.raw.program = "import";
@@ -166,7 +185,7 @@ public class ShellRunner {
     public void exportSourceList(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) throws Exception{
         reporter.randomRunId();
 
-        crawlArgs = argsService.get();
+        CrawlArgs crawlArgs = argsService.get();
         crawlArgs.raw = args;
 
         crawlArgs.raw.program = "export";
@@ -282,7 +301,7 @@ public class ShellRunner {
     public void outputExampleURLCheck(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) throws Exception{
         reporter.randomRunId();
 
-        crawlArgs = argsService.get();
+        CrawlArgs crawlArgs = argsService.get();
         crawlArgs.raw = args;
 
         crawlArgs.raw.program = "example-urls";
@@ -301,7 +320,6 @@ public class ShellRunner {
     public String getField(@ShellOption({"-t", "--type"}) String type,
                          @ShellOption({"-n", "--name"}) String name,
                          @ShellOption({"-f", "--field"}) String field) {
-        crawlArgs = argsService.get();
 
         if (type.equals("source")) {
             Optional<Source> maybeSource = sourceDAO.byName(name);
@@ -340,7 +358,7 @@ public class ShellRunner {
                          @ShellOption({"-f", "--field"}) String field,
                          @ShellOption({"-v", "--value"}) String value) {
 
-        crawlArgs = argsService.get();
+        CrawlArgs crawlArgs = argsService.get();
 
         if (type.equals("source")) {
             Optional<Source> maybeSource = sourceDAO.byName(name);
@@ -381,7 +399,7 @@ public class ShellRunner {
                            @ShellOption({"-f", "--field"}) String field,
                            @ShellOption({"-v", "--value"}) String value) {
 
-        crawlArgs = argsService.get();
+        CrawlArgs crawlArgs = argsService.get();
 
         // test command: add source "Imagen del Golfo" CRAWL_SCHEDULE "*"
 
@@ -436,7 +454,7 @@ public class ShellRunner {
         // test sample: show source "Imagen del Golfo"
         // test sample: show sourcelist "mexico-1"
 
-        crawlArgs = argsService.get();
+        CrawlArgs crawlArgs = argsService.get();
 
         if (type.equals("source")) {
             Optional<Source> maybeSource = sourceDAO.byName(name);
@@ -486,7 +504,7 @@ public class ShellRunner {
 
         if (result.equals("yes")) {
 
-            crawlArgs = argsService.get();
+            CrawlArgs crawlArgs = argsService.get();
 
             if (type.equals("source")) {
                 Optional<Source> maybeSource = sourceDAO.byName(name);
@@ -532,7 +550,7 @@ public class ShellRunner {
                               @ShellOption({"-f", "--field"}) String field,
                               @ShellOption({"-v","--value"}) String value) {
 
-        crawlArgs = argsService.get();
+        CrawlArgs crawlArgs = argsService.get();
 
         Optional<SourceList> maybeSourceList = sourceListDAO.byName(name);
         if(maybeSourceList.isPresent()) {
@@ -578,7 +596,7 @@ public class ShellRunner {
     @ShellMethod(value = "clear PIDs, usage: clear-pids", key = "clear-pids")
     public String clearPIDs() {
 
-        crawlArgs = argsService.get();
+        CrawlArgs crawlArgs = argsService.get();
 
         schedulerService.clearPIDs(crawlArgs);
 
@@ -589,7 +607,7 @@ public class ShellRunner {
     public String schedule(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) throws Exception{
         reporter.randomRunId();
 
-        crawlArgs = argsService.get();
+        CrawlArgs crawlArgs = argsService.get();
         crawlArgs.raw = args;
         crawlArgs.init();
         schedulerService.schedule(crawlArgs);
@@ -605,27 +623,33 @@ public class ShellRunner {
                        @ShellOption(value = {"-t", "--to-date"}, defaultValue = "null") String to,
                        @ShellOption({"-od", "--output-dir"}) String dir) throws Exception{
 
-        // test sample: dump source "Imagen del Golfo" "2020-09-01" "2020-09-24" "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports"
+        // test sample: dump source "Imagen del Golfo" "2020-09-01" "2020-09-24" "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports/compare"
         // test sample: dump sourcelist "mexico-1" "2020-09-01" "2020-09-24" "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports"
         // test sample: dump source "Imagen del Golfo" null null "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports"
         // test sample: dump sourcelist "mexico-1" null null "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports"
         // test sample: dump sourcelist "mexico-1" null "2020-09-24" "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports"
 
-        crawlArgs = argsService.get();
+
+        CrawlArgs crawlArgs = argsService.get();
 
         LocalDate fromDate = from.equals("null") ? null : LocalDate.parse(from);
         LocalDate toDate = to.equals("null") ? null : LocalDate.parse(to);
 
         Path path = Paths.get(dir, name+"-"+from+"-"+to+".csv");
 
-        List<String> columns = Arrays.asList("URL", "TEXT", "DATE", "TITLE");
+        List<String> columns = Arrays.asList(Source.STANDARD_NAME,
+                Article.URL, Article.TEXT, Article.DATE, Article.TITLE, Article.SCRAPE_KEYWORD_HIGHLIGHT);
 
         if (type.equals("source")) {
             Optional<Source> maybeSource = sourceDAO.byName(name);
             if (maybeSource.isPresent()) {
                 List<Article> articles = articleDAO.bySource(maybeSource.get());
 
-                List<Map<String, String>> filteredArticles = articles.stream().filter(d -> inbetween(d.get("DATE"), fromDate, toDate)).map(d -> toMapWithColumn(d, columns)).collect(Collectors.toList());
+                List<Map<String, String>> filteredArticles = articles.stream()
+                        .filter(d -> inbetween(d.get(Article.DATE), fromDate, toDate))
+                        .filter(distinctByKey(d->d.get(Article.URL)))
+                        .map(d -> toMapWithColumn(d, columns))
+                        .collect(Collectors.toList());
 
                 mapToCSV(filteredArticles, path);
 
@@ -649,7 +673,7 @@ public class ShellRunner {
                     allArticles.addAll(articles);
                 }
 
-                List<Map<String, String>> filteredArticles = allArticles.stream().filter(d -> inbetween(d.get("DATE"), fromDate, toDate)).map(d -> toMapWithColumn(d, columns)).collect(Collectors.toList());
+                List<Map<String, String>> filteredArticles = allArticles.stream().filter(d -> inbetween(d.get("DATE"), fromDate, toDate)).filter(distinctByKey(d->d.get("URL"))).map(d -> toMapWithColumn(d, columns)).collect(Collectors.toList());
                 mapToCSV(filteredArticles, path);
 
                 return String.format("export to %s successfully", path.toString());
@@ -676,7 +700,7 @@ public class ShellRunner {
         // test sample: jef sourcelist "mexico-1" "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports" "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports"
         // test sample: jef source "Imagen del Golfo" "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports" "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports"
 
-        crawlArgs = argsService.get();
+        CrawlArgs crawlArgs = argsService.get();
 
         if (type.equals("source")) {
             Optional<Source> maybeSource = sourceDAO.byName(name);
@@ -720,11 +744,13 @@ public class ShellRunner {
     public Map<String, String> toMapWithColumn (Article article, List<String> columns) {
         Map<String, String> props = new LinkedHashMap();
         for (String column: columns) {
-            Object value = article.get(column);
+            Object value;
+            if(column.equals(Source.STANDARD_NAME)) {
+                value = sourceDAO.getById(article.get(Article.SOURCE_ID)).get().get(Source.STANDARD_NAME);
+            } else {
+                value = article.get(column);
+            }
             String finalValue = value == null ? "" : value.toString();
-//            if (column.equals("URL")) {
-//                column = "url";
-//            }
             props.put(column, finalValue);
         }
         return props;
@@ -837,6 +863,13 @@ public class ShellRunner {
         }
 
         return (articleDate.isBefore(to) && articleDate.isAfter(from)) || (articleDate.isEqual(to) || articleDate.isEqual(from));
+    }
+
+    public static <T> Predicate<T> distinctByKey(
+            Function<? super T, ?> keyExtractor) {
+
+        Map<Object, Boolean> seen = new ConcurrentHashMap<>();
+        return t -> seen.putIfAbsent(keyExtractor.apply(t), Boolean.TRUE) == null;
     }
 
     @Bean
