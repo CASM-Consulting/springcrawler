@@ -18,9 +18,10 @@ import com.casm.acled.entities.source.Source;
 import com.casm.acled.entities.sourcelist.SourceList;
 import com.casm.acled.entities.sourcesourcelist.SourceSourceList;
 import net.sf.extjwnl.data.Exc;
-import org.apache.commons.csv.QuoteMode;
+import org.apache.commons.csv.*;
 import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
 import org.camunda.bpm.spring.boot.starter.rest.CamundaBpmRestJerseyAutoConfiguration;
+import org.checkerframework.checker.nullness.Opt;
 import org.jsoup.select.Elements;
 import org.postgresql.copy.CopyManager;
 import org.postgresql.core.BaseConnection;
@@ -65,9 +66,6 @@ import java.nio.file.Paths;
 
 import java.sql.*;
 import java.io.*;
-
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVPrinter;
 
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
@@ -200,22 +198,103 @@ public class ShellRunner {
 
     }
 
-    @ShellMethod(value = "link a Source (-s) to a source list (-sl)", key="link")
-    public void linkSourceToSourceList(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) throws Exception{
-        CrawlArgs crawlArgs = argsService.get();
-        crawlArgs.raw = args;
-        crawlArgs.init();
+    public Set<Source> getSourcesFromNameCSV(Path csvPath, boolean includesHeader, String headerName) throws IOException {
+        Set<Source> sources = new HashSet<>();
 
-        checkListService.linkSourceToSourceList(crawlArgs);
+
+        String header;
+        // If header is present, then we take headerName as the column of interest, unless it is null, then we default to STANDARD_NAME
+        if (includesHeader){
+            header = headerName == null? Source.STANDARD_NAME : headerName;
+        } else {
+            header = null;
+        }
+
+        try (Reader reader = java.nio.file.Files.newBufferedReader(csvPath);
+             CSVParser csvReader = new CSVParser(reader, includesHeader? CSVFormat.EXCEL.withFirstRecordAsHeader() : CSVFormat.EXCEL)){
+
+            for (CSVRecord record : csvReader) {
+
+                // If header name is specified, use it. Otherwise, get the first column value.
+                String name = headerName != null ? record.get(headerName) : record.get(0);
+
+                // If name is present, look up source by name and add if found to results.
+                if (name != null && !name.trim().isEmpty()) {
+                    Optional<Source> maybeSource = sourceDAO.byName(name);
+                    maybeSource.ifPresent(sources::add);
+                }
+            }
+        }
+
+        return sources;
     }
 
-    @ShellMethod(value = "unlink a Source (-s) from a source list (-sl)", key="unlink")
-    public void unlinkSourceFromSourceList(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) throws Exception{
-        CrawlArgs crawlArgs = argsService.get();
-        crawlArgs.raw = args;
-        crawlArgs.init();
+    @ShellMethod(value = "link a Source (-s) to a source list (-sl). Sources can be read from CSV (-p), use -h if CSV has a header, -hn NAME to specify column (assumes STANDARD_NAME)", key="link")
+    public void linkSourceToSourceList(@ShellOption(value = {"-s", "--source"}, defaultValue = ShellOption.NULL) String source,
+                                       @ShellOption(value = {"-sl", "--source-list"}, defaultValue = ShellOption.NULL) String sourceList,
+                                       @ShellOption(value = {"-h", "--includes-header"}, defaultValue = "false") boolean includesHeader,
+                                       @ShellOption(value = {"-hn", "--header-name"}, defaultValue = ShellOption.NULL) String headerName,
+                                       @ShellOption(value = {"-p", "--csv-path"}, defaultValue = ShellOption.NULL) String path) throws Exception{
 
-        checkListService.unlinkSourceFromSourceList(crawlArgs);
+        SourceList sl = null;
+        if (sourceList != null && !sourceList.isEmpty()) {
+            Optional<SourceList> maybeSourceList = sourceListDAO.byName(sourceList);
+            if (maybeSourceList.isPresent()) {
+                sl = maybeSourceList.get();
+            }
+        }
+        if (sl == null){
+            System.err.println("Must specify source list.");
+            return;
+        }
+
+        Set<Source> sources = new HashSet<>();
+
+        if (path != null && !path.isEmpty()){
+            sources.addAll(getSourcesFromNameCSV(Paths.get(path), includesHeader, headerName));
+            System.out.printf("Found %d sources from CSV%n", sources.size());
+        }
+
+        if (source != null && !source.isEmpty()){
+            Optional<Source> maybeSource = sourceDAO.byName(source);
+            maybeSource.ifPresent(sources::add);
+        }
+
+        checkListService.linkSourceToSourceList(sources, sl);
+    }
+
+    @ShellMethod(value = "unlink a Source (-s) from a source list (-sl). Sources can be read from CSV (-p), use -h if CSV has a header, -hn NAME to specify column (assumes STANDARD_NAME)", key="unlink")
+    public void unlinkSourceFromSourceList(@ShellOption(value = {"-s", "--source"}, defaultValue = ShellOption.NULL) String source,
+                                           @ShellOption(value = {"-sl", "--source-list"}, defaultValue = ShellOption.NULL) String sourceList,
+                                           @ShellOption(value = {"-h", "--includes-header"}, defaultValue = "false") boolean includesHeader,
+                                           @ShellOption(value = {"-hn", "--header-name"}, defaultValue = ShellOption.NULL) String headerName,
+                                           @ShellOption(value = {"-p", "--csv-path"}, defaultValue = ShellOption.NULL) String path) throws Exception{
+
+        SourceList sl = null;
+        if (sourceList != null && !sourceList.isEmpty()) {
+            Optional<SourceList> maybeSourceList = sourceListDAO.byName(sourceList);
+            if (maybeSourceList.isPresent()) {
+                sl = maybeSourceList.get();
+            }
+        }
+        if (sl == null){
+            System.err.println("Must specify source list.");
+            return;
+        }
+
+        Set<Source> sources = new HashSet<>();
+
+        if (path != null && !path.isEmpty()){
+            sources.addAll(getSourcesFromNameCSV(Paths.get(path), includesHeader, headerName));
+            System.out.printf("Found %d sources from CSV%n", sources.size());
+        }
+
+        if (source != null && !source.isEmpty()){
+            Optional<Source> maybeSource = sourceDAO.byName(source);
+            maybeSource.ifPresent(sources::add);
+        }
+
+        checkListService.unlinkSourceFromSourceList(sources, sl);
     }
 
     @ShellMethod(value = "output example urls ", key = "output")

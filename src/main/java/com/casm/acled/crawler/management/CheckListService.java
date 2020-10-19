@@ -720,18 +720,15 @@ public class CheckListService {
     }
 
 
-    public void linkSourceToSourceList(CrawlArgs crawlArgs) {
-
-        for (SourceList sl : crawlArgs.sourceLists){
-
-            sourceSourceListDAO.link(crawlArgs.source, sl);
+    public void linkSourceToSourceList(Set<Source> sources, SourceList sourceList) {
+        for (Source source : sources){
+            sourceSourceListDAO.link(source, sourceList);
         }
     }
 
-    public void unlinkSourceFromSourceList(CrawlArgs crawlArgs){
-        for (SourceList sl : crawlArgs.sourceLists){
-
-            sourceSourceListDAO.unlink(crawlArgs.source, sl);
+    public void unlinkSourceFromSourceList(Set<Source> sources, SourceList sourceList){
+        for (Source source : sources) {
+            sourceSourceListDAO.unlink(source, sourceList);
         }
     }
 }
