@@ -162,9 +162,7 @@ public class ACLEDCommitter implements ICommitter {
                 articleDAO.create(article);
             }
 
-            // qiwei added for testing output
-//            saveToLocal(article, Paths.get("/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports/test_scraper_tagger/Imagen del Golfo_norconex_test.csv"));
-//            saveHtmlToLocal(rawHtml, url, Paths.get("/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports/test_scraper_tagger/Milenio_htmls.csv"));
+
         }
     }
 
