@@ -1,11 +1,15 @@
 package com.casm.acled.crawler.scraper;
 
+import com.casm.acled.crawler.reporting.Event;
+import com.casm.acled.crawler.reporting.Report;
+import com.casm.acled.crawler.reporting.Reporter;
 import com.casm.acled.crawler.scraper.dates.ExcludingCustomDateMetadataFilter;
 import com.casm.acled.dao.entities.ArticleDAO;
 import com.casm.acled.dao.entities.SourceListDAO;
 import com.casm.acled.entities.EntityVersions;
 import com.casm.acled.entities.article.Article;
 import com.casm.acled.entities.source.Source;
+import com.google.common.base.Strings;
 import com.norconex.collector.http.HttpCollector;
 import com.norconex.collector.http.doc.HttpDocument;
 import com.norconex.collector.http.doc.HttpMetadata;
@@ -17,6 +21,7 @@ import org.slf4j.LoggerFactory;
 import uk.ac.susx.tag.norconex.jobqueuemanager.CrawlerArguments;
 
 import java.io.InputStream;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.function.Supplier;
@@ -34,6 +39,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import org.apache.commons.io.IOUtils;
 
+import static com.casm.acled.crawler.reporting.Event.*;
+import static com.casm.acled.crawler.scraper.ScraperFields.*;
+
 
 public class ACLEDCommitter implements ICommitter {
 
@@ -44,18 +52,21 @@ public class ACLEDCommitter implements ICommitter {
     private Integer maxArticles;
     private final SourceListDAO sourceListDAO;
     private final boolean sourceRequired;
+    private Reporter reporter;
     private final boolean recordRaw;
 
     private Supplier<HttpCollector> collectorSupplier;
 
 
     public ACLEDCommitter(ArticleDAO articleDAO, Source source,
-                         SourceListDAO sourceListDAO, boolean sourceRequired, boolean recordRaw) {
+                          SourceListDAO sourceListDAO, boolean sourceRequired, boolean recordRaw,
+                          Reporter reporter) {
 
         this.articleDAO = articleDAO;
         this.source = source;
         this.sourceListDAO = sourceListDAO;
         this.sourceRequired = sourceRequired;
+        this.reporter = reporter;
         maxArticles = null;
         this.recordRaw = recordRaw;
     }
@@ -95,53 +106,91 @@ public class ACLEDCommitter implements ICommitter {
 
     @Override
     public void add(String s, InputStream inputStream, Properties properties) {
-        // current problem is that the passing parameter is just the properties which is the metadata, so there is no way
-        // to get the doc object, which is needed to get the reference.
-        // probably could get reference by
-        // properties.getString("document.reference")
+        
+        String url = properties.getString("document.reference");
+        Report report = Report.of(source.id(), Source.class, ACLEDCommitter.class, url);
 
-        if(!previouslyScraped(properties)) {
+        String articleText = properties.getString(SCRAPED_ARTICLE);
+        String title = properties.getString(SCRAPED_TITLE);
+        String date = properties.getString(SCRAPED_DATE);
+        String standardDate = properties.getString( STANDARD_DATE);
 
-            if(!properties.getBoolean(ScraperFields.KEYWORD_PASSED) || !properties.getBoolean(ScraperFields.DATE_PASSED) ) {
-                return;
+        boolean keywordPassed = properties.getBoolean(KEYWORD_PASSED);
+        boolean datePassed = properties.getBoolean(DATE_PASSED);
+        boolean scrapedPassed = keywordPassed && datePassed;
+
+        /* =============================
+         * Reporting
+         * ========================== */
+
+        // All references reaching this stage counted as "accepted", but they may not be committed (SCRAPE_PASS).
+        reporter.report(report.event(REFERENCE_ACCEPTED));
+
+        // Report whether article text was scraped
+        if (Strings.isNullOrEmpty(articleText)){
+            reporter.report(report.event(Event.SCRAPE_NO_ARTICLE));
+        } else {
+            // We scraped, so report whether keyword passing
+            reporter.report(keywordPassed?
+                    report.event(QUERY_MATCH) :
+                    report.event(QUERY_NO_MATCH));
+        }
+
+        // Report whether article title was scraped
+        if (Strings.isNullOrEmpty(title)){
+            reporter.report(report.event(SCRAPE_NO_TITLE));
+        }
+
+        // Report whether article date was scraped
+        if (Strings.isNullOrEmpty(date)){
+            reporter.report(report.event(SCRAPE_NO_DATE));
+        } else {
+            // We scraped, so report whether article date was parsed
+            if (Strings.isNullOrEmpty(standardDate)){
+                reporter.report(report.event(DATE_PARSE_FAILED));
+            } else {
+                // We parsed, so report whether date within correct period
+                reporter.report(datePassed?
+                        report.event(DATE_MATCH) :
+                        report.event(DATE_NO_MATCH));
             }
+        }
+
+        // Report whether article will be committed
+        reporter.report(scrapedPassed?
+                report.event(SCRAPE_PASS) :
+                report.event(SCRAPE_FAIL));
+
+        /* ============================ */
+
+        if (scrapedPassed) {
 
             // qiwei added for record writing
             StringWriter writer = new StringWriter();
             try {
                 IOUtils.copy(inputStream, writer, properties.getString("document.contentEncoding"));
-            }
-            catch (Exception ex) {
-                String url = properties.getString("document.reference");
+            } catch (Exception ex) {
                 throw new RuntimeException("ERROR: Failed to retrieve web content for url: " + url);
             }
 
             String rawHtml = writer.toString();
 
-            String articleText = properties.getString( ScraperFields.SCRAPED_ARTICLE);
-            String title = properties.getString( ScraperFields.SCRAPED_TITLE);
-            String date = properties.getString( ScraperFields.SCRAPED_DATE);
-            String standardDate = properties.getString( ScraperFields.STANDARD_DATE);
-
             Article article = EntityVersions.get(Article.class)
                     .current();
 
-            if(title != null) {
+            if (title != null) {
                 article = article.put(Article.TITLE, title);
             }
-
-            // here, take url by searching this key value;
-            String url = properties.getString("document.reference");
 
             article = article.put(Article.TEXT, articleText)
                     .put(Article.SCRAPE_DATE, date)
                     .put(Article.URL, url);
 
-            if(properties.getString(ScraperFields.KEYWORD_HIGHLIGHT)!=null) {
+            if (properties.getString(ScraperFields.KEYWORD_HIGHLIGHT) != null) {
                 article = article.put(Article.SCRAPE_KEYWORD_HIGHLIGHT, properties.getString(ScraperFields.KEYWORD_HIGHLIGHT));
             }
 
-            if(standardDate != null) {
+            if (standardDate != null) {
                 LocalDateTime parsedDate = ExcludingCustomDateMetadataFilter.toDate(standardDate);
                 article = article.put(Article.DATE, parsedDate.toLocalDate());
             }
@@ -150,19 +199,13 @@ public class ACLEDCommitter implements ICommitter {
                 article = article.put(Article.SCRAPE_RAW_HTML, rawHtml);
             }
 
-            int depth = properties.getInt("collector.depth");
-            article = article.put(Article.CRAWL_DEPTH, depth);
+            article = article.put(Article.CRAWL_DEPTH, properties.getInt("collector.depth"));
+            article = article.put(Article.CRAWL_DATE, LocalDate.now());
 
-            LocalDate crawlDate = LocalDate.now();
-
-            article = article.put(Article.CRAWL_DATE, crawlDate);
-
-            if(!stopAfterNArticlesFromSource(source) ) {
+            if (!stopAfterNArticlesFromSource(source)) {
                 article = article.put(Article.SOURCE_ID, source.id());
                 articleDAO.create(article);
             }
-
-
         }
     }
 

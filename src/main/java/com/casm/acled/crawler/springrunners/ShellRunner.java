@@ -460,7 +460,7 @@ public class ShellRunner {
             Optional<Source> maybeSource = sourceDAO.byName(name);
             if(maybeSource.isPresent()) {
                 Source source =  maybeSource.get();
-                return source.toString();
+                return String.format("ID: %s%nData: %s", source.id(), source);
             }
             else {
                 return String.format("source name does not exist");

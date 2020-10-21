@@ -79,7 +79,7 @@ public class DateTagger implements IDocumentTagger{
                 importerMetadata.addBoolean(ScraperFields.DATE_PASSED, false);
             }
         } else {
-            reporter.report(Report.of(Event.DATE_PARSE_FAILED, source.id(), importerMetadata.getReference()));
+//            reporter.report(Report.of(Event.DATE_PARSE_FAILED, source.id(), importerMetadata.getReference()));
             importerMetadata.addBoolean(ScraperFields.DATE_PASSED, false);
 //            return true;
         }
