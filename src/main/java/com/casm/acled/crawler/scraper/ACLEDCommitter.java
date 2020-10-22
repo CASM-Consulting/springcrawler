@@ -122,10 +122,8 @@ public class ACLEDCommitter implements ICommitter {
         /* =============================
          * Reporting
          * ========================== */
-
         // All references reaching this stage counted as "accepted", but they may not be committed (SCRAPE_PASS).
         reporter.report(report.event(REFERENCE_ACCEPTED));
-
         // Report whether article text was scraped
         if (Strings.isNullOrEmpty(articleText)){
             reporter.report(report.event(Event.SCRAPE_NO_ARTICLE));
@@ -135,12 +133,10 @@ public class ACLEDCommitter implements ICommitter {
                     report.event(QUERY_MATCH) :
                     report.event(QUERY_NO_MATCH));
         }
-
         // Report whether article title was scraped
         if (Strings.isNullOrEmpty(title)){
             reporter.report(report.event(SCRAPE_NO_TITLE));
         }
-
         // Report whether article date was scraped
         if (Strings.isNullOrEmpty(date)){
             reporter.report(report.event(SCRAPE_NO_DATE));
@@ -155,12 +151,10 @@ public class ACLEDCommitter implements ICommitter {
                         report.event(DATE_NO_MATCH));
             }
         }
-
         // Report whether article will be committed
         reporter.report(scrapedPassed?
                 report.event(SCRAPE_PASS) :
                 report.event(SCRAPE_FAIL));
-
         /* ============================ */
 
         if (scrapedPassed) {

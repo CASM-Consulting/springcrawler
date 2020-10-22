@@ -53,12 +53,18 @@ public class Report {
         return new Report(event, id, type, reporterType, message, businessKey, runId, timestamp);
     }
 
-    public Report type(Object type) {
-        return new Report(event, id, type.toString(), reporterType, message, businessKey, runId, timestamp);
+    public Report type(Class<?> type) {
+        return type(type.getName());
+    }
+    public Report type(String type){
+        return new Report(event, id, type, reporterType, message, businessKey, runId, timestamp);
     }
 
-    public Report reporterType(Object reporterType){
-        return new Report(event, id, type, reporterType.toString(), message, businessKey, runId, timestamp);
+    public Report reporterType(Class<?> reporterType){
+        return reporterType(reporterType.getName());
+    }
+    public Report reporterType(String reporterType){
+        return new Report(event, id, type, reporterType, message, businessKey, runId, timestamp);
     }
 
     private Report timestamp(Instant timestamp) {
@@ -84,8 +90,8 @@ public class Report {
         return of(event, null, null, null);
     }
 
-    public static Report of(Integer id, Object type, Object reporterType, String message){
-        return new Report(null, id, type.toString(), reporterType.toString(), message, null, null, Instant.now());
+    public static Report of(Integer id, Class<?> type, Class<?> reporterType, String message){
+        return new Report(null, id, type.getName(), reporterType.getName(), message, null, null, Instant.now());
     }
 
     public Instant timestamp() {
@@ -133,6 +139,9 @@ public class Report {
         if(type != null) {
             cr = cr.put(CrawlReport.TYPE, type);
         }
+        if(reporterType != null){
+            cr = cr.put(CrawlReport.REPORTER_TYPE, reporterType);
+        }
         if(timestamp != null) {
             cr = cr.put(CrawlReport.TIMESTAMP, timestamp);
         }
@@ -156,7 +165,7 @@ public class Report {
         Report r = new Report(cr.get(CrawlReport.EVENT),
                 cr.get(CrawlReport.ID),
                 cr.get(CrawlReport.TYPE),
-                null,
+                cr.get(CrawlReport.REPORTER_TYPE),
                 cr.get(CrawlReport.MESSAGE),
                 cr.hasBusinessKey() ? cr.businessKey() : "",
                 cr.get(CrawlReport.RUN_ID),

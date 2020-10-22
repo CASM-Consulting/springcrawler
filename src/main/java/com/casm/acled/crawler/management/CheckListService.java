@@ -2,6 +2,8 @@ package com.casm.acled.crawler.management;
 
 import com.casm.acled.crawler.reporting.Event;
 import com.casm.acled.crawler.reporting.Report;
+import com.casm.acled.crawler.reporting.ReportQueryService;
+import com.casm.acled.crawler.reporting.ReportQueryService.EventCountSummary;
 import com.casm.acled.crawler.reporting.Reporter;
 import com.casm.acled.crawler.scraper.ACLEDScraper;
 import com.casm.acled.crawler.scraper.ScraperFields;
@@ -11,10 +13,7 @@ import com.casm.acled.crawler.scraper.dates.DateParsers;
 import com.casm.acled.crawler.scraper.dates.DateTimeService;
 import com.casm.acled.crawler.spring.CrawlService;
 import com.casm.acled.crawler.util.Util;
-import com.casm.acled.dao.entities.ArticleDAO;
-import com.casm.acled.dao.entities.SourceDAO;
-import com.casm.acled.dao.entities.SourceListDAO;
-import com.casm.acled.dao.entities.SourceSourceListDAO;
+import com.casm.acled.dao.entities.*;
 import com.casm.acled.entities.EntityVersions;
 import com.casm.acled.entities.VersionedEntity;
 import com.casm.acled.entities.article.Article;
@@ -85,6 +84,9 @@ public class CheckListService {
 
     @Autowired
     private ArticleDAO articleDAO;
+
+    @Autowired
+    private ReportQueryService reportQueryService;
 
 
     private void attemptAllScrapers() {
@@ -477,6 +479,40 @@ public class CheckListService {
         }
         return out;
     }
+
+    public void checkSourceCrawlReports(Source source, int numRuns){
+
+        System.out.println("Source: " + source.get(Source.NAME));
+
+        String [] header = {"Run ID", "References", "Committed", "No Keyword Match", "Date Irrelevant", "Date Parse Failed", "Date Missing", "Text Missing"};
+        String [][] content = new String[][] {header};
+
+        Map<String, EventCountSummary> summaryPerRun = reportQueryService
+                .summaryPerRun(source.id(), numRuns);
+
+        for (Map.Entry<String, EventCountSummary> entry : summaryPerRun.entrySet()) {
+
+            EventCountSummary summary = entry.getValue();
+
+            String[] data = new String[]{
+                    entry.getKey(),
+                    Integer.toString(summary.getCount(Event.REFERENCE_ACCEPTED)),
+                    Integer.toString(summary.getCount(Event.SCRAPE_PASS)),
+                    Integer.toString(summary.getCount(Event.QUERY_NO_MATCH)),
+                    Integer.toString(summary.getCount(Event.DATE_NO_MATCH)),
+                    Integer.toString(summary.getCount(Event.DATE_PARSE_FAILED)),
+                    Integer.toString(summary.getCount(Event.SCRAPE_NO_DATE)),
+                    Integer.toString(summary.getCount(Event.SCRAPE_NO_ARTICLE)),
+            };
+
+            content = insertRow(content, content.length, data);
+        }
+
+        TableBuilder tableBuilder = new TableBuilder(new ArrayTableModel(content));
+        tableBuilder.addFullBorder(BorderStyle.fancy_light);
+        System.out.println(tableBuilder.build().render(100));
+    }
+
 
     public void exportCrawlerSourcesToCSV(Path path, SourceList sourceList) throws IOException {
         List<Source> sources = sourceDAO.byList(sourceList);
