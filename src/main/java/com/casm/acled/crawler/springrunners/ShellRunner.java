@@ -11,6 +11,7 @@ import com.casm.acled.dao.entities.SourceDAO;
 import com.casm.acled.dao.entities.SourceListDAO;
 import com.casm.acled.dao.entities.SourceSourceListDAO;
 import com.casm.acled.dao.util.ExportCSV;
+import com.casm.acled.entities.EntityField;
 import com.casm.acled.entities.article.Article;
 import com.casm.acled.entities.source.Source;
 import com.casm.acled.entities.sourcelist.SourceList;
@@ -313,6 +314,19 @@ public class ShellRunner {
         checkListService.unlinkSourceFromSourceList(sources, sl);
     }
 
+//    @ShellMethod
+//    public void checkURL(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) {
+//        reporter.randomRunId();
+//        CrawlArgs crawlArgs = argsService.get();
+//        crawlArgs.raw = args;
+//        crawlArgs.init();
+//
+//        checkListService.
+//
+//
+//
+//    }
+
     @ShellMethod(value = "output example urls ", key = "output")
     public void outputExampleURLCheck(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) throws Exception{
         reporter.randomRunId();
@@ -342,7 +356,7 @@ public class ShellRunner {
             if (maybeSource.isPresent()) {
                 Source source = maybeSource.get();
                 String value = source.get(field);
-                return String.format(value);
+                return value.toString();
             }
             else {
                 return String.format("source name does not exist");
@@ -369,7 +383,7 @@ public class ShellRunner {
     @ShellMethod(value = "set specific value to the corresponding field; usage: set type name field [value]", key = "set")
     // generic, only handle single instance
     // in the set method, probably need to update DAO???
-    public String setField(@ShellOption({"-t", "--type"}) String type,
+    public <T> String setField(@ShellOption({"-t", "--type"}) String type,
                          @ShellOption({"-n", "--name"}) String name,
                          @ShellOption({"-f", "--field"}) String field,
                          @ShellOption({"-v", "--value"}) String value) {
