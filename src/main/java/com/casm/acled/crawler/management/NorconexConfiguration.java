@@ -216,6 +216,10 @@ public class NorconexConfiguration {
         crawler.setPreImportProcessors(scraper, metadata);
     }
 
+    public long getPoliteness() {
+        return politeness;
+    }
+
     private void configureImporter() {
 
         // set this to correctly manage file sizes etc... (sw ???)
