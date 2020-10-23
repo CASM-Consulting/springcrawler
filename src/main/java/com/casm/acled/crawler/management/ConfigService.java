@@ -20,4 +20,8 @@ public class ConfigService {
     public String userAgent() {
         return "CASM Tech";
     }
+
+    public int maxDelay() {
+        return 10;
+    }
 }
