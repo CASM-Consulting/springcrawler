@@ -1,7 +1,6 @@
 package com.casm.acled.crawler.springrunners;
 
 import com.beust.jcommander.JCommander;
-import com.beust.jcommander.Parameter;
 import com.casm.acled.configuration.ObjectMapperConfiguration;
 import com.casm.acled.crawler.management.*;
 import com.casm.acled.crawler.reporting.Reporter;
@@ -20,8 +19,6 @@ import org.springframework.boot.autoconfigure.validation.ValidationAutoConfigura
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
-
-import java.util.HashMap;
 
 /**
  * Created by Andrew D. Robertson on 23/09/2020.
@@ -46,7 +43,7 @@ public class CrawlerScheduleRunner implements CommandLineRunner {
     private CrawlArgsService argsService;
 
     @Autowired
-    private PathService pathService;
+    private ConfigService pathService;
 
     private CrawlArgs crawlArgs;
 

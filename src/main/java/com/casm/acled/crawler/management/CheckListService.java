@@ -469,6 +469,11 @@ public class CheckListService {
 
     }
 
+    public void testURL(Source source, SourceList list, String url) {
+//        scraperService.getText()
+
+    }
+
     public static String[][] insertRow(String[][] m, int r, String[] data) {
         String[][] out = new String[m.length + 1][];
         for (int i = 0; i < r; i++) {

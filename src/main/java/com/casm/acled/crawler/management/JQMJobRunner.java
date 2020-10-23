@@ -1,6 +1,5 @@
 package com.casm.acled.crawler.management;
 
-import com.casm.acled.entities.source.Source;
 import com.enioka.jqm.api.*;
 import com.google.common.collect.ImmutableMap;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +22,7 @@ public class JQMJobRunner implements JobRunner {
     private JobProvider jobProvider;
 
     @Autowired
-    private PathService pathService;
+    private ConfigService pathService;
 
     public JQMJobRunner () {
 
