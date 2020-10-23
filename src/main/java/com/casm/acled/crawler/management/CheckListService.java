@@ -5,6 +5,7 @@ import com.casm.acled.crawler.reporting.Report;
 import com.casm.acled.crawler.reporting.ReportQueryService;
 import com.casm.acled.crawler.reporting.ReportQueryService.EventCountSummary;
 import com.casm.acled.crawler.reporting.Reporter;
+import com.casm.acled.crawler.scraper.ACLEDCommitter;
 import com.casm.acled.crawler.scraper.ACLEDScraper;
 import com.casm.acled.crawler.scraper.ScraperFields;
 import com.casm.acled.crawler.scraper.ScraperService;
@@ -511,6 +512,66 @@ public class CheckListService {
         TableBuilder tableBuilder = new TableBuilder(new ArrayTableModel(content));
         tableBuilder.addFullBorder(BorderStyle.fancy_light);
         System.out.println(tableBuilder.build().render(100));
+    }
+
+    public void checkSourceListCrawlReports(SourceList sourceList) {
+
+        System.out.println("Sourcelist: " + sourceList.get(SourceList.LIST_NAME));
+
+        String [] header = {"Source", "References", "Committed", "No Keyword Match", "Date Irrelevant", "Date Parse Failed", "Date Missing", "Text Missing"};
+        String [][] content = new String[][] {header};
+
+        for (Source source : sourceDAO.byList(sourceList)){
+
+            List<String> latestRunIds = reportQueryService.latestRunIds(2, source.id(), Source.class, ACLEDCommitter.class);
+
+            if (latestRunIds.isEmpty()){
+                System.out.println("No run for: " + source.get(Source.STANDARD_NAME));
+            } else {
+                String[] data;
+                if (latestRunIds.size() == 1){
+                    EventCountSummary summary = reportQueryService.summaryForRun(latestRunIds.get(0), source.id(), Source.class, ACLEDCommitter.class);
+                    data = new String[]{
+                            source.get(Source.STANDARD_NAME),
+                            Integer.toString(summary.getCount(Event.REFERENCE_ACCEPTED)),
+                            Integer.toString(summary.getCount(Event.SCRAPE_PASS)),
+                            Integer.toString(summary.getCount(Event.QUERY_NO_MATCH)),
+                            Integer.toString(summary.getCount(Event.DATE_NO_MATCH)),
+                            Integer.toString(summary.getCount(Event.DATE_PARSE_FAILED)),
+                            Integer.toString(summary.getCount(Event.SCRAPE_NO_DATE)),
+                            Integer.toString(summary.getCount(Event.SCRAPE_NO_ARTICLE)),
+                    };
+                } else {
+                    EventCountSummary latest = reportQueryService.summaryForRun(latestRunIds.get(0), source.id(), Source.class, ACLEDCommitter.class);
+                    EventCountSummary penultimate = reportQueryService.summaryForRun(latestRunIds.get(1), source.id(), Source.class, ACLEDCommitter.class);
+
+                    data = new String[]{
+                            source.get(Source.STANDARD_NAME),
+                            buildChangeString(latest.getCount(Event.REFERENCE_ACCEPTED), penultimate.getCount(Event.REFERENCE_ACCEPTED)),
+                            buildChangeString(latest.getCount(Event.SCRAPE_PASS), penultimate.getCount(Event.SCRAPE_PASS)),
+                            buildChangeString(latest.getCount(Event.QUERY_NO_MATCH), penultimate.getCount(Event.QUERY_NO_MATCH)),
+                            buildChangeString(latest.getCount(Event.DATE_NO_MATCH), penultimate.getCount(Event.DATE_NO_MATCH)),
+                            buildChangeString(latest.getCount(Event.DATE_PARSE_FAILED), penultimate.getCount(Event.DATE_PARSE_FAILED)),
+                            buildChangeString(latest.getCount(Event.SCRAPE_NO_DATE), penultimate.getCount(Event.SCRAPE_NO_DATE)),
+                            buildChangeString(latest.getCount(Event.SCRAPE_NO_ARTICLE), penultimate.getCount(Event.SCRAPE_NO_ARTICLE)),
+                    };
+                }
+                content = insertRow(content, content.length, data);
+            }
+        }
+
+        TableBuilder tableBuilder = new TableBuilder(new ArrayTableModel(content));
+        tableBuilder.addFullBorder(BorderStyle.fancy_light);
+        System.out.println(tableBuilder.build().render(100));
+    }
+
+    private String buildChangeString(int lastCount, int previousCount){
+        int diff = lastCount - previousCount;
+        if (diff < 0){
+            return String.format("%d (%d)", lastCount, diff);
+        } else {
+            return String.format("%d (+%d)", lastCount, diff);
+        }
     }
 
 
