@@ -35,6 +35,13 @@ import java.util.regex.Pattern;
 
 import com.norconex.importer.handler.tagger.impl.*;
 
+import com.norconex.collector.http.robot.RobotsTxt;
+import com.norconex.collector.http.robot.impl.StandardRobotsTxtProvider;
+import org.apache.http.client.HttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
+import com.norconex.collector.http.delay.IDelayResolver;
+import com.norconex.collector.http.delay.impl.GenericDelayResolver;
+
 
 public class Crawl {
 
@@ -97,6 +104,26 @@ public class Crawl {
 
         config = new NorconexConfiguration(workingDir.resolve(scraperCachePath), args);
         config.crawler().setUrlNormalizer(new RootLogAppenderClearingURLNormaliser());
+
+        // added for checking the crawlDelay in robots.txt
+        String url = source.get(Source.LINK);
+
+        StandardRobotsTxtProvider srtp  = new StandardRobotsTxtProvider();
+
+        HttpClient httpClient = HttpClientBuilder.create().build();
+
+        RobotsTxt robotsTxt = srtp.getRobotsTxt(httpClient, url, "CASM Tech");
+
+        float robotsDelay = robotsTxt.getCrawlDelay();
+
+        if (robotsDelay > 100) { // certain threshold
+            GenericDelayResolver gdr = new GenericDelayResolver();
+            gdr.setDefaultDelay((config.getPoliteness() <= 50) ? 50 : config.getPoliteness()); // safety check to avoid to to small a delay
+            gdr.setIgnoreRobotsCrawlDelay(true); // disable the crawlDelay in robots.txt file
+            gdr.setScope(GenericDelayResolver.SCOPE_SITE);
+            config.crawler().setDelayResolver(gdr);
+        }
+
 
         List<String> sitemaps = new ArrayList<>();
 

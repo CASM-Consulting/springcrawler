@@ -5,6 +5,7 @@ import bithazard.sitemap.parser.model.InvalidSitemapUrlException;
 import bithazard.sitemap.parser.model.UrlConnectionException;
 import com.casm.acled.crawler.Crawl;
 import com.casm.acled.crawler.management.CheckListService;
+import com.casm.acled.crawler.management.ConfigService;
 import com.casm.acled.crawler.management.CrawlArgs;
 import com.casm.acled.crawler.management.CrawlArgsService;
 import com.casm.acled.crawler.scraper.ACLEDCommitter;
@@ -84,6 +85,9 @@ public class CrawlService {
     @Autowired
     private CheckListService checkListService;
 
+    @Autowired
+    private ConfigService configService;
+
     public CrawlService() {
 //        args = argsService.get();
     }
@@ -144,9 +148,6 @@ public class CrawlService {
 
         //ThreadGroup required for logger context, see CustomLoggerRepository
         ThreadGroup tg = new ThreadGroup(Integer.toString(sourceId));
-
-//            ExecutorService executor = Executors.newSingleThreadExecutor();
-//            Future<Void> future = executor.submit()
 
         Thread thread = new Thread(tg, () -> {
 
@@ -334,7 +335,9 @@ public class CrawlService {
 
         HttpClient httpClient = HttpClientBuilder.create().build();
 
-        RobotsTxt robotsTxt = srtp.getRobotsTxt(httpClient, url, "CASM Tech");
+        String userAgent = configService.userAgent();
+
+        RobotsTxt robotsTxt = srtp.getRobotsTxt(httpClient, url, userAgent);
 
         List<String> sitemaps = Arrays.asList(robotsTxt.getSitemapLocations());
 
@@ -356,10 +359,15 @@ public class CrawlService {
 
         // Attempt to discover sitemap location from robots.txt
         SitemapParser sitemapParser = new SitemapParser();
+
+        String userAgent = configService.userAgent();
+
+        sitemapParser.setUserAgent(userAgent);
         try {
             Set<String> sitemapLocations = sitemapParser.getSitemapLocations(url);
             sitemaps.addAll(sitemapLocations);
         } catch (InvalidSitemapUrlException e) {
+            logger.warn(e.getMessage(), e);
             //pass
         }
 

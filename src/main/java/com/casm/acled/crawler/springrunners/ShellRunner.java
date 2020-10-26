@@ -1,6 +1,4 @@
 package com.casm.acled.crawler.springrunners;
-import com.beust.jcommander.JCommander;
-import com.beust.jcommander.Strings;
 import com.casm.acled.configuration.ObjectMapperConfiguration;
 import com.casm.acled.crawler.Crawl;
 import com.casm.acled.crawler.management.CheckListService;
@@ -13,23 +11,18 @@ import com.casm.acled.dao.entities.SourceDAO;
 import com.casm.acled.dao.entities.SourceListDAO;
 import com.casm.acled.dao.entities.SourceSourceListDAO;
 import com.casm.acled.dao.util.ExportCSV;
+import com.casm.acled.entities.EntityField;
 import com.casm.acled.entities.article.Article;
 import com.casm.acled.entities.source.Source;
 import com.casm.acled.entities.sourcelist.SourceList;
-import com.casm.acled.entities.sourcesourcelist.SourceSourceList;
-import net.sf.extjwnl.data.Exc;
 import org.apache.commons.csv.*;
 import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
 import org.camunda.bpm.spring.boot.starter.rest.CamundaBpmRestJerseyAutoConfiguration;
-import org.checkerframework.checker.nullness.Opt;
 import org.jsoup.select.Elements;
-import org.postgresql.copy.CopyManager;
-import org.postgresql.core.BaseConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.Banner;
-import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -54,28 +47,22 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.sound.sampled.Line;
 import javax.validation.Valid;
 import org.jline.reader.LineReader;
 
 import org.jsoup.Jsoup;
-import org.jsoup.nodes.*;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import java.sql.*;
 import java.io.*;
 
-import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
@@ -123,23 +110,53 @@ public class ShellRunner {
     private SourceListDAO sourceListDAO;
 
     @Autowired
+    private SourceSourceListDAO sourceSourceListDAO;
+
+    @Autowired
     private SchedulerService schedulerService;
 
     @Autowired
     private ExportCSV exportCSV;
 
 
-    @ShellMethod(value = "Copy a Source (-s) or SourceList (-sl) to a with a new name (-N)")
+    @ShellMethod(value = "Copy a Source (-s) or SourceList (-sl) to a with a new name (-N) or suffix if flag 'S' is provided")
     public void copy(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) {
         CrawlArgs crawlArgs = argsService.get(args);
         crawlArgs.init();
 
+        boolean suffix = crawlArgs.flagSet.contains("S");
+
         if( crawlArgs.source != null ) {
-            Source copy = crawlArgs.source.put(Source.STANDARD_NAME, crawlArgs.name);
+            Source copy = crawlArgs.source;
+            String name = suffix ?
+                    copy.get(Source.STANDARD_NAME) + crawlArgs.name :
+                    crawlArgs.name;
+            copy = copy.put(Source.STANDARD_NAME, name);
             sourceDAO.create(copy);
         } else if( !crawlArgs.sourceLists.isEmpty() ) {
-            SourceList list = crawlArgs.sourceLists.get(0).put(SourceList.LIST_NAME, crawlArgs.name);
-            sourceListDAO.create(list);
+            SourceList list = crawlArgs.sourceLists.get(0);
+            String name = suffix ?
+                    list.get(SourceList.LIST_NAME) + crawlArgs.name :
+                    crawlArgs.name;
+
+            list = list.put(SourceList.LIST_NAME, name);
+            List<Source> sources = sourceDAO.byList(list);
+
+            if(suffix) {
+
+                sources = sources.stream()
+                        .map(s -> s.put(Source.STANDARD_NAME, s.get(Source.STANDARD_NAME) + crawlArgs.name) )
+                        .collect(Collectors.toList());
+
+                sources = sourceDAO.create(sources);
+            }
+
+            list = sourceListDAO.create(list);
+
+            for(Source source : sources) {
+                sourceSourceListDAO.link(source, list);
+            }
+
         }
     }
 
@@ -297,6 +314,19 @@ public class ShellRunner {
         checkListService.unlinkSourceFromSourceList(sources, sl);
     }
 
+//    @ShellMethod
+//    public void checkURL(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) {
+//        reporter.randomRunId();
+//        CrawlArgs crawlArgs = argsService.get();
+//        crawlArgs.raw = args;
+//        crawlArgs.init();
+//
+//        checkListService.
+//
+//
+//
+//    }
+
     @ShellMethod(value = "output example urls ", key = "output")
     public void outputExampleURLCheck(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) throws Exception{
         reporter.randomRunId();
@@ -347,7 +377,7 @@ public class ShellRunner {
             if (maybeSource.isPresent()) {
                 Source source = maybeSource.get();
                 String value = source.get(field);
-                return String.format(value);
+                return value.toString();
             }
             else {
                 return String.format("source name does not exist");
@@ -374,7 +404,7 @@ public class ShellRunner {
     @ShellMethod(value = "set specific value to the corresponding field; usage: set type name field [value]", key = "set")
     // generic, only handle single instance
     // in the set method, probably need to update DAO???
-    public String setField(@ShellOption({"-t", "--type"}) String type,
+    public <T> String setField(@ShellOption({"-t", "--type"}) String type,
                          @ShellOption({"-n", "--name"}) String name,
                          @ShellOption({"-f", "--field"}) String field,
                          @ShellOption({"-v", "--value"}) String value) {
