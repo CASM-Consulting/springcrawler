@@ -122,30 +122,30 @@ public class ACLEDCommitter implements ICommitter {
         /* =============================
          * Reporting
          * ========================== */
-        // All references reaching this stage counted as "accepted", but they may not be committed (SCRAPE_PASS).
+        // All references reaching this stage counted as "accepted", but they might not be committed (SCRAPE_PASS).
         reporter.report(report.event(REFERENCE_ACCEPTED));
-        // Report whether article text was scraped
+        // Report if article text wasn't scraped
         if (Strings.isNullOrEmpty(articleText)){
             reporter.report(report.event(Event.SCRAPE_NO_ARTICLE));
         } else {
-            // We scraped, so report whether keyword passing
+            // It was scraped, so report whether keywords passed
             reporter.report(keywordPassed?
                     report.event(QUERY_MATCH) :
                     report.event(QUERY_NO_MATCH));
         }
-        // Report whether article title was scraped
+        // Report if article title wasn't scraped
         if (Strings.isNullOrEmpty(title)){
             reporter.report(report.event(SCRAPE_NO_TITLE));
         }
-        // Report whether article date was scraped
+        // Report if article date wasn't scraped
         if (Strings.isNullOrEmpty(date)){
             reporter.report(report.event(SCRAPE_NO_DATE));
         } else {
-            // We scraped, so report whether article date was parsed
+            // It was scraped, so report whether article date failed to parse
             if (Strings.isNullOrEmpty(standardDate)){
                 reporter.report(report.event(DATE_PARSE_FAILED));
             } else {
-                // We parsed, so report whether date within correct period
+                // It parsed, so report whether date within correct period
                 reporter.report(datePassed?
                         report.event(DATE_MATCH) :
                         report.event(DATE_NO_MATCH));
