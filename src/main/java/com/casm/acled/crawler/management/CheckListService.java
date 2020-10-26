@@ -516,21 +516,20 @@ public class CheckListService {
 
     public void checkSourceListCrawlReports(SourceList sourceList) {
 
-        System.out.println("Sourcelist: " + sourceList.get(SourceList.LIST_NAME));
-
         String [] header = {"Source", "References", "Committed", "No Keyword Match", "Date Irrelevant", "Date Parse Failed", "Date Missing", "Text Missing"};
         String [][] content = new String[][] {header};
 
         for (Source source : sourceDAO.byList(sourceList)){
 
-            List<String> latestRunIds = reportQueryService.latestRunIds(2, source.id(), Source.class, ACLEDCommitter.class);
+            Map<String, EventCountSummary> runToSummary = reportQueryService.summaryPerRun(source.id(), 10);
 
-            if (latestRunIds.isEmpty()){
+            if (runToSummary.isEmpty()){
                 System.out.println("No run for: " + source.get(Source.STANDARD_NAME));
             } else {
+                System.out.println("Using data over " + runToSummary.size() + " runs for: " + source.get(Source.STANDARD_NAME));
                 String[] data;
-                if (latestRunIds.size() == 1){
-                    EventCountSummary summary = reportQueryService.summaryForRun(latestRunIds.get(0), source.id(), Source.class, ACLEDCommitter.class);
+                if (runToSummary.size() == 1){
+                    EventCountSummary summary = runToSummary.values().iterator().next();
                     data = new String[]{
                             source.get(Source.STANDARD_NAME),
                             Integer.toString(summary.getCount(Event.REFERENCE_ACCEPTED)),
@@ -542,38 +541,49 @@ public class CheckListService {
                             Integer.toString(summary.getCount(Event.SCRAPE_NO_ARTICLE)),
                     };
                 } else {
-                    EventCountSummary latest = reportQueryService.summaryForRun(latestRunIds.get(0), source.id(), Source.class, ACLEDCommitter.class);
-                    EventCountSummary penultimate = reportQueryService.summaryForRun(latestRunIds.get(1), source.id(), Source.class, ACLEDCommitter.class);
-
+                    List<EventCountSummary> summaries = new ArrayList<>(runToSummary.values());
                     data = new String[]{
                             source.get(Source.STANDARD_NAME),
-                            buildChangeString(latest.getCount(Event.REFERENCE_ACCEPTED), penultimate.getCount(Event.REFERENCE_ACCEPTED)),
-                            buildChangeString(latest.getCount(Event.SCRAPE_PASS), penultimate.getCount(Event.SCRAPE_PASS)),
-                            buildChangeString(latest.getCount(Event.QUERY_NO_MATCH), penultimate.getCount(Event.QUERY_NO_MATCH)),
-                            buildChangeString(latest.getCount(Event.DATE_NO_MATCH), penultimate.getCount(Event.DATE_NO_MATCH)),
-                            buildChangeString(latest.getCount(Event.DATE_PARSE_FAILED), penultimate.getCount(Event.DATE_PARSE_FAILED)),
-                            buildChangeString(latest.getCount(Event.SCRAPE_NO_DATE), penultimate.getCount(Event.SCRAPE_NO_DATE)),
-                            buildChangeString(latest.getCount(Event.SCRAPE_NO_ARTICLE), penultimate.getCount(Event.SCRAPE_NO_ARTICLE)),
+                            diffAndRangeStr(Event.REFERENCE_ACCEPTED, summaries),
+                            diffAndRangeStr(Event.SCRAPE_PASS, summaries),
+                            diffAndRangeStr(Event.QUERY_NO_MATCH, summaries),
+                            diffAndRangeStr(Event.DATE_NO_MATCH, summaries),
+                            diffAndRangeStr(Event.DATE_PARSE_FAILED, summaries),
+                            diffAndRangeStr(Event.SCRAPE_NO_DATE, summaries),
+                            diffAndRangeStr(Event.SCRAPE_NO_ARTICLE, summaries)
                     };
                 }
                 content = insertRow(content, content.length, data);
             }
         }
 
+        System.out.println("Sourcelist: " + sourceList.get(SourceList.LIST_NAME));
+
         TableBuilder tableBuilder = new TableBuilder(new ArrayTableModel(content));
         tableBuilder.addFullBorder(BorderStyle.fancy_light);
-        System.out.println(tableBuilder.build().render(100));
+        System.out.println(tableBuilder.build().render(140));
+
+        System.out.println("Format: <latest> (<diff from previous>) [<range over max 10 last runs>]");
     }
 
-    private String buildChangeString(int lastCount, int previousCount){
+    private String diffAndRangeStr(Event event, List<EventCountSummary> summaries){
+        int lastCount = summaries.get(0).getCount(event);
+        int previousCount = summaries.get(1).getCount(event);
         int diff = lastCount - previousCount;
-        if (diff < 0){
-            return String.format("%d (%d)", lastCount, diff);
-        } else {
-            return String.format("%d (+%d)", lastCount, diff);
-        }
-    }
 
+        String diffStr = String.format(diff < 0? " (%d)" :  " (+%d)" , diff);
+
+        int maxCount = summaries.stream()
+                            .mapToInt(s -> s.getCount(event))
+                            .max().getAsInt();
+        int minCount = summaries.stream()
+                            .mapToInt(s -> s.getCount(event))
+                            .min().getAsInt();
+
+        String rangeStr = String.format(" [%d-%d]", minCount, maxCount);
+
+        return lastCount + diffStr + rangeStr;
+    }
 
     public void exportCrawlerSourcesToCSV(Path path, SourceList sourceList) throws IOException {
         List<Source> sources = sourceDAO.byList(sourceList);
