@@ -361,7 +361,7 @@ public class ShellRunner {
             Optional<SourceList> maybeSourceList = sourceListDAO.byName(name);
             if (!maybeSourceList.isPresent()) throw new RuntimeException("Must specify source list name (-n)");
 
-            checkListService.checkSourceListCrawlReports(maybeSourceList.get());
+            checkListService.checkSourceListCrawlReports(maybeSourceList.get(), numRuns);
         }
     }
 

@@ -522,24 +522,24 @@ public class CheckListService {
         System.out.println(tableBuilder.build().render(100));
     }
 
-    public void checkSourceListCrawlReports(SourceList sourceList) {
+    public void checkSourceListCrawlReports(SourceList sourceList, int numRuns) {
 
-        String [] header = {"Source", "References", "Committed", "No Keyword Match", "Date Irrelevant", "Date Parse Failed", "Date Missing", "Text Missing"};
+        String [] header = {"Source", "Runs", "References", "Committed", "No Keyword Match", "Date Irrelevant", "Date Parse Failed", "Date Missing", "Text Missing"};
         String [][] content = new String[][] {header};
 
         for (Source source : sourceDAO.byList(sourceList)){
 
-            Map<String, EventCountSummary> runToSummary = reportQueryService.summaryPerRun(source.id(), 10);
+            Map<String, EventCountSummary> runToSummary = reportQueryService.summaryPerRun(source.id(), numRuns);
 
+            String[] data;
             if (runToSummary.isEmpty()){
-                System.out.println("No run for: " + source.get(Source.STANDARD_NAME));
+                data = new String[]{source.get(Source.STANDARD_NAME), "0", "","","","","","",""};
             } else {
-                System.out.println("Using data over " + runToSummary.size() + " runs for: " + source.get(Source.STANDARD_NAME));
-                String[] data;
                 if (runToSummary.size() == 1){
                     EventCountSummary summary = runToSummary.values().iterator().next();
                     data = new String[]{
                             source.get(Source.STANDARD_NAME),
+                            "1",
                             Integer.toString(summary.getCount(Event.REFERENCE_ACCEPTED)),
                             Integer.toString(summary.getCount(Event.SCRAPE_PASS)),
                             Integer.toString(summary.getCount(Event.QUERY_NO_MATCH)),
@@ -552,6 +552,7 @@ public class CheckListService {
                     List<EventCountSummary> summaries = new ArrayList<>(runToSummary.values());
                     data = new String[]{
                             source.get(Source.STANDARD_NAME),
+                            Integer.toString(runToSummary.size()),
                             diffAndRangeStr(Event.REFERENCE_ACCEPTED, summaries),
                             diffAndRangeStr(Event.SCRAPE_PASS, summaries),
                             diffAndRangeStr(Event.QUERY_NO_MATCH, summaries),
@@ -561,15 +562,15 @@ public class CheckListService {
                             diffAndRangeStr(Event.SCRAPE_NO_ARTICLE, summaries)
                     };
                 }
-                content = insertRow(content, content.length, data);
             }
+            content = insertRow(content, content.length, data);
         }
 
         System.out.println("Sourcelist: " + sourceList.get(SourceList.LIST_NAME));
 
         TableBuilder tableBuilder = new TableBuilder(new ArrayTableModel(content));
         tableBuilder.addFullBorder(BorderStyle.fancy_light);
-        System.out.println(tableBuilder.build().render(140));
+        System.out.println(tableBuilder.build().render(200));
 
         System.out.println("Format: <latest> (<diff from previous>) [<range over max 10 last runs>]");
     }
