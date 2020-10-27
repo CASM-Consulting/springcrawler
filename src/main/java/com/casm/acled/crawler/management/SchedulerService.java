@@ -175,7 +175,7 @@ public class SchedulerService {
         return maybeJob;
     }
 
-    public void ensureSchedule(Job job) {
+    public void ensureSchedule(Job job, LocalDate from, LocalDate to) {
 
         CronExpression cron;
 
@@ -187,10 +187,22 @@ public class SchedulerService {
 
         LocalDateTime now = timeProvider.getTime();
 
-        // A job that's never been run before will default to crawling from a week ago
-        LocalDate crawlFrom = now.minusDays(7).toLocalDate();
-        // The to date will always be a couple months ahead to ensure we don't discount any data that's too recent
-        LocalDate crawlTo = now.plusMonths(2).toLocalDate();
+
+        LocalDate crawlFrom;
+        if(from == null) {
+            // A job that's never been run before will default to crawling from a week ago
+            crawlFrom = now.minusDays(7).toLocalDate();
+        } else {
+            crawlFrom = from;
+        }
+
+        LocalDate crawlTo;
+        if(to == null) {
+            // The to date will always be a couple months ahead to ensure we don't discount any data that's too recent
+            crawlTo = now.plusMonths(2).toLocalDate();
+        } else {
+            crawlTo = to;
+        }
 
         LocalDateTime nextRun = fromDate(cron.getTimeAfter(toDate(now)));
         LocalDateTime prevRun = fromDate(getTimeBefore(toDate(now), cron));
@@ -206,8 +218,10 @@ public class SchedulerService {
         if(maybeJob.isPresent()) {
             Job curJob = maybeJob.get();
 
-            // Set the from date to when the job last started (minusing a day for safety)
-            crawlFrom = curJob.getStarted().minusDays(1).toLocalDate();
+            if(from == null) {
+                // Set the from date to when the job last started (minusing a day for safety)
+                crawlFrom = curJob.getStarted().minusDays(1).toLocalDate();
+            }
 
             String jobState = curJob.state();
             switch (jobState) {
@@ -279,7 +293,7 @@ public class SchedulerService {
                 //pass
             }
 
-            ensureSchedule(job);
+            ensureSchedule(job, args.from, args.to);
         }
     }
 }
