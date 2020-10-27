@@ -66,7 +66,7 @@ public class CrawlerSweep {
         for(JobRequest job : jobs) {
             client.enqueue(job);
             try {
-                Thread.sleep(1*1000);
+                Thread.sleep(10*1000);
             } catch (InterruptedException e) {}
 
         }
