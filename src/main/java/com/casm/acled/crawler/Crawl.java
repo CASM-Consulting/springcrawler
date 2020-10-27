@@ -4,27 +4,21 @@ import com.casm.acled.crawler.management.CrawlArgs;
 import com.casm.acled.crawler.management.NorconexConfiguration;
 import com.casm.acled.crawler.scraper.*;
 import com.casm.acled.crawler.reporting.Reporter;
-import com.casm.acled.crawler.scraper.dates.CompositeDateParser;
-import com.casm.acled.crawler.scraper.dates.ExcludingCustomDateMetadataFilter;
-import com.casm.acled.crawler.scraper.dates.DateParser;
-import com.casm.acled.crawler.scraper.dates.SiteMapLastModifiedMetadataFilter;
+import com.casm.acled.crawler.scraper.dates.*;
 import com.casm.acled.crawler.scraper.keywords.ExcludingKeywordFilter;
-import com.casm.acled.crawler.util.CustomLoggerRepository;
+import com.casm.acled.crawler.scraper.keywords.KeywordTagger;
 import com.casm.acled.entities.source.Source;
 import com.casm.acled.entities.sourcelist.SourceList;
 import com.norconex.collector.core.filter.impl.RegexReferenceFilter;
 import com.norconex.collector.http.HttpCollector;
 import com.norconex.collector.http.url.IURLNormalizer;
 import com.norconex.collector.http.url.impl.GenericURLNormalizer;
+import com.norconex.importer.handler.IImporterHandler;
 import com.norconex.importer.handler.filter.AbstractDocumentFilter;
 import com.norconex.importer.handler.filter.OnMatch;
 import com.norconex.importer.handler.filter.impl.DateMetadataFilter;
 import com.norconex.importer.handler.filter.impl.EmptyMetadataFilter;
-import org.apache.log4j.Level;
-import org.apache.log4j.LogManager;
-import org.apache.log4j.spi.DefaultRepositorySelector;
-import org.apache.log4j.spi.LoggerRepository;
-import org.apache.log4j.spi.RootLogger;
+import com.norconex.importer.handler.transformer.impl.ReplaceTransformer;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -33,9 +27,21 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
+
+import com.norconex.importer.handler.tagger.impl.*;
+
+import com.norconex.collector.http.robot.RobotsTxt;
+import com.norconex.collector.http.robot.impl.StandardRobotsTxtProvider;
+import org.apache.http.client.HttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
+import com.norconex.collector.http.delay.IDelayResolver;
+import com.norconex.collector.http.delay.impl.GenericDelayResolver;
+
 
 public class Crawl {
 
@@ -78,7 +84,7 @@ public class Crawl {
         }
     }
 
-    public Crawl(CrawlArgs args, ACLEDImporter importer, Reporter reporter, List<String> discoveredSitemaps) {
+    public Crawl(CrawlArgs args, ACLEDCommitter committer, Reporter reporter, List<String> discoveredSitemaps) {
         this.source = args.source;
         this.from = args.from;
         this.to = args.to;
@@ -87,9 +93,9 @@ public class Crawl {
         String id = id(false);
         Path scraperCachePath = Paths.get(id);
 
-        importer.setCollectorSupplier(collectorSupplier);
+        committer.setCollectorSupplier(collectorSupplier);
 
-        importer.setMaxArticles(args.maxArticle);
+        committer.setMaxArticles(args.maxArticle);
 
         Path workingDir = args.workingDir;
 
@@ -98,6 +104,26 @@ public class Crawl {
 
         config = new NorconexConfiguration(workingDir.resolve(scraperCachePath), args);
         config.crawler().setUrlNormalizer(new RootLogAppenderClearingURLNormaliser());
+
+        // added for checking the crawlDelay in robots.txt
+        String url = source.get(Source.LINK);
+
+        StandardRobotsTxtProvider srtp  = new StandardRobotsTxtProvider();
+
+        HttpClient httpClient = HttpClientBuilder.create().build();
+
+        RobotsTxt robotsTxt = srtp.getRobotsTxt(httpClient, url, "CASM Tech");
+
+        float robotsDelay = robotsTxt.getCrawlDelay();
+
+        if (robotsDelay > 100) { // certain threshold
+            GenericDelayResolver gdr = new GenericDelayResolver();
+            gdr.setDefaultDelay((config.getPoliteness() <= 50) ? 50 : config.getPoliteness()); // safety check to avoid to to small a delay
+            gdr.setIgnoreRobotsCrawlDelay(true); // disable the crawlDelay in robots.txt file
+            gdr.setScope(GenericDelayResolver.SCOPE_SITE);
+            config.crawler().setDelayResolver(gdr);
+        }
+
 
         List<String> sitemaps = new ArrayList<>();
 
@@ -112,7 +138,13 @@ public class Crawl {
         }
 
 
+        // as Simon mentioned before, want two different pipelines exist at the same time; so added to switch between them;
+        // probably need to add a new parameter for it;
+        String processFlag = "norconex";
+
         List<AbstractDocumentFilter> filters = new ArrayList<>();
+        List<IImporterHandler> handlers = new ArrayList<>();
+
         filters.add(new AcceptFilter());
 
         EmptyMetadataFilter emptyArticle = new EmptyMetadataFilter(OnMatch.EXCLUDE,
@@ -131,18 +163,30 @@ public class Crawl {
                 zoneId = ZoneId.of(zid);
             }
 
-            DateMetadataFilter dateFilter = dateFilter(source,
-                    ZonedDateTime.of(from.atTime(0,0,0), zoneId),
-                    ZonedDateTime.of(to.atTime(0,0,0), zoneId)
-            );
+//            DateMetadataFilter dateFilter = dateFilter(source,
+//                    ZonedDateTime.of(from.atTime(0,0,0), zoneId),
+//                    ZonedDateTime.of(to.atTime(0,0,0), zoneId)
+//            );
+//
+//            filters.add(dateFilter);
 
-            filters.add(dateFilter);
+
+            // here we use dateMetadataTagger
+            DateTagger dateTagger = dateTagger(source,
+                    ZonedDateTime.of(from.atTime(0,0,0), zoneId),
+                    ZonedDateTime.of(to.atTime(0,0,0), zoneId));
+            handlers.add(dateTagger);
+
         }
 
         if(!args.skipKeywords) {
+//            ExcludingKeywordFilter keywordFilter = keywordFilter(args.sourceList, source);
+//            filters.add(keywordFilter);
 
-            ExcludingKeywordFilter keywordFilter = keywordFilter(args.sourceLists.get(0), source);
-            filters.add(keywordFilter);
+            // here use keywordTagger to write corresponding fields;
+            KeywordTagger keywordTagger = keywordTagger(args.sourceLists.get(0), source);
+            handlers.add(keywordTagger);
+
         }
 
         filters.forEach(config::addFilter);
@@ -159,8 +203,27 @@ public class Crawl {
 
 //        String scraperName = Util.getID(startURLs[0]);
 
-        ACLEDScraper scraper = ACLEDScraper.load(args.scrapersDir, source, reporter);
-        ACLEDMetadataPreProcessor metadata = new ACLEDMetadataPreProcessor(startURLs[0]);
+        if (processFlag.equals("scraper")) {
+            ACLEDScraper scraper = ACLEDScraper.load(args.scrapersDir, source, reporter);
+            ACLEDMetadataPreProcessor metadata = new ACLEDMetadataPreProcessor(startURLs[0]);
+            config.setScraper(scraper, metadata);
+            handlers.addAll(filters);
+            config.importer().setPostParseHandlers(handlers.toArray(new IImporterHandler[handlers.size()]));
+        }
+
+        if (processFlag.equals("norconex")) {
+            DOMTagger documentTagger = new ACLEDTagger(args.scrapersDir, source).get();
+            Map<String, String> replacementParams = new HashMap<String, String>();
+            replacementParams.put("<script.*?>.*?<\\/script>", "");
+            ACLEDTransformer tempTransformer = new ACLEDTransformer(replacementParams);
+            ReplaceTransformer documentTransfomer = tempTransformer.transformer;
+
+            handlers.add(0,documentTransfomer);
+            handlers.add(1,documentTagger);
+            handlers.addAll(filters);
+            config.importer().setPostParseHandlers(handlers.toArray(new IImporterHandler[handlers.size()]));
+        }
+
 
         if(source.hasValue(Source.CRAWL_EXCLUDE_PATTERN)) {
             String pattern = source.get(Source.CRAWL_EXCLUDE_PATTERN);
@@ -178,7 +241,6 @@ public class Crawl {
 
         config.crawler().setMaxDepth(args.depth);
 
-        config.setScraper(scraper, metadata);
         config.crawler().setStartURLs(startURLs);
 //        config.collector();
         if(args.crawlId != null && !args.crawlId.isEmpty()) {
@@ -186,7 +248,9 @@ public class Crawl {
         } else {
             config.setId(id);
         }
-        config.crawler().setPostImportProcessors(importer);
+//        config.crawler().setPostImportProcessors(importer);
+        // use committer for testing
+        config.crawler().setCommitter(committer);
     }
 
     public NorconexConfiguration getConfig() {
@@ -200,6 +264,14 @@ public class Crawl {
         ExcludingKeywordFilter keywordFilter = new ExcludingKeywordFilter(ScraperFields.SCRAPED_ARTICLE, query);
 
         return keywordFilter;
+    }
+
+    private KeywordTagger keywordTagger(SourceList sourceList, Source source) {
+
+        String query = resolveQuery(sourceList, source);
+        KeywordTagger keywordTagger = new KeywordTagger(ScraperFields.SCRAPED_ARTICLE, query);
+
+        return keywordTagger;
     }
 
     private DateMetadataFilter dateFilter(Source source, ZonedDateTime from, ZonedDateTime to) {
@@ -216,6 +288,18 @@ public class Crawl {
         return dateMetadataFilter;
     }
 
+    private DateTagger dateTagger(Source source, ZonedDateTime from, ZonedDateTime to) {
+        List<String> dateFormatSpecs = source.get(Source.DATE_FORMAT);
+
+        DateParser dateParser = CompositeDateParser.of(dateFormatSpecs);
+
+        DateTagger dateMetadataTagger = new DateTagger(source, ScraperFields.SCRAPED_DATE, dateParser, reporter);
+        dateMetadataTagger.setFromTime(from);
+        dateMetadataTagger.setToTime(to);
+
+        return dateMetadataTagger;
+
+    }
 //    private ULocale getLocale(Source source) {
 //        ULocale locale = new ULocale(source.get(Source.LOCALE));
 //        return locale;
@@ -256,7 +340,8 @@ public class Crawl {
     }
 
     public void run() {
-        config.finalise();
+        // remove the finalise, already added filters in previous step;
+//        config.finalise();
         collector = new HttpCollector(config.collector());
         collector.start(true);
     }

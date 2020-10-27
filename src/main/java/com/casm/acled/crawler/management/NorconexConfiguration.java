@@ -18,6 +18,7 @@ import com.norconex.importer.handler.filter.AbstractDocumentFilter;
 import com.norconex.importer.handler.filter.OnMatch;
 import com.norconex.importer.parser.GenericDocumentParserFactory;
 
+
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -213,6 +214,10 @@ public class NorconexConfiguration {
     public void setScraper(ACLEDScraper scraper, ACLEDMetadataPreProcessor metadata) {
 
         crawler.setPreImportProcessors(scraper, metadata);
+    }
+
+    public long getPoliteness() {
+        return politeness;
     }
 
     private void configureImporter() {

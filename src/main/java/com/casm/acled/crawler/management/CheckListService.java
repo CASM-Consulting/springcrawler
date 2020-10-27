@@ -401,7 +401,7 @@ public class CheckListService {
 
         Path path = args.workingDir.resolve(args.path);
 
-        exportCrawlerSourcesToCSV(args.workingDir.resolve(path), sourceList);
+        exportCrawlerSourcesToCSV(path, sourceList);
     }
 
     public void importCrawlerSourceList(CrawlArgs args) throws IOException {
@@ -414,9 +414,12 @@ public class CheckListService {
 
         List<Source> sources = importCrawlerSourcesFromCSV(path, EntityVersions.get(Source.class).current());
 
-        for(SourceList list : args.sourceLists) {
-            for(Source source : sources) {
-                sourceSourceListDAO.link(source, list);
+        if(args.flagSet.contains("L")) {
+
+            for(SourceList list : args.sourceLists) {
+                for(Source source : sources) {
+                    sourceSourceListDAO.link(source, list);
+                }
             }
         }
     }
@@ -463,6 +466,11 @@ public class CheckListService {
         tableBuilder.addFullBorder(BorderStyle.fancy_light);
         System.out.println(tableBuilder.build().render(80));
 
+
+    }
+
+    public void testURL(Source source, SourceList list, String url) {
+//        scraperService.getText()
 
     }
 
@@ -518,7 +526,7 @@ public class CheckListService {
         Set<String> fields = importExportFields;
 
         try (
-                final OutputStream outputStream = java.nio.file.Files.newOutputStream(path, StandardOpenOption.CREATE);
+                final OutputStream outputStream = java.nio.file.Files.newOutputStream(path, StandardOpenOption.CREATE_NEW);
                 final PrintWriter writer = new PrintWriter(new BufferedWriter(new OutputStreamWriter(outputStream, StandardCharsets.UTF_8)), false);
                 final CSVPrinter csv = new CSVPrinter(writer, CSVFormat.EXCEL)
 //                CSVWriter csv = new CSVWriter(writer)
@@ -720,18 +728,15 @@ public class CheckListService {
     }
 
 
-    public void linkSourceToSourceList(CrawlArgs crawlArgs) {
-
-        for (SourceList sl : crawlArgs.sourceLists){
-
-            sourceSourceListDAO.link(crawlArgs.source, sl);
+    public void linkSourceToSourceList(Set<Source> sources, SourceList sourceList) {
+        for (Source source : sources){
+            sourceSourceListDAO.link(source, sourceList);
         }
     }
 
-    public void unlinkSourceFromSourceList(CrawlArgs crawlArgs){
-        for (SourceList sl : crawlArgs.sourceLists){
-
-            sourceSourceListDAO.unlink(crawlArgs.source, sl);
+    public void unlinkSourceFromSourceList(Set<Source> sources, SourceList sourceList){
+        for (Source source : sources) {
+            sourceSourceListDAO.unlink(source, sourceList);
         }
     }
 }

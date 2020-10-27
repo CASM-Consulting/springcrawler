@@ -5,8 +5,10 @@ import bithazard.sitemap.parser.model.InvalidSitemapUrlException;
 import bithazard.sitemap.parser.model.UrlConnectionException;
 import com.casm.acled.crawler.Crawl;
 import com.casm.acled.crawler.management.CheckListService;
+import com.casm.acled.crawler.management.ConfigService;
 import com.casm.acled.crawler.management.CrawlArgs;
 import com.casm.acled.crawler.management.CrawlArgsService;
+import com.casm.acled.crawler.scraper.ACLEDCommitter;
 import com.casm.acled.crawler.scraper.ACLEDImporter;
 import com.casm.acled.crawler.reporting.Reporter;
 import com.casm.acled.crawler.util.CustomLoggerRepository;
@@ -83,6 +85,9 @@ public class CrawlService {
     @Autowired
     private CheckListService checkListService;
 
+    @Autowired
+    private ConfigService configService;
+
     public CrawlService() {
 //        args = argsService.get();
     }
@@ -102,8 +107,8 @@ public class CrawlService {
 
         if(maybesSourceList.isPresent() && maybeSource.isPresent()) {
 
-            ACLEDImporter importer = new ACLEDImporter(articleDAO, maybeSource.get(), sourceListDAO, true);
-            importer.setMaxArticles(10);
+            ACLEDCommitter committer = new ACLEDCommitter(articleDAO, maybeSource.get(), sourceListDAO, true, true);
+            committer.setMaxArticles(10);
 
             CrawlArgs args = argsService.get();
 
@@ -111,8 +116,7 @@ public class CrawlService {
             args.sourceLists = ImmutableList.of(maybesSourceList.get());
             args.depth = 3;
 
-            Crawl crawl = new Crawl(args, importer, reporter, ImmutableList.of());
-//            crawl.getConfig().crawler().setIgnoreSitemap(false);
+            Crawl crawl = new Crawl(args, committer, reporter, ImmutableList.of());
             crawl.run();
         } else {
 
@@ -145,18 +149,16 @@ public class CrawlService {
         //ThreadGroup required for logger context, see CustomLoggerRepository
         ThreadGroup tg = new ThreadGroup(Integer.toString(sourceId));
 
-//            ExecutorService executor = Executors.newSingleThreadExecutor();
-//            Future<Void> future = executor.submit()
-
         Thread thread = new Thread(tg, () -> {
 
             configureLogging(args.workingDir, Crawl.id(args.source));
 
-            ACLEDImporter importer = new ACLEDImporter(articleDAO, source, sourceListDAO, true);
+//            ACLEDImporter importer = new ACLEDImporter(articleDAO, source, sourceListDAO, true);
+            ACLEDCommitter committer = new ACLEDCommitter(articleDAO, source, sourceListDAO, true, true);
 
             List<String> discoveredSitemaps = getSitemaps(source);
 
-            Crawl crawl = new Crawl(args, importer, reporter, discoveredSitemaps);
+            Crawl crawl = new Crawl(args, committer, reporter, discoveredSitemaps);
 
             crawl.run();
         });
@@ -333,7 +335,9 @@ public class CrawlService {
 
         HttpClient httpClient = HttpClientBuilder.create().build();
 
-        RobotsTxt robotsTxt = srtp.getRobotsTxt(httpClient, url, "CASM Tech");
+        String userAgent = configService.userAgent();
+
+        RobotsTxt robotsTxt = srtp.getRobotsTxt(httpClient, url, userAgent);
 
         List<String> sitemaps = Arrays.asList(robotsTxt.getSitemapLocations());
 
@@ -353,17 +357,24 @@ public class CrawlService {
 
         Set<String> sitemaps = new HashSet<>();
 
-        // Add standard ones
-        String _url = url;
-        sitemaps.addAll(STANDARD_SITEMAP_LOCS.stream().map(s->_url+(_url.endsWith("/")?"":"/")+s).collect(Collectors.toList()));
-
         // Attempt to discover sitemap location from robots.txt
         SitemapParser sitemapParser = new SitemapParser();
+
+        String userAgent = configService.userAgent();
+
+        sitemapParser.setUserAgent(userAgent);
         try {
             Set<String> sitemapLocations = sitemapParser.getSitemapLocations(url);
             sitemaps.addAll(sitemapLocations);
         } catch (InvalidSitemapUrlException e) {
+            logger.warn(e.getMessage(), e);
             //pass
+        }
+
+        if(sitemaps.isEmpty()) {
+            // Try standard ones
+            String _url = url;
+            sitemaps.addAll(STANDARD_SITEMAP_LOCS.stream().map(s->_url+(_url.endsWith("/")?"":"/")+s).collect(Collectors.toList()));
         }
 
         List<String> contactableSitemaps = checkURLs(new ArrayList<>(sitemaps));
