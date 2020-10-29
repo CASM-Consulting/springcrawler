@@ -122,32 +122,35 @@ public class ACLEDTagger {
             if (rootValue.containsKey("tag") || rootValue.containsKey("custom")) {
                 if (rootSelector.equals("")) {
                     if (rootValue.containsKey("tag")) {
-                        rootSelector = rootSelector + rootValue.get("tag");
+                        rootSelector += rootValue.get("tag");
                     }
                     if (rootValue.containsKey("custom")){
-                        rootSelector = rootSelector + rootValue.get("custom");
+                        rootSelector += rootValue.get("custom");
                     }
                 }
                 else {
                     // for sub spans, always get the first one;
                     if (rootValue.containsKey("tag")) {
                         // seems okay to add :nth-child(1) or not
-                        rootSelector = rootSelector + " " +rootValue.get("tag") + "";
+                        rootSelector += " " +rootValue.get("tag") + "";
                     }
                     if (rootValue.containsKey("custom")) {
                         // seems okay to add :nth-child(1) or not
-                        rootSelector = rootSelector + " " +rootValue.get("custom") + "";
+                        rootSelector += " " +rootValue.get("custom") + "";
                     }
 
                 }
                 if (rootValue.containsKey("class")) {
-                    rootSelector = rootSelector + "." + rootValue.get("class");
+                    rootSelector += "." + rootValue.get("class");
+                }
+                if( rootValue.containsKey("att")) {
+                    rootSelector += "[" + rootValue.get("att") + "]";
+
                 }
             }
-
-
         }
-    return rootSelector;
+
+        return rootSelector;
     }
 
     public void addDOMDetailsAll(Map<String, List<Map<String, String>>> scraperDef, DOMTagger t) {
@@ -163,7 +166,12 @@ public class ACLEDTagger {
             String field = entry.getKey();
             String selector = "";
 
+            String att = null;
+
+            String extract = "text";
+
             for (Map<String, String> select : entry.getValue()) {
+
 
                 if (select.containsKey("tag") || select.containsKey("custom")) {
                     if (selector.equals("")) {
@@ -189,18 +197,26 @@ public class ACLEDTagger {
                     if (select.containsKey("class")) {
                         selector = selector + "." + select.get("class");
                     }
+                    if( select.containsKey("att")) {
+                        selector += "[" + select.get("att") + "]";
+                        att = select.get("att");
+                    }
+
+                    if(att != null) {
+                        extract = "attr("+att+")";
+                    }
                 }
 
             }
             // separate them in case want to modify article's selector;
             if (field.equals(ARTICLE)) {
-                t.addDOMExtractDetails(new DOMExtractDetails(rootSelector + selector + "", ScraperFields.SCRAPED_ARTICLE, true, "text"));
+                t.addDOMExtractDetails(new DOMExtractDetails(rootSelector + selector, ScraperFields.SCRAPED_ARTICLE, true, extract));
             }
             else if (field.equals(TITLE)){
-                t.addDOMExtractDetails(new DOMExtractDetails(rootSelector + selector, ScraperFields.SCRAPED_TITLE, true, "text"));
+                t.addDOMExtractDetails(new DOMExtractDetails(rootSelector + selector, ScraperFields.SCRAPED_TITLE, true, extract));
             }
             else if (field.equals(DATE)) {
-                t.addDOMExtractDetails(new DOMExtractDetails(rootSelector + selector, ScraperFields.SCRAPED_DATE, true, "text"));
+                t.addDOMExtractDetails(new DOMExtractDetails(rootSelector + selector, ScraperFields.SCRAPED_DATE, true, extract));
 
             }
         }
@@ -217,8 +233,9 @@ public class ACLEDTagger {
 
         String selector = "";
 
-        for (Map<String, String> select : entry) {
+        String att = null;
 
+        for (Map<String, String> select : entry) {
             if (select.containsKey("tag") || select.containsKey("custom")) {
                 if (selector.equals("")) {
                     if (select.containsKey("tag")) {
@@ -243,11 +260,18 @@ public class ACLEDTagger {
                 if (select.containsKey("class")) {
                     selector = selector + "." + select.get("class");
                 }
+                if( select.containsKey("att")) {
+                    selector += "[" + select.get("att") + "]";
+                    att=select.get("att");
+                }
             }
-
         }
 
-        tagger.addDOMExtractDetails(new DOMExtractDetails(rootSelector + selector, toField, true, "text"));
+        String extract = "text";
+        if(att != null) {
+            extract = "attr("+att+")";
+        }
+        tagger.addDOMExtractDetails(new DOMExtractDetails(rootSelector + selector, toField, true, extract));
 
     }
 
@@ -302,7 +326,7 @@ public class ACLEDTagger {
 //        DOMTagger t = ACLEDTagger.load(Paths.get("/Users/pengqiwei/Downloads/My/PhDs/acled_thing/acled-scrapers"), source);
 
         // here add a transformer:
-        Map<String, String> params = new HashMap<String, String>();
+        Map<String, String> params = new HashMap<>();
         params.put("<script.*?>.*?<\\/script>", "");
         ACLEDTransformer transformer = new ACLEDTransformer(params);
 
