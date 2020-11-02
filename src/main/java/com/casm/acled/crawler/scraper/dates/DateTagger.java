@@ -10,6 +10,9 @@ import com.norconex.importer.handler.ImporterHandlerException;
 import com.norconex.importer.handler.filter.OnMatch;
 import com.norconex.importer.handler.tagger.AbstractDocumentTagger;
 import com.norconex.importer.handler.tagger.*;
+import com.norconex.importer.handler.tagger.impl.DOMTagger;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 
 import java.io.InputStream;
 import java.time.LocalDateTime;
@@ -21,6 +24,8 @@ import java.util.stream.Collectors;
 
 
 public class DateTagger implements IDocumentTagger{
+
+    private static final Logger LOG = LogManager.getLogger(DateTagger.class);
 
     private final String field;
     private final DateParser dateParser;
@@ -65,23 +70,31 @@ public class DateTagger implements IDocumentTagger{
     @Override
     public void tagDocument(String s, InputStream inputStream, ImporterMetadata importerMetadata, boolean b) throws ImporterHandlerException {
 
-        String date = importerMetadata.get(field).get(0);
-        Optional<LocalDateTime> maybeDateTime = dateParser.parse(date);
+        if(importerMetadata.containsKey(field)) {
 
-        if (maybeDateTime.isPresent()) {
-            LocalDateTime ldt = maybeDateTime.get();
-            String standardDateString = ldt.format(dtf);
-            importerMetadata.addString(ScraperFields.STANDARD_DATE, standardDateString);
+            String date = importerMetadata.get(field).get(0);
+            Optional<LocalDateTime> maybeDateTime = dateParser.parse(date);
 
-            if((ldt.isBefore(this.to) && ldt.isAfter(this.from)) || (ldt.isEqual(this.to) || ldt.isEqual(this.from))) {
-                importerMetadata.addBoolean(ScraperFields.DATE_PASSED, true);
+            if (maybeDateTime.isPresent()) {
+                LocalDateTime ldt = maybeDateTime.get();
+                String standardDateString = ldt.format(dtf);
+                importerMetadata.addString(ScraperFields.STANDARD_DATE, standardDateString);
+
+                if((ldt.isBefore(this.to) && ldt.isAfter(this.from)) || (ldt.isEqual(this.to) || ldt.isEqual(this.from))) {
+                    importerMetadata.addBoolean(ScraperFields.DATE_PASSED, true);
+                } else {
+                    importerMetadata.addBoolean(ScraperFields.DATE_PASSED, false);
+                }
             } else {
+                reporter.report(Report.of(Event.DATE_PARSE_FAILED, source.id(), importerMetadata.getReference()));
                 importerMetadata.addBoolean(ScraperFields.DATE_PASSED, false);
+//            return true;
             }
         } else {
 //            reporter.report(Report.of(Event.DATE_PARSE_FAILED, source.id(), importerMetadata.getReference()));
             importerMetadata.addBoolean(ScraperFields.DATE_PASSED, false);
 //            return true;
+            LOG.warn("date not found " + importerMetadata.getReference());
         }
     }
 }

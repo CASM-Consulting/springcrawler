@@ -145,13 +145,13 @@ public class Crawl {
         List<AbstractDocumentFilter> filters = new ArrayList<>();
         List<IImporterHandler> handlers = new ArrayList<>();
 
-        filters.add(new AcceptFilter());
-
-        EmptyMetadataFilter emptyArticle = new EmptyMetadataFilter(OnMatch.EXCLUDE,
-                ScraperFields.SCRAPED_ARTICLE,
-                ScraperFields.SCRAPED_DATE);
-
-        filters.add(emptyArticle);
+//        filters.add(new AcceptFilter());
+//
+//        EmptyMetadataFilter emptyArticle = new EmptyMetadataFilter(OnMatch.EXCLUDE,
+//                ScraperFields.SCRAPED_ARTICLE,
+//                ScraperFields.SCRAPED_DATE);
+//
+//        filters.add(emptyArticle);
 
         if(from != null && to != null ) {
 

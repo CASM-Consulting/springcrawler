@@ -207,7 +207,7 @@ public class CrawlService {
         long recently = LocalDateTime.now().minus(3, ChronoUnit.DAYS)
                 .toInstant(ZoneOffset.UTC).toEpochMilli();
 
-        ssrf.setFrom(recently);
+        ssrf.setFromDate(recently);
 
         HttpCrawlerConfig hcc = new HttpCrawlerConfig();
 

@@ -7,6 +7,7 @@ import com.casm.acled.crawler.reporting.ReportQueryService.EventCountSummary;
 import com.casm.acled.crawler.reporting.Reporter;
 import com.casm.acled.crawler.scraper.ACLEDCommitter;
 import com.casm.acled.crawler.scraper.ACLEDScraper;
+import com.casm.acled.crawler.scraper.ACLEDTagger;
 import com.casm.acled.crawler.scraper.ScraperFields;
 import com.casm.acled.crawler.scraper.ScraperService;
 import com.casm.acled.crawler.scraper.dates.DateParser;
@@ -24,6 +25,7 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.norconex.collector.http.doc.HttpDocument;
+import com.norconex.importer.handler.tagger.impl.DOMTagger;
 import org.apache.commons.csv.*;
 import org.apache.commons.lang3.BooleanUtils;
 import org.slf4j.Logger;
@@ -220,6 +222,10 @@ public class CheckListService {
 
     public boolean datesParse(CrawlArgs args, Source source) {
         ACLEDScraper scraper = ACLEDScraper.load(args.scrapersDir, source, reporter);
+
+        ACLEDTagger acledTagger = new ACLEDTagger(args.scrapersDir, source);
+
+//        DOMTagger domTagger = acledTagger.get();
 
         return dateTimeService.checkExistingPasses(source, exampleGetter(scraper));
     }
