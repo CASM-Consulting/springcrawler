@@ -118,7 +118,7 @@ public class NorconexConfiguration {
 
 
 //        crawler.setMaxDocuments(10);
-        crawler.setLinkExtractorQuitAtDepth(true);
+//        crawler.setLinkExtractorQuitAtDepth(true);
         crawler.setImporterConfig(importer);
         // Basic crawler config
         crawler.setUserAgent(userAgent);
