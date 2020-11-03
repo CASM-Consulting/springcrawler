@@ -335,7 +335,7 @@ public class CrawlService {
 
         HttpClient httpClient = HttpClientBuilder.create().build();
 
-        String userAgent = configService.userAgent();
+        String userAgent = configService.getUserAgent();
 
         RobotsTxt robotsTxt = srtp.getRobotsTxt(httpClient, url, userAgent);
 
@@ -360,7 +360,7 @@ public class CrawlService {
         // Attempt to discover sitemap location from robots.txt
         SitemapParser sitemapParser = new SitemapParser();
 
-        String userAgent = configService.userAgent();
+        String userAgent = configService.getUserAgent();
 
         sitemapParser.setUserAgent(userAgent);
         try {

@@ -1,10 +1,7 @@
 package com.casm.acled.crawler.springrunners;
 import com.casm.acled.configuration.ObjectMapperConfiguration;
 import com.casm.acled.crawler.Crawl;
-import com.casm.acled.crawler.management.CheckListService;
-import com.casm.acled.crawler.management.CrawlArgs;
-import com.casm.acled.crawler.management.CrawlArgsService;
-import com.casm.acled.crawler.management.SchedulerService;
+import com.casm.acled.crawler.management.*;
 import com.casm.acled.crawler.reporting.Reporter;
 import com.casm.acled.dao.entities.ArticleDAO;
 import com.casm.acled.dao.entities.SourceDAO;
@@ -118,6 +115,13 @@ public class ShellRunner {
     @Autowired
     private ExportCSV exportCSV;
 
+    @Autowired
+    private EmailService emailService;
+
+    @ShellMethod(value = "Test a method", key="test")
+    public void test(){
+        emailService.sendSimpleMessage("andrewr@casmtechnology.com", "Test", "A working example. " + LocalDate.now() );
+    }
 
     @ShellMethod(value = "Copy a Source (-s) or SourceList (-sl) to a with a new name (-N) or suffix if flag 'S' is provided")
     public void copy(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) {

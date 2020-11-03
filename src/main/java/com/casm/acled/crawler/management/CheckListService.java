@@ -1,5 +1,7 @@
 package com.casm.acled.crawler.management;
 
+import com.casm.acled.crawler.management.checks.Check;
+import com.casm.acled.crawler.management.checks.CheckList;
 import com.casm.acled.crawler.reporting.Event;
 import com.casm.acled.crawler.reporting.Report;
 import com.casm.acled.crawler.reporting.Reporter;
@@ -25,7 +27,6 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.norconex.collector.http.doc.HttpDocument;
-import com.norconex.importer.handler.tagger.impl.DOMTagger;
 import org.apache.commons.csv.*;
 import org.apache.commons.lang3.BooleanUtils;
 import org.slf4j.Logger;
@@ -87,6 +88,12 @@ public class CheckListService {
 
     @Autowired
     private ArticleDAO articleDAO;
+
+    @Autowired
+    private ConfigService configService;
+
+    @Autowired
+    private EmailService emailService;
 
 
     private void attemptAllScrapers() {
@@ -269,18 +276,50 @@ public class CheckListService {
 
     }
 
-    public interface Check {
-        String header();
-        Object check();
-    }
-
     public static boolean passed(Object maybeBoolean){
         try {
             Boolean b = (Boolean)maybeBoolean;
             return b != null? b : false;
         } catch (ClassCastException e){
-            return false;
+            return maybeBoolean instanceof String && ((String) maybeBoolean).startsWith("N/A");
         }
+    }
+
+    public CheckList checkSourceStatus2(CrawlArgs args, Source source){
+        System.out.println("Checking source: " + source.get(Source.STANDARD_NAME));
+
+        Check connection = Check.bool(() -> checkConnection(source));
+        Check scraperExists = Check.bool(() -> scraperExists(args, source));
+        Check hasExamples = Check.bool(() -> hasExamples(source));
+        Check hasDateFormat = Check.bool(()-> hasDateFormat(source));
+
+        Check hasSitemaps = Check.notApplicable("off");
+        Check hasRecentSitemaps = Check.notApplicable();
+        if (source.isFalse(Source.CRAWL_DISABLE_SITEMAPS)) {
+            try {
+                List<String> sitemaps = crawlService.getSitemaps(source);
+                hasSitemaps = Check.bool(() -> !sitemaps.isEmpty());
+                if (hasSitemaps.isPass()) {
+                    hasRecentSitemaps = Check.bool(() -> !crawlService.recentSitemapURLs(source.get(Source.LINK), sitemaps).isEmpty());
+                }
+            } catch (Exception e){
+                hasSitemaps = Check.failed(e.getMessage());
+            }
+        }
+
+        boolean canScrapeExamples = Check.allPass(hasExamples, connection, scraperExists);
+
+        Check dateParsed = Check.bool(()-> canScrapeExamples && datesParse(args, source));
+
+        List<HttpDocument> scraped = canScrapeExamples? scraperService.checkExampleURLs(args.scrapersDir, source) : new ArrayList<>();
+
+        Check titleScraped = Check.bool(() -> canScrapeExamples && scraped.stream().noneMatch(doc -> Strings.isNullOrEmpty(doc.getMetadata().getString(SCRAPED_TITLE))));
+        Check dateScraped = Check.bool(() -> canScrapeExamples && scraped.stream().noneMatch(doc -> Strings.isNullOrEmpty(doc.getMetadata().getString(SCRAPED_DATE))));
+        Check articleScraped = Check.bool(() -> canScrapeExamples && scraped.stream().noneMatch(doc -> Strings.isNullOrEmpty(doc.getMetadata().getString(SCRAPED_ARTICLE))));
+
+        return CheckList.of(connection, scraperExists, hasExamples, hasDateFormat,
+                            hasSitemaps, hasRecentSitemaps, dateScraped, dateParsed,
+                            titleScraped, articleScraped);
     }
 
     public String [] checkSourceStatus(CrawlArgs args, Source source)  {
@@ -330,14 +369,18 @@ public class CheckListService {
         }
 
         try {
-            List<String> sitemaps = crawlService.getSitemaps(source);
-            hasSiteMaps = !sitemaps.isEmpty();
-            if((boolean)hasSiteMaps) {
-                try {
-                    Set<String> recent = crawlService.recentSitemapURLs(source.get(Source.LINK), sitemaps);
-                    hasRecentSiteMaps = !recent.isEmpty();
-                } catch (Exception e) {
-                    hasRecentSiteMaps = e.getMessage();
+            if (source.get(Source.CRAWL_DISABLE_SITEMAPS)){
+                hasSiteMaps = "N/A (off)";
+            } else {
+                List<String> sitemaps = crawlService.getSitemaps(source);
+                hasSiteMaps = !sitemaps.isEmpty();
+                if ((boolean) hasSiteMaps) {
+                    try {
+                        Set<String> recent = crawlService.recentSitemapURLs(source.get(Source.LINK), sitemaps);
+                        hasRecentSiteMaps = !recent.isEmpty();
+                    } catch (Exception e) {
+                        hasRecentSiteMaps = e.getMessage();
+                    }
                 }
             }
         }
@@ -379,6 +422,12 @@ public class CheckListService {
             articleScraped = false;
         }
 
+        boolean passed = passed(dateParsed) // implies connection, scraperExists, hasDateFormat, and dateScraped
+                            && passed(titleScraped)
+                            && passed(articleScraped)
+                            && passed(hasSiteMaps)
+                            && passed(hasRecentSiteMaps);
+
         checkValue.add(source.get(Source.STANDARD_NAME));
         checkValue.add(String.valueOf(connection));
         checkValue.add(String.valueOf(scraperExists));
@@ -390,6 +439,7 @@ public class CheckListService {
         checkValue.add(String.valueOf(dateParsed));
         checkValue.add(String.valueOf(titleScraped));
         checkValue.add(String.valueOf(articleScraped));
+        checkValue.add(String.valueOf(passed));
 
 
 
@@ -430,22 +480,27 @@ public class CheckListService {
         }
     }
 
-    public void checkSourceList(CrawlArgs args) {
+    public String checkSourceList(CrawlArgs args) {
         String [] header = {"Source ID", "connection", "scraperExists", "hasExamples", "hasDateFormat", "hasSiteMaps",
-                "hasRecentSitemaps", "dateScraped", "dateParsed", "titleScraped", "articleScraped"};
+                "hasRecentSitemaps", "dateScraped", "dateParsed", "titleScraped", "articleScraped", "passed"};
 //        String [] header = {"Source ID", "hasSiteMaps"};
         String [][] content = new String[][] {header};
 
+        String name = "Source(s)";
         List<Source> sources = new ArrayList<>();
         if (args.source != null){
             sources.add(args.source);
+            name = args.source.get(Source.STANDARD_NAME);
         } else if (args.sourceLists != null && !args.sourceLists.isEmpty()) {
             SourceList sourceList = args.sourceLists.get(0);
+            name = sourceList.get(SourceList.LIST_NAME);
             sources.addAll(sourceDAO.byList(sourceList));
         }
         if (sources.isEmpty()){
             throw new RuntimeException("No source list or source specified.");
         }
+
+        boolean anyFailed = false;
 
         for(Source source : sources) {
 
@@ -459,20 +514,36 @@ public class CheckListService {
 //                content = insertRow(content,content.length, checkArray);
 //
 //            }
-            String [] checkArray = checkSourceStatus(args, source);
-            if (checkArray.length==0) {
-                continue;
+//            String [] checkArray = checkSourceStatus(args, source);
+//            if (checkArray.length==0) {
+//                continue;
+//            }
+//            content = insertRow(content,content.length, checkArray);
+
+            CheckList checks = checkSourceStatus2(args, source);
+
+            if (!checks.isPass()){
+                anyFailed = true;
             }
-            content = insertRow(content,content.length, checkArray);
+
+
+            String[] checkArray = checks.toTableRow(source.get(Source.STANDARD_NAME), true);
+            content = insertRow(content, content.length, checkArray);
 
         }
 
         TableModel model = new ArrayTableModel(content);
         TableBuilder tableBuilder = new TableBuilder(model);
         tableBuilder.addFullBorder(BorderStyle.fancy_light);
-        System.out.println(tableBuilder.build().render(80));
+        String table = tableBuilder.build().render(80);
+        System.out.println(table);
 
+        if (anyFailed && configService.isEmailConfigured()){
 
+            emailService.sendHtmlMessage(configService.getEmail(), name + " failing", "<pre>"+table+"</pre>");
+        }
+
+        return table;
     }
 
     public void testURL(Source source, SourceList list, String url) {

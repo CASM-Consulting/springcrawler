@@ -161,7 +161,7 @@ public class NorconexConfiguration {
         StandardSitemapResolverFactory ssrf = new StandardSitemapResolverFactory();
         if(args.from != null) {
             long from = args.from.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli() - (24 * 60 * 60 * 1000);
-            ssrf.setFrom(from);
+            ssrf.setFromDate(from);
         }
 
         ssrf.setLenient(true);
