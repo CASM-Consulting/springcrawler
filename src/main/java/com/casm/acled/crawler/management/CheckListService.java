@@ -322,6 +322,7 @@ public class CheckListService {
                             titleScraped, articleScraped);
     }
 
+    @Deprecated
     public String [] checkSourceStatus(CrawlArgs args, Source source)  {
 
         System.out.println("Checking source: " + source.get(Source.STANDARD_NAME));

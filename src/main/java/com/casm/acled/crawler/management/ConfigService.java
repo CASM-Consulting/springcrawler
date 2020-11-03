@@ -7,11 +7,25 @@ import org.springframework.context.annotation.Configuration;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+
+/**
+ * App-wide configuration configuration properties.
+ *
+ * Configure them in application.properties.
+ *
+ * Due to the prefix argument to @ConfigurationProperties, each
+ * field on the ConfigService is a property that appears under the
+ * namespace crawler.configservice.
+ *
+ * So if you want to configure, e.g. the "email" field, then you
+ * would set the value of "crawler.configservice.email" in
+ * application.properties.
+ */
 @Configuration
 @ConfigurationProperties(prefix = "crawler.configservice")
 public class ConfigService {
 
-    // Assign default values here
+    // Properties and their default values are defined here.
     private Path workingDir = Paths.get("test");
     private Path scraperDir = Paths.get("/home/sw206/git/alced-scrapers");
     private String userAgent = "CASM Tech";
