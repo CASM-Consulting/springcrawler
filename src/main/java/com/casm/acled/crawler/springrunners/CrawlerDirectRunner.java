@@ -103,7 +103,7 @@ public class CrawlerDirectRunner implements CommandLineRunner {
 
 //        crawlArgs.raw.source = "1";
 //        crawlArgs.raw.source = "Animal Politico";
-//        crawlArgs.raw.source = "El Proceso";
+        crawlArgs.raw.source = "El Proceso";
 //        crawlArgs.raw.source = "La Silla Rota";
 //        crawlArgs.raw.source = "Imagen del Golfo";
 //        crawlArgs.raw.source = "Sintesis";
@@ -118,10 +118,10 @@ public class CrawlerDirectRunner implements CommandLineRunner {
 //        crawlArgs.raw.source = "Noroeste";
 //        crawlArgs.raw.source = "24 Horas (Mexico)";
 //        crawlArgs.raw.source = "nncMX";
-        crawlArgs.raw.source = "Tribuna Campeche";
+//        crawlArgs.raw.source = "Tribuna Campeche";
         crawlArgs.raw.sourceLists = ImmutableList.of("mexico-1");
 //        crawlArgs.raw.sourceLists = ImmutableList.of("fake-net");
-        crawlArgs.raw.from = "2020-10-01";
+        crawlArgs.raw.from = "2020-10-29";
         crawlArgs.raw.to =  "2021-01-01";
         crawlArgs.raw.workingDir = "test";
 //        crawlArgs.raw.workingDir = "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/JQM_ROOT/test";

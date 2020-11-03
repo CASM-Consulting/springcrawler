@@ -727,50 +727,39 @@ public class ShellRunner {
     }
 
     @ShellMethod(value = "generate JEF configuration for source/sourcelists. Usage: jef type name working_dir output_dir", key = "jef")
-    public String jef(@ShellOption({"-t", "--t"}) String type,
-                      @ShellOption({"-n","--name"}) String name,
-                      @ShellOption({"-wd", "--working-dir"}) String workingDir,
-                      @ShellOption({"-od","--output-dir"}) String outputDir) {
+    public String jef(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args
+//            @ShellOption({"-t", "--t"}) String type,
+//                      @ShellOption({"-n","--name"}) String name,
+//                      @ShellOption({"-wd", "--working-dir"}) String workingDir,
+//                      @ShellOption({"-od","--output-dir"}) String outputDir
+    ) {
 
         // test sample: jef sourcelist "mexico-1" "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports" "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports"
         // test sample: jef source "Imagen del Golfo" "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports" "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports"
 
-        CrawlArgs crawlArgs = argsService.get();
+        CrawlArgs crawlArgs = argsService.get(args);
+        crawlArgs.init();
 
-        if (type.equals("source")) {
-            Optional<Source> maybeSource = sourceDAO.byName(name);
-            if (maybeSource.isPresent()) {
-                Source source = maybeSource.get();
-                Path outputPath = Paths.get(outputDir, Util.getID(source)+"-jef.xml");
-                generateDom(workingDir, Arrays.asList(source), outputPath.toString());
+        if (crawlArgs.source != null) {
+            Source source = crawlArgs.source;
+            Path outputPath = crawlArgs.path.resolve(Crawl.id(source)+"-jef.xml");
 
-                return String.format("JEF configuration generated to %s successfully", outputPath.toString());
+            generateDom(crawlArgs.workingDir, Arrays.asList(source), outputPath);
 
-            }
-            else {
+            return String.format("JEF configuration generated to %s successfully", outputPath.toString());
 
-                return String.format("source name does not exist");
+        } else if (!crawlArgs.sourceLists.isEmpty()) {
+            SourceList sourceList = crawlArgs.sourceLists.get(0);
+            String name = sourceList.get(SourceList.LIST_NAME);
+            name = name.toLowerCase().replaceAll(" ", "-");
+            List<Source> sources = sourceDAO.byList(sourceList);
+            Path outputPath = crawlArgs.path.resolve(Util.getID(name)+"-jef.xml");
+            generateDom(crawlArgs.workingDir, sources, outputPath);
 
-            }
-
-        }
-        else if (type.equals("sourcelist")) {
-            Optional<SourceList> maybeSourceList = sourceListDAO.byName(name);
-            if (maybeSourceList.isPresent()) {
-                SourceList sourceList = maybeSourceList.get();
-                List<Source> sources = sourceDAO.byList(sourceList);
-                Path outputPath = Paths.get(outputDir, name+"-jef.xml");
-                generateDom(workingDir, sources, outputPath.toString());
-
-                return String.format("JEF configuration generated to %s successfully", outputPath.toString());
-            }
-            else {
-                return String.format("source list name does not exist");
-            }
-
+            return String.format("JEF configuration generated to %s successfully", outputPath.toString());
         }
         else {
-            return String.format("wrong type value, should be source or sourcelist");
+            return String.format("source or sourcelist should be provided");
         }
 
     }
@@ -822,7 +811,7 @@ public class ShellRunner {
 
     }
 
-    public void generateDom(String dir, List<Source> sources, String outputDir) {
+    public void generateDom(Path dir, List<Source> sources, Path outputDir) {
         try {
             DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
             DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
@@ -844,7 +833,8 @@ public class ShellRunner {
 
             for (Source source: sources) {
                 Element path = doc.createElement("path");
-                Path combinedPath = Paths.get(dir, Crawl.id(source), "progress", "latest");
+                String id = Crawl.id(source);
+                Path combinedPath = dir.resolve(Paths.get( id, "progress", "latest"));
                 path.appendChild(doc.createTextNode(combinedPath.toString()));
                 paths.appendChild(path);
 
@@ -871,7 +861,7 @@ public class ShellRunner {
 
             DOMSource source = new DOMSource(doc);
 
-            StreamResult result =  new StreamResult(new File(outputDir));
+            StreamResult result =  new StreamResult(outputDir.toFile());
             transformer.transform(source, result);
         }
 

@@ -705,10 +705,10 @@ public class DateParsers {
 
     public static void runParser() {
         DateParser parser = CompositeDateParser.of(ImmutableList.of(
-                "ISO:/yyyy-MM-dd//RE.*| (.*) |.*"
+                "ISO:/d 'de' MMM 'de' yyyy/es_MX/RE.*, (.*)"
         ));
 
-        List<String> examples = ImmutableList.of("Xalapa | 2020-09-24 | Cortesía");
+        List<String> examples = ImmutableList.of("sábado, 3 de octubre de 2020");
 
         for(String example : examples) {
             System.out.println(parser.parse(example).toString());
