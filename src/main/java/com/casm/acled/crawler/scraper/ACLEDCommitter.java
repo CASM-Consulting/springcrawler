@@ -106,7 +106,6 @@ public class ACLEDCommitter implements ICommitter {
                 return;
             }
 
-            // qiwei added for record writing
             StringWriter writer = new StringWriter();
             try {
                 IOUtils.copy(inputStream, writer, properties.getString("document.contentEncoding"));
