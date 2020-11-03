@@ -143,6 +143,8 @@ public class Crawl {
         String processFlag = "norconex";
 
         List<AbstractDocumentFilter> filters = new ArrayList<>();
+        List<IImporterHandler> preParsers = new ArrayList<>();
+        List<IImporterHandler> postParse = new ArrayList<>();
         List<IImporterHandler> handlers = new ArrayList<>();
 
 //        filters.add(new AcceptFilter());
@@ -208,7 +210,7 @@ public class Crawl {
             ACLEDMetadataPreProcessor metadata = new ACLEDMetadataPreProcessor(startURLs[0]);
             config.setScraper(scraper, metadata);
             handlers.addAll(filters);
-            config.importer().setPostParseHandlers(handlers.toArray(new IImporterHandler[handlers.size()]));
+            config.importer().setPreParseHandlers(handlers.toArray(new IImporterHandler[handlers.size()]));
         }
 
         if (processFlag.equals("norconex")) {
@@ -221,7 +223,7 @@ public class Crawl {
             handlers.add(0,documentTransfomer);
             handlers.add(1,documentTagger);
             handlers.addAll(filters);
-            config.importer().setPostParseHandlers(handlers.toArray(new IImporterHandler[handlers.size()]));
+            config.importer().setPreParseHandlers(handlers.toArray(new IImporterHandler[handlers.size()]));
         }
 
 
