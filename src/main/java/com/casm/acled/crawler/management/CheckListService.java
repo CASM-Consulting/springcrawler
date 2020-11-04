@@ -4,7 +4,10 @@ import com.casm.acled.crawler.management.checks.Check;
 import com.casm.acled.crawler.management.checks.CheckList;
 import com.casm.acled.crawler.reporting.Event;
 import com.casm.acled.crawler.reporting.Report;
+import com.casm.acled.crawler.reporting.ReportQueryService;
+import com.casm.acled.crawler.reporting.ReportQueryService.EventCountSummary;
 import com.casm.acled.crawler.reporting.Reporter;
+import com.casm.acled.crawler.scraper.ACLEDCommitter;
 import com.casm.acled.crawler.scraper.ACLEDScraper;
 import com.casm.acled.crawler.scraper.ACLEDTagger;
 import com.casm.acled.crawler.scraper.ScraperFields;
@@ -14,10 +17,7 @@ import com.casm.acled.crawler.scraper.dates.DateParsers;
 import com.casm.acled.crawler.scraper.dates.DateTimeService;
 import com.casm.acled.crawler.spring.CrawlService;
 import com.casm.acled.crawler.util.Util;
-import com.casm.acled.dao.entities.ArticleDAO;
-import com.casm.acled.dao.entities.SourceDAO;
-import com.casm.acled.dao.entities.SourceListDAO;
-import com.casm.acled.dao.entities.SourceSourceListDAO;
+import com.casm.acled.dao.entities.*;
 import com.casm.acled.entities.EntityVersions;
 import com.casm.acled.entities.VersionedEntity;
 import com.casm.acled.entities.article.Article;
@@ -27,6 +27,7 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.norconex.collector.http.doc.HttpDocument;
+import com.norconex.importer.handler.tagger.impl.DOMTagger;
 import org.apache.commons.csv.*;
 import org.apache.commons.lang3.BooleanUtils;
 import org.slf4j.Logger;
@@ -88,6 +89,9 @@ public class CheckListService {
 
     @Autowired
     private ArticleDAO articleDAO;
+
+    @Autowired
+    private ReportQueryService reportQueryService;
 
     @Autowired
     private ConfigService configService;
@@ -562,6 +566,111 @@ public class CheckListService {
             out[i] = m[i - 1];
         }
         return out;
+    }
+
+    public void checkSourceCrawlReports(Source source, int numRuns){
+
+        System.out.println("Source: " + source.get(Source.NAME));
+
+        String [] header = {"Run ID", "References", "Committed", "No Keyword Match", "Date Irrelevant", "Date Parse Failed", "Date Missing", "Text Missing"};
+        String [][] content = new String[][] {header};
+
+        Map<String, EventCountSummary> summaryPerRun = reportQueryService
+                .summaryPerRun(source.id(), numRuns);
+
+        for (Map.Entry<String, EventCountSummary> entry : summaryPerRun.entrySet()) {
+
+            EventCountSummary summary = entry.getValue();
+
+            String[] data = new String[]{
+                    entry.getKey(),
+                    Integer.toString(summary.getCount(Event.REFERENCE_ACCEPTED)),
+                    Integer.toString(summary.getCount(Event.SCRAPE_PASS)),
+                    Integer.toString(summary.getCount(Event.QUERY_NO_MATCH)),
+                    Integer.toString(summary.getCount(Event.DATE_NO_MATCH)),
+                    Integer.toString(summary.getCount(Event.DATE_PARSE_FAILED)),
+                    Integer.toString(summary.getCount(Event.SCRAPE_NO_DATE)),
+                    Integer.toString(summary.getCount(Event.SCRAPE_NO_ARTICLE)),
+            };
+
+            content = insertRow(content, content.length, data);
+        }
+
+        TableBuilder tableBuilder = new TableBuilder(new ArrayTableModel(content));
+        tableBuilder.addFullBorder(BorderStyle.fancy_light);
+        System.out.println(tableBuilder.build().render(100));
+    }
+
+    public void checkSourceListCrawlReports(SourceList sourceList, int numRuns) {
+
+        String [] header = {"Source", "Runs", "References", "Committed", "No Keyword Match", "Date Irrelevant", "Date Parse Failed", "Date Missing", "Text Missing"};
+        String [][] content = new String[][] {header};
+
+        for (Source source : sourceDAO.byList(sourceList)){
+
+            Map<String, EventCountSummary> runToSummary = reportQueryService.summaryPerRun(source.id(), numRuns);
+
+            String[] data;
+            if (runToSummary.isEmpty()){
+                data = new String[]{source.get(Source.STANDARD_NAME), "0", "","","","","","",""};
+            } else {
+                if (runToSummary.size() == 1){
+                    EventCountSummary summary = runToSummary.values().iterator().next();
+                    data = new String[]{
+                            source.get(Source.STANDARD_NAME),
+                            "1",
+                            Integer.toString(summary.getCount(Event.REFERENCE_ACCEPTED)),
+                            Integer.toString(summary.getCount(Event.SCRAPE_PASS)),
+                            Integer.toString(summary.getCount(Event.QUERY_NO_MATCH)),
+                            Integer.toString(summary.getCount(Event.DATE_NO_MATCH)),
+                            Integer.toString(summary.getCount(Event.DATE_PARSE_FAILED)),
+                            Integer.toString(summary.getCount(Event.SCRAPE_NO_DATE)),
+                            Integer.toString(summary.getCount(Event.SCRAPE_NO_ARTICLE)),
+                    };
+                } else {
+                    List<EventCountSummary> summaries = new ArrayList<>(runToSummary.values());
+                    data = new String[]{
+                            source.get(Source.STANDARD_NAME),
+                            Integer.toString(runToSummary.size()),
+                            diffAndRangeStr(Event.REFERENCE_ACCEPTED, summaries),
+                            diffAndRangeStr(Event.SCRAPE_PASS, summaries),
+                            diffAndRangeStr(Event.QUERY_NO_MATCH, summaries),
+                            diffAndRangeStr(Event.DATE_NO_MATCH, summaries),
+                            diffAndRangeStr(Event.DATE_PARSE_FAILED, summaries),
+                            diffAndRangeStr(Event.SCRAPE_NO_DATE, summaries),
+                            diffAndRangeStr(Event.SCRAPE_NO_ARTICLE, summaries)
+                    };
+                }
+            }
+            content = insertRow(content, content.length, data);
+        }
+
+        System.out.println("Sourcelist: " + sourceList.get(SourceList.LIST_NAME));
+
+        TableBuilder tableBuilder = new TableBuilder(new ArrayTableModel(content));
+        tableBuilder.addFullBorder(BorderStyle.fancy_light);
+        System.out.println(tableBuilder.build().render(200));
+
+        System.out.println("Format: <latest> (<diff from previous>) [<range over max 10 last runs>]");
+    }
+
+    private String diffAndRangeStr(Event event, List<EventCountSummary> summaries){
+        int lastCount = summaries.get(0).getCount(event);
+        int previousCount = summaries.get(1).getCount(event);
+        int diff = lastCount - previousCount;
+
+        String diffStr = String.format(diff < 0? " (%d)" :  " (+%d)" , diff);
+
+        int maxCount = summaries.stream()
+                            .mapToInt(s -> s.getCount(event))
+                            .max().getAsInt();
+        int minCount = summaries.stream()
+                            .mapToInt(s -> s.getCount(event))
+                            .min().getAsInt();
+
+        String rangeStr = String.format(" [%d-%d]", minCount, maxCount);
+
+        return lastCount + diffStr + rangeStr;
     }
 
     public void exportCrawlerSourcesToCSV(Path path, SourceList sourceList) throws IOException {

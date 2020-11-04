@@ -8,7 +8,6 @@ import com.casm.acled.dao.entities.SourceDAO;
 import com.casm.acled.dao.entities.SourceListDAO;
 import com.casm.acled.dao.entities.SourceSourceListDAO;
 import com.casm.acled.dao.util.ExportCSV;
-import com.casm.acled.entities.EntityField;
 import com.casm.acled.entities.article.Article;
 import com.casm.acled.entities.source.Source;
 import com.casm.acled.entities.sourcelist.SourceList;
@@ -26,12 +25,9 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
 import org.springframework.boot.autoconfigure.validation.ValidationAutoConfiguration;
 import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
 
-import org.springframework.core.MethodParameter;
-import org.springframework.shell.*;
 import org.springframework.shell.standard.ShellMethod;
 import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellOption;
@@ -42,7 +38,6 @@ import java.nio.file.StandardOpenOption;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import javax.validation.Valid;
 import org.jline.reader.LineReader;
@@ -219,25 +214,18 @@ public class ShellRunner {
 
     }
 
-    public Set<Source> getSourcesFromNameCSV(Path csvPath, boolean includesHeader, String headerName) throws IOException {
+    public Set<Source> getSourcesFromNameCSV(Path csvPath) throws IOException {
         Set<Source> sources = new HashSet<>();
 
-
-        String header;
-        // If header is present, then we take headerName as the column of interest, unless it is null, then we default to STANDARD_NAME
-        if (includesHeader){
-            header = headerName == null? Source.STANDARD_NAME : headerName;
-        } else {
-            header = null;
-        }
-
-        try (Reader reader = java.nio.file.Files.newBufferedReader(csvPath);
-             CSVParser csvReader = new CSVParser(reader, includesHeader? CSVFormat.EXCEL.withFirstRecordAsHeader() : CSVFormat.EXCEL)){
+        try (
+                Reader reader = java.nio.file.Files.newBufferedReader(csvPath);
+                CSVParser csvReader = new CSVParser(reader,  CSVFormat.EXCEL )
+        ){
 
             for (CSVRecord record : csvReader) {
 
                 // If header name is specified, use it. Otherwise, get the first column value.
-                String name = headerName != null ? record.get(headerName) : record.get(0);
+                String name = record.get(Source.STANDARD_NAME);
 
                 // If name is present, look up source by name and add if found to results.
                 if (name != null && !name.trim().isEmpty()) {
@@ -250,38 +238,38 @@ public class ShellRunner {
         return sources;
     }
 
-    @ShellMethod(value = "link a Source (-s) to a source list (-sl). Sources can be read from CSV (-p), use -h if CSV has a header, -hn NAME to specify column (assumes STANDARD_NAME)", key="link")
-    public void linkSourceToSourceList(@ShellOption(value = {"-s", "--source"}, defaultValue = ShellOption.NULL) String source,
-                                       @ShellOption(value = {"-sl", "--source-list"}, defaultValue = ShellOption.NULL) String sourceList,
-                                       @ShellOption(value = {"-h", "--includes-header"}, defaultValue = "false") boolean includesHeader,
-                                       @ShellOption(value = {"-hn", "--header-name"}, defaultValue = ShellOption.NULL) String headerName,
-                                       @ShellOption(value = {"-p", "--csv-path"}, defaultValue = ShellOption.NULL) String path) throws Exception{
+    private void checkNull(Object value, String message) {
+        if(value == null) {
+            logger.error(message);
+            throw new RuntimeException(message);
+        }
+    }
 
-        SourceList sl = null;
-        if (sourceList != null && !sourceList.isEmpty()) {
-            Optional<SourceList> maybeSourceList = sourceListDAO.byName(sourceList);
-            if (maybeSourceList.isPresent()) {
-                sl = maybeSourceList.get();
-            }
-        }
-        if (sl == null){
-            System.err.println("Must specify source list.");
-            return;
-        }
+    @ShellMethod(value = "Link a Source to a source list (-sl). Either using -s or sources can be read from CSV (-P).", key="link")
+    public void linkSourceToSourceList(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args
+//            @ShellOption(value = {"-s", "--source"}, defaultValue = ShellOption.NULL) String source,
+//           @ShellOption(value = {"-sl", "--source-list"}, defaultValue = ShellOption.NULL) String sourceList,
+//           @ShellOption(value = {"-p", "--csv-path"}, defaultValue = ShellOption.NULL) String path
+    ) throws Exception{
+
+        CrawlArgs crawlArgs = argsService.get(args);
+        crawlArgs.init();
+        checkNull(crawlArgs.sourceLists, "Source List required");
+
+        SourceList sourceList = crawlArgs.sourceLists.get(0);
 
         Set<Source> sources = new HashSet<>();
 
-        if (path != null && !path.isEmpty()){
-            sources.addAll(getSourcesFromNameCSV(Paths.get(path), includesHeader, headerName));
-            System.out.printf("Found %d sources from CSV%n", sources.size());
+        if (crawlArgs.path != null){
+            sources.addAll(getSourcesFromNameCSV(crawlArgs.path));
+            logger.info("Found {} sources from CSV {}", sources.size(), crawlArgs.path);
         }
 
-        if (source != null && !source.isEmpty()){
-            Optional<Source> maybeSource = sourceDAO.byName(source);
-            maybeSource.ifPresent(sources::add);
+        if (crawlArgs.source != null ){
+            sources.add(crawlArgs.source);
         }
 
-        checkListService.linkSourceToSourceList(sources, sl);
+        checkListService.linkSourceToSourceList(sources, sourceList);
     }
 
     @ShellMethod(value = "unlink a Source (-s) from a source list (-sl). Sources can be read from CSV (-p), use -h if CSV has a header, -hn NAME to specify column (assumes STANDARD_NAME)", key="unlink")
@@ -306,7 +294,7 @@ public class ShellRunner {
         Set<Source> sources = new HashSet<>();
 
         if (path != null && !path.isEmpty()){
-            sources.addAll(getSourcesFromNameCSV(Paths.get(path), includesHeader, headerName));
+            sources.addAll(getSourcesFromNameCSV(Paths.get(path)));
             System.out.printf("Found %d sources from CSV%n", sources.size());
         }
 
@@ -346,6 +334,27 @@ public class ShellRunner {
 
         reporter.getRunReports().stream().forEach(r -> logger.info(r.toString()));
 
+    }
+
+    @ShellMethod(value = "Check crawl reports", key = "check-reports")
+    public void checkSourceCrawlRuns(@ShellOption(value = {"-t", "--type"}, defaultValue = "source") String type,
+                                     @ShellOption({"-n", "--name"}) String name,
+                                     @ShellOption(value = {"-r", "--runs"}, defaultValue = "10") int numRuns){
+
+        if (type.equals("source")){
+
+            Optional<Source> maybeSource = sourceDAO.byName(name);
+            if (!maybeSource.isPresent()) throw new RuntimeException("Must specify source name (-n)");
+
+            checkListService.checkSourceCrawlReports(maybeSource.get(), numRuns);
+
+        } else if (type.equals("sourcelist")){
+
+            Optional<SourceList> maybeSourceList = sourceListDAO.byName(name);
+            if (!maybeSourceList.isPresent()) throw new RuntimeException("Must specify source list name (-n)");
+
+            checkListService.checkSourceListCrawlReports(maybeSourceList.get(), numRuns);
+        }
     }
 
     // generic set / get commands for sources and source lists, in the form
@@ -494,7 +503,7 @@ public class ShellRunner {
             Optional<Source> maybeSource = sourceDAO.byName(name);
             if(maybeSource.isPresent()) {
                 Source source =  maybeSource.get();
-                return source.toString();
+                return String.format("ID: %s%nData: %s", source.id(), source);
             }
             else {
                 return String.format("source name does not exist");
@@ -897,35 +906,35 @@ public class ShellRunner {
         return t -> seen.putIfAbsent(keyExtractor.apply(t), Boolean.TRUE) == null;
     }
 
-    @Bean
-    public ParameterResolver commandParameterResolver() {
-        return new ParameterResolver(){
-
-            @Override
-            public boolean supports(MethodParameter parameter) {
-                return parameter.getParameterType().isAssignableFrom(List.class);
-            }
-
-            /**
-             * This implementation simply returns all the words (arguments) present
-             * 'Infinite arity'
-             */
-            @Override
-            public ValueResult resolve(MethodParameter methodParameter, List<String> words) {
-                return new ValueResult(methodParameter, words);
-            }
-
-            @Override
-            public Stream<ParameterDescription> describe(MethodParameter parameter) {
-                return Stream.of(ParameterDescription.outOf(parameter));
-            }
-
-            @Override
-            public List<CompletionProposal> complete(MethodParameter parameter, CompletionContext context) {
-                return Collections.emptyList();
-            }
-        };
-    }
+//    @Bean
+//    public ParameterResolver commandParameterResolver() {
+//        return new ParameterResolver(){
+//
+//            @Override
+//            public boolean supports(MethodParameter parameter) {
+//                return parameter.getParameterType().isAssignableFrom(List.class);
+//            }
+//
+//            /**
+//             * This implementation simply returns all the words (arguments) present
+//             * 'Infinite arity'
+//             */
+//            @Override
+//            public ValueResult resolve(MethodParameter methodParameter, List<String> words) {
+//                return new ValueResult(methodParameter, words);
+//            }
+//
+//            @Override
+//            public Stream<ParameterDescription> describe(MethodParameter parameter) {
+//                return Stream.of(ParameterDescription.outOf(parameter));
+//            }
+//
+//            @Override
+//            public List<CompletionProposal> complete(MethodParameter parameter, CompletionContext context) {
+//                return Collections.emptyList();
+//            }
+//        };
+//    }
 
     public String ask(String question) {
         question = "\n" + question + " > ";

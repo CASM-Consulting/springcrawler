@@ -107,7 +107,7 @@ public class CrawlService {
 
         if(maybesSourceList.isPresent() && maybeSource.isPresent()) {
 
-            ACLEDCommitter committer = new ACLEDCommitter(articleDAO, maybeSource.get(), sourceListDAO, true, true);
+            ACLEDCommitter committer = new ACLEDCommitter(articleDAO, maybeSource.get(), sourceListDAO, true, true, reporter);
             committer.setMaxArticles(10);
 
             CrawlArgs args = argsService.get();
@@ -154,7 +154,7 @@ public class CrawlService {
             configureLogging(args.workingDir, Crawl.id(args.source));
 
 //            ACLEDImporter importer = new ACLEDImporter(articleDAO, source, sourceListDAO, true);
-            ACLEDCommitter committer = new ACLEDCommitter(articleDAO, source, sourceListDAO, true, true);
+            ACLEDCommitter committer = new ACLEDCommitter(articleDAO, source, sourceListDAO, true, true, reporter);
 
             List<String> discoveredSitemaps = getSitemaps(source);
 

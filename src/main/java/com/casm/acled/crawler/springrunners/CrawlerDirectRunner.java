@@ -102,6 +102,8 @@ public class CrawlerDirectRunner implements CommandLineRunner {
         crawlArgs.raw.program = "crawl";
 
 //        crawlArgs.raw.source = "1";
+//        crawlArgs.raw.source = "Riodoce";
+//        crawlArgs.raw.source = "La Verdad";
 //        crawlArgs.raw.source = "Animal Politico";
         crawlArgs.raw.source = "El Proceso";
 //        crawlArgs.raw.source = "La Silla Rota";
@@ -111,6 +113,7 @@ public class CrawlerDirectRunner implements CommandLineRunner {
 //        crawlArgs.raw.source = "El Sol de Acapulco";
 //        crawlArgs.raw.source = "Siglo de Durango";
 //        crawlArgs.raw.source = "Imagen del Golfo";
+
 //        crawlArgs.raw.source = "Milenio";
 //        crawlArgs.raw.source = "La Prensa de Monclova";
 //        crawlArgs.raw.source = "MiMorelia";
