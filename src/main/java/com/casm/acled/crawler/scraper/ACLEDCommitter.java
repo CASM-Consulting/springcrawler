@@ -104,6 +104,49 @@ public class ACLEDCommitter implements ICommitter {
         return false;
     }
 
+    private void reportACCEPTED(Report report) {
+        reporter.report(report.event(REFERENCE_ACCEPTED));
+    }
+
+    private void reportArticle(Report report, String articleText, boolean keywordPassed) {
+        if (Strings.isNullOrEmpty(articleText)){
+            reporter.report(report.event(Event.SCRAPE_NO_ARTICLE));
+        } else {
+            // It was scraped, so report whether keywords passed
+            reporter.report(keywordPassed?
+                    report.event(QUERY_MATCH) :
+                    report.event(QUERY_NO_MATCH));
+        }
+    }
+
+    private void reportTitle(Report report, String title) {
+        if (Strings.isNullOrEmpty(title)){
+            reporter.report(report.event(SCRAPE_NO_TITLE));
+        }
+    }
+
+    private void reportDate(Report report, String date, String standardDate, boolean datePassed) {
+        if (Strings.isNullOrEmpty(date)){
+            reporter.report(report.event(SCRAPE_NO_DATE));
+        } else {
+            // It was scraped, so report whether article date failed to parse
+            if (Strings.isNullOrEmpty(standardDate)){
+                reporter.report(report.event(DATE_PARSE_FAILED));
+            } else {
+                // It parsed, so report whether date within correct period
+                reporter.report(datePassed?
+                        report.event(DATE_MATCH) :
+                        report.event(DATE_NO_MATCH));
+            }
+        }
+    }
+
+    private void reportCommitted(Report report, boolean scrapedPassed) {
+        reporter.report(scrapedPassed?
+                report.event(SCRAPE_PASS) :
+                report.event(SCRAPE_FAIL));
+    }
+
     @Override
     public void add(String s, InputStream inputStream, Properties properties) {
         
@@ -123,38 +166,20 @@ public class ACLEDCommitter implements ICommitter {
          * Reporting
          * ========================== */
         // All references reaching this stage counted as "accepted", but they might not be committed (SCRAPE_PASS).
-        reporter.report(report.event(REFERENCE_ACCEPTED));
+        reportACCEPTED(report);
+
         // Report if article text wasn't scraped
-        if (Strings.isNullOrEmpty(articleText)){
-            reporter.report(report.event(Event.SCRAPE_NO_ARTICLE));
-        } else {
-            // It was scraped, so report whether keywords passed
-            reporter.report(keywordPassed?
-                    report.event(QUERY_MATCH) :
-                    report.event(QUERY_NO_MATCH));
-        }
+        reportArticle(report, articleText, keywordPassed);
+
         // Report if article title wasn't scraped
-        if (Strings.isNullOrEmpty(title)){
-            reporter.report(report.event(SCRAPE_NO_TITLE));
-        }
+        reportTitle(report, title);
+
         // Report if article date wasn't scraped
-        if (Strings.isNullOrEmpty(date)){
-            reporter.report(report.event(SCRAPE_NO_DATE));
-        } else {
-            // It was scraped, so report whether article date failed to parse
-            if (Strings.isNullOrEmpty(standardDate)){
-                reporter.report(report.event(DATE_PARSE_FAILED));
-            } else {
-                // It parsed, so report whether date within correct period
-                reporter.report(datePassed?
-                        report.event(DATE_MATCH) :
-                        report.event(DATE_NO_MATCH));
-            }
-        }
+        reportDate(report, date, standardDate, datePassed);
+
         // Report whether article will be committed
-        reporter.report(scrapedPassed?
-                report.event(SCRAPE_PASS) :
-                report.event(SCRAPE_FAIL));
+        reportCommitted(report, scrapedPassed);
+
         /* ============================ */
 
         if (scrapedPassed) {
