@@ -215,25 +215,18 @@ public class ShellRunner {
 
     }
 
-    public Set<Source> getSourcesFromNameCSV(Path csvPath, boolean includesHeader, String headerName) throws IOException {
+    public Set<Source> getSourcesFromNameCSV(Path csvPath) throws IOException {
         Set<Source> sources = new HashSet<>();
 
-
-        String header;
-        // If header is present, then we take headerName as the column of interest, unless it is null, then we default to STANDARD_NAME
-        if (includesHeader){
-            header = headerName == null? Source.STANDARD_NAME : headerName;
-        } else {
-            header = null;
-        }
-
-        try (Reader reader = java.nio.file.Files.newBufferedReader(csvPath);
-             CSVParser csvReader = new CSVParser(reader, includesHeader? CSVFormat.EXCEL.withFirstRecordAsHeader() : CSVFormat.EXCEL)){
+        try (
+                Reader reader = java.nio.file.Files.newBufferedReader(csvPath);
+                CSVParser csvReader = new CSVParser(reader,  CSVFormat.EXCEL )
+        ){
 
             for (CSVRecord record : csvReader) {
 
                 // If header name is specified, use it. Otherwise, get the first column value.
-                String name = headerName != null ? record.get(headerName) : record.get(0);
+                String name = record.get(Source.STANDARD_NAME);
 
                 // If name is present, look up source by name and add if found to results.
                 if (name != null && !name.trim().isEmpty()) {
@@ -246,38 +239,38 @@ public class ShellRunner {
         return sources;
     }
 
-    @ShellMethod(value = "link a Source (-s) to a source list (-sl). Sources can be read from CSV (-p), use -h if CSV has a header, -hn NAME to specify column (assumes STANDARD_NAME)", key="link")
-    public void linkSourceToSourceList(@ShellOption(value = {"-s", "--source"}, defaultValue = ShellOption.NULL) String source,
-                                       @ShellOption(value = {"-sl", "--source-list"}, defaultValue = ShellOption.NULL) String sourceList,
-                                       @ShellOption(value = {"-h", "--includes-header"}, defaultValue = "false") boolean includesHeader,
-                                       @ShellOption(value = {"-hn", "--header-name"}, defaultValue = ShellOption.NULL) String headerName,
-                                       @ShellOption(value = {"-p", "--csv-path"}, defaultValue = ShellOption.NULL) String path) throws Exception{
+    private void checkNull(Object value, String message) {
+        if(value == null) {
+            logger.error(message);
+            throw new RuntimeException(message);
+        }
+    }
 
-        SourceList sl = null;
-        if (sourceList != null && !sourceList.isEmpty()) {
-            Optional<SourceList> maybeSourceList = sourceListDAO.byName(sourceList);
-            if (maybeSourceList.isPresent()) {
-                sl = maybeSourceList.get();
-            }
-        }
-        if (sl == null){
-            System.err.println("Must specify source list.");
-            return;
-        }
+    @ShellMethod(value = "Link a Source to a source list (-sl). Either using -s or sources can be read from CSV (-P).", key="link")
+    public void linkSourceToSourceList(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args
+//            @ShellOption(value = {"-s", "--source"}, defaultValue = ShellOption.NULL) String source,
+//           @ShellOption(value = {"-sl", "--source-list"}, defaultValue = ShellOption.NULL) String sourceList,
+//           @ShellOption(value = {"-p", "--csv-path"}, defaultValue = ShellOption.NULL) String path
+    ) throws Exception{
+
+        CrawlArgs crawlArgs = argsService.get(args);
+        crawlArgs.init();
+        checkNull(crawlArgs.sourceLists, "Source List required");
+
+        SourceList sourceList = crawlArgs.sourceLists.get(0);
 
         Set<Source> sources = new HashSet<>();
 
-        if (path != null && !path.isEmpty()){
-            sources.addAll(getSourcesFromNameCSV(Paths.get(path), includesHeader, headerName));
-            System.out.printf("Found %d sources from CSV%n", sources.size());
+        if (crawlArgs.path != null){
+            sources.addAll(getSourcesFromNameCSV(crawlArgs.path));
+            logger.info("Found {} sources from CSV {}", sources.size(), crawlArgs.path);
         }
 
-        if (source != null && !source.isEmpty()){
-            Optional<Source> maybeSource = sourceDAO.byName(source);
-            maybeSource.ifPresent(sources::add);
+        if (crawlArgs.source != null ){
+            sources.add(crawlArgs.source);
         }
 
-        checkListService.linkSourceToSourceList(sources, sl);
+        checkListService.linkSourceToSourceList(sources, sourceList);
     }
 
     @ShellMethod(value = "unlink a Source (-s) from a source list (-sl). Sources can be read from CSV (-p), use -h if CSV has a header, -hn NAME to specify column (assumes STANDARD_NAME)", key="unlink")
@@ -302,7 +295,7 @@ public class ShellRunner {
         Set<Source> sources = new HashSet<>();
 
         if (path != null && !path.isEmpty()){
-            sources.addAll(getSourcesFromNameCSV(Paths.get(path), includesHeader, headerName));
+            sources.addAll(getSourcesFromNameCSV(Paths.get(path)));
             System.out.printf("Found %d sources from CSV%n", sources.size());
         }
 
@@ -744,50 +737,39 @@ public class ShellRunner {
     }
 
     @ShellMethod(value = "generate JEF configuration for source/sourcelists. Usage: jef type name working_dir output_dir", key = "jef")
-    public String jef(@ShellOption({"-t", "--t"}) String type,
-                      @ShellOption({"-n","--name"}) String name,
-                      @ShellOption({"-wd", "--working-dir"}) String workingDir,
-                      @ShellOption({"-od","--output-dir"}) String outputDir) {
+    public String jef(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args
+//            @ShellOption({"-t", "--t"}) String type,
+//                      @ShellOption({"-n","--name"}) String name,
+//                      @ShellOption({"-wd", "--working-dir"}) String workingDir,
+//                      @ShellOption({"-od","--output-dir"}) String outputDir
+    ) {
 
         // test sample: jef sourcelist "mexico-1" "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports" "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports"
         // test sample: jef source "Imagen del Golfo" "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports" "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports"
 
-        CrawlArgs crawlArgs = argsService.get();
+        CrawlArgs crawlArgs = argsService.get(args);
+        crawlArgs.init();
 
-        if (type.equals("source")) {
-            Optional<Source> maybeSource = sourceDAO.byName(name);
-            if (maybeSource.isPresent()) {
-                Source source = maybeSource.get();
-                Path outputPath = Paths.get(outputDir, Util.getID(source)+"-jef.xml");
-                generateDom(workingDir, Arrays.asList(source), outputPath.toString());
+        if (crawlArgs.source != null) {
+            Source source = crawlArgs.source;
+            Path outputPath = crawlArgs.path.resolve(Crawl.id(source)+"-jef.xml");
 
-                return String.format("JEF configuration generated to %s successfully", outputPath.toString());
+            generateDom(crawlArgs.workingDir, Arrays.asList(source), outputPath);
 
-            }
-            else {
+            return String.format("JEF configuration generated to %s successfully", outputPath.toString());
 
-                return String.format("source name does not exist");
+        } else if (!crawlArgs.sourceLists.isEmpty()) {
+            SourceList sourceList = crawlArgs.sourceLists.get(0);
+            String name = sourceList.get(SourceList.LIST_NAME);
+            name = name.toLowerCase().replaceAll(" ", "-");
+            List<Source> sources = sourceDAO.byList(sourceList);
+            Path outputPath = crawlArgs.path.resolve(Util.getID(name)+"-jef.xml");
+            generateDom(crawlArgs.workingDir, sources, outputPath);
 
-            }
-
-        }
-        else if (type.equals("sourcelist")) {
-            Optional<SourceList> maybeSourceList = sourceListDAO.byName(name);
-            if (maybeSourceList.isPresent()) {
-                SourceList sourceList = maybeSourceList.get();
-                List<Source> sources = sourceDAO.byList(sourceList);
-                Path outputPath = Paths.get(outputDir, name+"-jef.xml");
-                generateDom(workingDir, sources, outputPath.toString());
-
-                return String.format("JEF configuration generated to %s successfully", outputPath.toString());
-            }
-            else {
-                return String.format("source list name does not exist");
-            }
-
+            return String.format("JEF configuration generated to %s successfully", outputPath.toString());
         }
         else {
-            return String.format("wrong type value, should be source or sourcelist");
+            return String.format("source or sourcelist should be provided");
         }
 
     }
@@ -839,7 +821,7 @@ public class ShellRunner {
 
     }
 
-    public void generateDom(String dir, List<Source> sources, String outputDir) {
+    public void generateDom(Path dir, List<Source> sources, Path outputDir) {
         try {
             DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
             DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
@@ -861,7 +843,8 @@ public class ShellRunner {
 
             for (Source source: sources) {
                 Element path = doc.createElement("path");
-                Path combinedPath = Paths.get(dir, Crawl.id(source), "progress", "latest");
+                String id = Crawl.id(source);
+                Path combinedPath = dir.resolve(Paths.get( id, "progress", "latest"));
                 path.appendChild(doc.createTextNode(combinedPath.toString()));
                 paths.appendChild(path);
 
@@ -888,7 +871,7 @@ public class ShellRunner {
 
             DOMSource source = new DOMSource(doc);
 
-            StreamResult result =  new StreamResult(new File(outputDir));
+            StreamResult result =  new StreamResult(outputDir.toFile());
             transformer.transform(source, result);
         }
 

@@ -9,6 +9,7 @@ import com.norconex.collector.http.HttpCollectorConfig;
 import com.norconex.collector.http.crawler.HttpCrawlerConfig;
 import com.norconex.collector.http.crawler.URLCrawlScopeStrategy;
 import com.norconex.collector.http.delay.impl.GenericDelayResolver;
+import com.norconex.collector.http.fetch.impl.GenericDocumentFetcher;
 import com.norconex.collector.http.sitemap.impl.StandardSitemapResolverFactory;
 import com.norconex.collector.http.url.impl.GenericLinkExtractor;
 import com.norconex.collector.http.url.impl.XMLFeedLinkExtractor;
@@ -161,13 +162,17 @@ public class NorconexConfiguration {
         StandardSitemapResolverFactory ssrf = new StandardSitemapResolverFactory();
         if(args.from != null) {
             long from = args.from.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli() - (24 * 60 * 60 * 1000);
-            ssrf.setFrom(from);
+            ssrf.setFromDate(from);
         }
 
         ssrf.setLenient(true);
         ssrf.setEscalateErrors(true);
 
         crawler.setSitemapResolverFactory(ssrf);
+
+        GenericDocumentFetcher documentFetcher = new GenericDocumentFetcher();
+        documentFetcher.setDetectCharset(true);
+        crawler.setDocumentFetcher(documentFetcher);
 
         // Used to set the politeness delay for consecutive post calls to the site (helps prevent being blocked)
         GenericDelayResolver gdr = new GenericDelayResolver();

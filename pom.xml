@@ -20,7 +20,7 @@
         <!--1.5.9 for testing source article, title and date-->
         <casm.acled.version>1.5.12</casm.acled.version>
         <lucene.version>8.5.1</lucene.version>
-        <collector-http-casm.version>2.9.15</collector-http-casm.version>
+        <collector-http-casm.version>2.9.16</collector-http-casm.version>
     </properties>
 
     <parent>
