@@ -337,6 +337,27 @@ public class ShellRunner {
 
     }
 
+    @ShellMethod(value = "Check crawl reports", key = "check-reports")
+    public void checkSourceCrawlRuns(@ShellOption(value = {"-t", "--type"}, defaultValue = "source") String type,
+                                     @ShellOption({"-n", "--name"}) String name,
+                                     @ShellOption(value = {"-r", "--runs"}, defaultValue = "10") int numRuns){
+
+        if (type.equals("source")){
+
+            Optional<Source> maybeSource = sourceDAO.byName(name);
+            if (!maybeSource.isPresent()) throw new RuntimeException("Must specify source name (-n)");
+
+            checkListService.checkSourceCrawlReports(maybeSource.get(), numRuns);
+
+        } else if (type.equals("sourcelist")){
+
+            Optional<SourceList> maybeSourceList = sourceListDAO.byName(name);
+            if (!maybeSourceList.isPresent()) throw new RuntimeException("Must specify source list name (-n)");
+
+            checkListService.checkSourceListCrawlReports(maybeSourceList.get(), numRuns);
+        }
+    }
+
     // generic set / get commands for sources and source lists, in the form
     // generic, only handle single instance
     @ShellMethod(value = "get specific value from the corresponding field; usage: get type name field", key = "get")
@@ -483,7 +504,7 @@ public class ShellRunner {
             Optional<Source> maybeSource = sourceDAO.byName(name);
             if(maybeSource.isPresent()) {
                 Source source =  maybeSource.get();
-                return source.toString();
+                return String.format("ID: %s%nData: %s", source.id(), source);
             }
             else {
                 return String.format("source name does not exist");

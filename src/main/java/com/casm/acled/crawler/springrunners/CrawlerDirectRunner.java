@@ -102,6 +102,8 @@ public class CrawlerDirectRunner implements CommandLineRunner {
         crawlArgs.raw.program = "crawl";
 
 //        crawlArgs.raw.source = "1";
+//        crawlArgs.raw.source = "Riodoce";
+//        crawlArgs.raw.source = "La Verdad";
 //        crawlArgs.raw.source = "Animal Politico";
         crawlArgs.raw.source = "El Proceso";
 //        crawlArgs.raw.source = "La Silla Rota";
@@ -111,6 +113,7 @@ public class CrawlerDirectRunner implements CommandLineRunner {
 //        crawlArgs.raw.source = "El Sol de Acapulco";
 //        crawlArgs.raw.source = "Siglo de Durango";
 //        crawlArgs.raw.source = "Imagen del Golfo";
+
 //        crawlArgs.raw.source = "Milenio";
 //        crawlArgs.raw.source = "La Prensa de Monclova";
 //        crawlArgs.raw.source = "MiMorelia";
@@ -125,8 +128,8 @@ public class CrawlerDirectRunner implements CommandLineRunner {
         crawlArgs.raw.to =  "2021-01-01";
         crawlArgs.raw.workingDir = "test";
 //        crawlArgs.raw.workingDir = "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/JQM_ROOT/test";
-        crawlArgs.raw.scrapersDir = "/home/sw206/git/acled-scrapers/";
-//        crawlArgs.raw.scrapersDir = "/Users/adr27/Documents/git/acled-scrapers/";
+//        crawlArgs.raw.scrapersDir = "/home/sw206/git/acled-scrapers/";
+        crawlArgs.raw.scrapersDir = "/Users/adr27/Documents/git/acled-scrapers/";
 //        crawlArgs.raw.scrapersDir = "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/springcrawler/testscrapers/generic/";
 //        crawlArgs.raw.scrapersDir = "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/acled-scrapers/";
 
