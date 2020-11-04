@@ -147,6 +147,53 @@ public class ACLEDCommitter implements ICommitter {
                 report.event(SCRAPE_FAIL));
     }
 
+    private String getRaw(InputStream inputStream, Properties properties, String url) {
+        StringWriter writer = new StringWriter();
+        try {
+            IOUtils.copy(inputStream, writer, properties.getString("document.contentEncoding"));
+        } catch (Exception ex) {
+            throw new RuntimeException("ERROR: Failed to retrieve web content for url: " + url);
+        }
+
+        String rawHtml = writer.toString();
+
+        return rawHtml;
+    }
+
+    private void commitArticle(String url, String date, String standardDate, String title, String keywordHighlight,
+                               String articleText, String rawHtml, int depth) {
+        Article article = EntityVersions.get(Article.class)
+                .current()
+                .put(Article.TEXT, articleText)
+                .put(Article.SCRAPE_DATE, date)
+                .put(Article.URL, url)
+                .put(Article.CRAWL_DEPTH, depth)
+                .put(Article.CRAWL_DATE, LocalDate.now())
+                ;
+
+        if (title != null) {
+            article = article.put(Article.TITLE, title);
+        }
+
+        if (keywordHighlight != null) {
+            article = article.put(Article.SCRAPE_KEYWORD_HIGHLIGHT, keywordHighlight);
+        }
+
+        if (standardDate != null) {
+            LocalDateTime parsedDate = ExcludingCustomDateMetadataFilter.toDate(standardDate);
+            article = article.put(Article.DATE, parsedDate.toLocalDate());
+        }
+
+        if (recordRaw) {
+            article = article.put(Article.SCRAPE_RAW_HTML, rawHtml);
+        }
+
+        if (!stopAfterNArticlesFromSource(source)) {
+            article = article.put(Article.SOURCE_ID, source.id());
+            articleDAO.create(article);
+        }
+    }
+
     @Override
     public void add(String s, InputStream inputStream, Properties properties) {
         
@@ -157,6 +204,13 @@ public class ACLEDCommitter implements ICommitter {
         String title = properties.getString(SCRAPED_TITLE);
         String date = properties.getString(SCRAPED_DATE);
         String standardDate = properties.getString( STANDARD_DATE);
+        String keywordHighlight = properties.getString(ScraperFields.KEYWORD_HIGHLIGHT);
+        String rawHtml = null;
+        int depth = properties.getInt("collector.depth");
+
+        if (recordRaw) {
+            rawHtml = getRaw(inputStream, properties, url);
+        }
 
         boolean keywordPassed = properties.getBoolean(KEYWORD_PASSED);
         boolean datePassed = properties.getBoolean(DATE_PASSED);
@@ -184,47 +238,7 @@ public class ACLEDCommitter implements ICommitter {
 
         if (scrapedPassed) {
 
-            // qiwei added for record writing
-            StringWriter writer = new StringWriter();
-            try {
-                IOUtils.copy(inputStream, writer, properties.getString("document.contentEncoding"));
-            } catch (Exception ex) {
-                throw new RuntimeException("ERROR: Failed to retrieve web content for url: " + url);
-            }
-
-            String rawHtml = writer.toString();
-
-            Article article = EntityVersions.get(Article.class)
-                    .current();
-
-            if (title != null) {
-                article = article.put(Article.TITLE, title);
-            }
-
-            article = article.put(Article.TEXT, articleText)
-                    .put(Article.SCRAPE_DATE, date)
-                    .put(Article.URL, url);
-
-            if (properties.getString(ScraperFields.KEYWORD_HIGHLIGHT) != null) {
-                article = article.put(Article.SCRAPE_KEYWORD_HIGHLIGHT, properties.getString(ScraperFields.KEYWORD_HIGHLIGHT));
-            }
-
-            if (standardDate != null) {
-                LocalDateTime parsedDate = ExcludingCustomDateMetadataFilter.toDate(standardDate);
-                article = article.put(Article.DATE, parsedDate.toLocalDate());
-            }
-
-            if (recordRaw) {
-                article = article.put(Article.SCRAPE_RAW_HTML, rawHtml);
-            }
-
-            article = article.put(Article.CRAWL_DEPTH, properties.getInt("collector.depth"));
-            article = article.put(Article.CRAWL_DATE, LocalDate.now());
-
-            if (!stopAfterNArticlesFromSource(source)) {
-                article = article.put(Article.SOURCE_ID, source.id());
-                articleDAO.create(article);
-            }
+            commitArticle(url, date, standardDate, title, keywordHighlight, articleText, rawHtml, depth);
         }
     }
 
