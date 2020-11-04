@@ -22,7 +22,7 @@ import java.nio.file.Paths;
  * application.properties.
  */
 @Configuration
-@ConfigurationProperties(prefix = "crawler.configservice")
+@ConfigurationProperties(prefix = "crawler")
 public class ConfigService {
 
     // Properties and their default values are defined here.
