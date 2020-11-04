@@ -326,136 +326,112 @@ public class ShellRunner {
 
     // generic set / get commands for sources and source lists, in the form
     // generic, only handle single instance
-    // this method cannot be compatible with CrawlArgs parameters for now.
-    @ShellMethod(value = "get specific value from the corresponding field; usage: get type name field", key = "get")
-    public String getField(@ShellOption({"-t", "--type"}) String type,
-                           @ShellOption({"-n", "--name"}) String name,
-                           @ShellOption({"-f", "--field"}) String field) {
+    @ShellMethod(value = "get specific value from the corresponding field; usage: get -s/sl name -field value", key = "get")
+    public String getField(@ShellOption(value = {"-sl"}, defaultValue = ShellOption.NULL) String sourceListName,
+                           @ShellOption(value = {"-s"}, defaultValue = ShellOption.NULL) String sourceName,
+                           @ShellOption({"-field"}) String field, // because -f already exists in crawlargs...
+                           @ShellOption(optOut = true) @Valid CrawlArgs.Raw args) {
 
-        if (type.equals("source")) {
-            Optional<Source> maybeSource = sourceDAO.byName(name);
-            if (maybeSource.isPresent()) {
-                Source source = maybeSource.get();
-                String value = source.get(field);
-                return value.toString();
-            }
-            else {
-                return String.format("source name does not exist");
+        CrawlArgs crawlArgs = argsService.get(args);
+        crawlArgs.init();
 
-            }
+
+        if (crawlArgs.source!=null) {
+            Source source = crawlArgs.source;
+            Object value = source.get(field);
+            return value.toString();
         }
-        else if (type.equals("sourcelist")){
-            Optional<SourceList> maybeSourceList = sourceListDAO.byName(name);
-            if(maybeSourceList.isPresent()) {
-                SourceList sourceList =  maybeSourceList.get();
-                String value = sourceList.get(field);
-                return String.format(value);
-            }
-            else {
-                return String.format("source list name does not exist");
-            }
+
+        else if (!crawlArgs.sourceLists.isEmpty()) {
+            SourceList sourceList = crawlArgs.sourceLists.get(0);
+            Object value = sourceList.get(field);
+            return value.toString();
         }
         else {
-            return String.format("wrong type value, should be source or sourcelist");
+            return String.format("source or sourcelist should be provided");
         }
 
     }
 
-    @ShellMethod(value = "set specific value to the corresponding field; usage: set type name field [value]", key = "set")
+    @ShellMethod(value = "set specific value to the corresponding field; usage: set -s/sl name -field value -value value", key = "set")
     // generic, only handle single instance
-    // this method cannot be compatible with CrawlArgs parameters for now.
-    public <T> String setField(@ShellOption({"-t", "--type"}) String type,
-                               @ShellOption({"-n", "--name"}) String name,
-                               @ShellOption({"-f", "--field"}) String field,
-                               @ShellOption({"-v", "--value"}) String value) {
+    public <T> String setField(@ShellOption(value = {"-sl"}, defaultValue = ShellOption.NULL) String sourceListName,
+                               @ShellOption(value = {"-s"}, defaultValue = ShellOption.NULL) String sourceName,
+                               @ShellOption({"-field"}) String field, // because -f already exists in crawlargs...
+                               @ShellOption({"-value"}) String value,
+                               @ShellOption(optOut = true) @Valid CrawlArgs.Raw args) {
 
-        CrawlArgs crawlArgs = argsService.get();
+        // this function is problematic, cuz need to know the field's class in advance. and casting str to that class in order to set data.
+        // need to figure out the data class, in this function, we can directly change from string to int, but not generic enough
 
-        if (type.equals("source")) {
-            Optional<Source> maybeSource = sourceDAO.byName(name);
-            if(maybeSource.isPresent()) {
-                Source source =  maybeSource.get();
-                source = source.put(field, value);
-                sourceDAO.upsert(source);
+        CrawlArgs crawlArgs = argsService.get(args);
+        crawlArgs.init();
 
-                return String.format("value set successfully");
-            }
-            else {
-                return String.format("source name does not exist");
+        if (crawlArgs.source!=null) {
+            Source source = crawlArgs.source;
+//            Class<?> fieldClass = source.get(field).getClass();
+            source = source.put(field, value);
+            sourceDAO.upsert(source);
 
-            }
+            return String.format("value set successfully");
         }
-        else if (type.equals("sourcelist")){
-            Optional<SourceList> maybeSourceList = sourceListDAO.byName(name);
-            if(maybeSourceList.isPresent()) {
-                SourceList sourceList =  maybeSourceList.get();
-                sourceList = sourceList.put(field, value);
-                sourceListDAO.upsert(sourceList);
 
-                return String.format("value set successfully");
+        else if (!crawlArgs.sourceLists.isEmpty()) {
+            SourceList sourceList = crawlArgs.sourceLists.get(0);
+            sourceList = sourceList.put(field, value);
+            sourceListDAO.upsert(sourceList);
 
-            }
-            else {
-                return String.format("source list name does not exist");
-            }
+            return String.format("value set successfully");
+
         }
         else {
-            return String.format("wrong type value, should be source or sourcelist");
+            return String.format("source or sourcelist should be provided");
         }
+
     }
 
-    // this method cannot be compatible with CrawlArgs parameters for now.
-    @ShellMethod(value = "add field/property value to existing list; usage: add type name field [value]", key = "add")
-    public String addValue(@ShellOption({"-t", "--type"}) String type,
-                           @ShellOption({"-n", "--name"}) String name,
-                           @ShellOption({"-f", "--field"}) String field,
-                           @ShellOption({"-v", "--value"}) String value) {
+    @ShellMethod(value = "add field/property value to existing list; usage: add -sl/s name -field value -value value", key = "add")
+    public String addValue(@ShellOption(value = {"-sl"}, defaultValue = ShellOption.NULL) String sourceListName,
+                           @ShellOption(value = {"-s"}, defaultValue = ShellOption.NULL) String sourceName,
+                           @ShellOption({"-field"}) String field, // because -f already exists in crawlargs...
+                           @ShellOption({"-value"}) String value,
+                           @ShellOption(optOut = true) @Valid CrawlArgs.Raw args) {
 
-        CrawlArgs crawlArgs = argsService.get();
+        // test command: add -s "Imagen del Golfo" -field CRAWL_SCHEDULE -value "*"
 
-        // test command: add source "Imagen del Golfo" CRAWL_SCHEDULE "*"
+        CrawlArgs crawlArgs = argsService.get(args);
+        crawlArgs.init();
 
-        if (type.equals("source")) {
-            Optional<Source> maybeSource = sourceDAO.byName(name);
-            if(maybeSource.isPresent()) {
-                Source source =  maybeSource.get();
-                Object fieldValue = source.get(field);
-                if (fieldValue instanceof List) {
-                    ((List) fieldValue).add(value);
-                    source = source.put(field, fieldValue);
-                    sourceDAO.upsert(source);
-                    return String.format("value added successfully");
-                }
-                else {
-                    return String.format("the field value is not a list object");
-                }
+        if (crawlArgs.source!=null) {
+            Source source = crawlArgs.source;
+            Object fieldValue = source.get(field);
+            if (fieldValue instanceof List) {
+                ((List) fieldValue).add(value);
+                source = source.put(field, fieldValue);
+                sourceDAO.upsert(source);
+                return String.format("value added successfully");
             }
             else {
-                return String.format("source name does not exist");
-
+                return String.format("the field value is not a list object");
             }
         }
-        else if (type.equals("sourcelist")){
-            Optional<SourceList> maybeSourceList = sourceListDAO.byName(name);
-            if(maybeSourceList.isPresent()) {
-                SourceList sourceList =  maybeSourceList.get();
-                Object fieldValue = sourceList.get(field);
-                if (fieldValue instanceof List) {
-                    ((List) fieldValue).add(value);
-                    sourceList = sourceList.put(field, fieldValue);
-                    sourceListDAO.upsert(sourceList);
-                    return String.format("value added successfully");
-                }
-                else {
-                    return String.format("the field value is not a list object");
-                }
+
+        else if (!crawlArgs.sourceLists.isEmpty()) {
+            SourceList sourceList = crawlArgs.sourceLists.get(0);
+            Object fieldValue = sourceList.get(field);
+            if (fieldValue instanceof List) {
+                ((List) fieldValue).add(value);
+                sourceList = sourceList.put(field, fieldValue);
+                sourceListDAO.upsert(sourceList);
+                return String.format("value added successfully");
             }
             else {
-                return String.format("source list name does not exist");
+                return String.format("the field value is not a list object");
             }
+
         }
         else {
-            return String.format("wrong type value, should be source or sourcelist");
+            return String.format("source or sourcelist should be provided");
         }
     }
 
@@ -490,82 +466,67 @@ public class ShellRunner {
     }
 
     // this method cannot be compatible with CrawlArgs parameters for now.
-    @ShellMethod(value = "delete source/sourcelist field value. usage: delete source/sourcelist name field", key = "delete")
-    public String deleteValue(@ShellOption({"-t", "--type"}) String type,
-                              @ShellOption({"-n", "--name"}) String name,
-                              @ShellOption({"-f", "--field"}) String field) {
-
-        // test sample: delete source "Imagen del Golfo" WATER
+    @ShellMethod(value = "delete source/sourcelist field value. usage: delete -s/sl name -field value", key = "delete")
+    public String deleteValue(@ShellOption(value = {"-sl"}, defaultValue = ShellOption.NULL) String sourceListName,
+                              @ShellOption(value = {"-s"}, defaultValue = ShellOption.NULL) String sourceName,
+                              @ShellOption({"-field"}) String field, // because -f already exists in crawlargs...
+                              @ShellOption(optOut = true) @Valid CrawlArgs.Raw args) {
 
         // by saying clear, deleting the value, emm, does it mean to set it to null?
+
         String question = "Confirm to delete? \nyes/no";
         String result = ask(question);
 
+        CrawlArgs crawlArgs = argsService.get(args);
+        crawlArgs.init();
+
         if (result.equals("yes")) {
+            if (crawlArgs.source != null) {
+                Source source = crawlArgs.source;
+                source = source.put(field, null);
+                sourceDAO.upsert(source);
 
-            CrawlArgs crawlArgs = argsService.get();
+                return String.format("successfully delete value");
 
-            if (type.equals("source")) {
-                Optional<Source> maybeSource = sourceDAO.byName(name);
-                if(maybeSource.isPresent()) {
-                    Source source =  maybeSource.get();
-                    source = source.put(field, null);
-                    sourceDAO.upsert(source);
+            } else if (!crawlArgs.sourceLists.isEmpty()) {
+                SourceList sourceList = crawlArgs.sourceLists.get(0);
+                sourceList = sourceList.put(field, null);
+                sourceListDAO.upsert(sourceList);
 
-                    return String.format("successfully delete value");
-                }
-                else {
-                    return String.format("source name does not exist");
-
-                }
-            }
-            else if (type.equals("sourcelist")){
-                String printStr = "";
-                Optional<SourceList> maybeSourceList = sourceListDAO.byName(name);
-                if(maybeSourceList.isPresent()) {
-                    SourceList sourceList =  maybeSourceList.get();
-                    sourceList = sourceList.put(field, null);
-                    sourceListDAO.upsert(sourceList);
-
-                    return String.format("successfully delete value");
-                }
-                else {
-                    return String.format("source list name does not exist");
-                }
+                return String.format("successfully delete value");
             }
             else {
-                return String.format("wrong type value, should be source or sourcelist");
+                return String.format("source or sourcelist should be provided");
             }
-
         }
         else {
-            return String.format("deletion stopped");
+            return String.format("deletion cancelled");
         }
+
     }
 
     // this method cannot be compatible with CrawlArgs parameters for now.
-    @ShellMethod(value = "batch update all source values via sourcelist, modify all source under given sourcelist. usage: update name field value", key = "update")
-    public String updateValue(@ShellOption({"-n", "--name"}) String name,
-                              @ShellOption({"-f", "--field"}) String field,
-                              @ShellOption({"-v","--value"}) String value) {
+    @ShellMethod(value = "batch update all source values via sourcelist, modify all source under given sourcelist. usage: update -sl name -field value -value value", key = "update")
+    public String updateValue(@ShellOption(value = {"-sl"}) String sourceListName,
+                              @ShellOption({"-field"}) String field, // because -f already exists in crawlargs...
+                              @ShellOption({"-value"}) String value,
+                              @ShellOption(optOut = true) @Valid CrawlArgs.Raw args) {
 
-        CrawlArgs crawlArgs = argsService.get();
+        CrawlArgs crawlArgs = argsService.get(args);
+        crawlArgs.init();
 
-        Optional<SourceList> maybeSourceList = sourceListDAO.byName(name);
-        if(maybeSourceList.isPresent()) {
-            SourceList sourceList = maybeSourceList.get();
-            List<Source> sources = sourceDAO.byList(sourceList);
-            for (Source source: sources) {
-                source = source.put(field, value);
-                sourceDAO.upsert(source);
-            }
+        checkNull(crawlArgs.sourceLists, "Source List required");
 
-            return String.format("successfully update value for all sources under the given sourcelist");
+        SourceList sourceList = crawlArgs.sourceLists.get(0);
+        List<Source> sources = sourceDAO.byList(sourceList);
+
+        for (Source source: sources) {
+            source = source.put(field, value);
+            sourceDAO.upsert(source);
         }
 
-        else {
-            return String.format("source list name does not exist");
-        }
+        return String.format("successfully update value for all sources under the given sourcelist");
+
     }
 
     // this method cannot be compatible with CrawlArgs parameters for now.
@@ -676,9 +637,6 @@ public class ShellRunner {
 //                      @ShellOption({"-wd", "--working-dir"}) String workingDir,
 //                      @ShellOption({"-od","--output-dir"}) String outputDir
     ) {
-
-        // test sample: jef sourcelist "mexico-1" "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports" "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports"
-        // test sample: jef source "Imagen del Golfo" "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports" "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports"
 
         CrawlArgs crawlArgs = argsService.get(args);
         crawlArgs.init();
