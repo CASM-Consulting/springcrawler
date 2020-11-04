@@ -183,6 +183,7 @@ public class Crawl {
         preParsers.add(documentTagger);
 
         config.importer().setPreParseHandlers(preParsers.toArray(new IImporterHandler[]{}));
+        config.importer().setPostParseHandlers(postParsers.toArray(new IImporterHandler[]{}));
 
         if(source.hasValue(Source.CRAWL_EXCLUDE_PATTERN)) {
             String pattern = source.get(Source.CRAWL_EXCLUDE_PATTERN);

@@ -1,17 +1,13 @@
 package com.casm.acled.crawler.springrunners;
 import com.casm.acled.configuration.ObjectMapperConfiguration;
 import com.casm.acled.crawler.Crawl;
-import com.casm.acled.crawler.management.CheckListService;
-import com.casm.acled.crawler.management.CrawlArgs;
-import com.casm.acled.crawler.management.CrawlArgsService;
-import com.casm.acled.crawler.management.SchedulerService;
+import com.casm.acled.crawler.management.*;
 import com.casm.acled.crawler.reporting.Reporter;
 import com.casm.acled.dao.entities.ArticleDAO;
 import com.casm.acled.dao.entities.SourceDAO;
 import com.casm.acled.dao.entities.SourceListDAO;
 import com.casm.acled.dao.entities.SourceSourceListDAO;
 import com.casm.acled.dao.util.ExportCSV;
-import com.casm.acled.entities.EntityField;
 import com.casm.acled.entities.article.Article;
 import com.casm.acled.entities.source.Source;
 import com.casm.acled.entities.sourcelist.SourceList;
@@ -29,12 +25,9 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
 import org.springframework.boot.autoconfigure.validation.ValidationAutoConfiguration;
 import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
 
-import org.springframework.core.MethodParameter;
-import org.springframework.shell.*;
 import org.springframework.shell.standard.ShellMethod;
 import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellOption;
@@ -45,7 +38,6 @@ import java.nio.file.StandardOpenOption;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import javax.validation.Valid;
 import org.jline.reader.LineReader;
@@ -907,35 +899,35 @@ public class ShellRunner {
         return t -> seen.putIfAbsent(keyExtractor.apply(t), Boolean.TRUE) == null;
     }
 
-    @Bean
-    public ParameterResolver commandParameterResolver() {
-        return new ParameterResolver(){
-
-            @Override
-            public boolean supports(MethodParameter parameter) {
-                return parameter.getParameterType().isAssignableFrom(List.class);
-            }
-
-            /**
-             * This implementation simply returns all the words (arguments) present
-             * 'Infinite arity'
-             */
-            @Override
-            public ValueResult resolve(MethodParameter methodParameter, List<String> words) {
-                return new ValueResult(methodParameter, words);
-            }
-
-            @Override
-            public Stream<ParameterDescription> describe(MethodParameter parameter) {
-                return Stream.of(ParameterDescription.outOf(parameter));
-            }
-
-            @Override
-            public List<CompletionProposal> complete(MethodParameter parameter, CompletionContext context) {
-                return Collections.emptyList();
-            }
-        };
-    }
+//    @Bean
+//    public ParameterResolver commandParameterResolver() {
+//        return new ParameterResolver(){
+//
+//            @Override
+//            public boolean supports(MethodParameter parameter) {
+//                return parameter.getParameterType().isAssignableFrom(List.class);
+//            }
+//
+//            /**
+//             * This implementation simply returns all the words (arguments) present
+//             * 'Infinite arity'
+//             */
+//            @Override
+//            public ValueResult resolve(MethodParameter methodParameter, List<String> words) {
+//                return new ValueResult(methodParameter, words);
+//            }
+//
+//            @Override
+//            public Stream<ParameterDescription> describe(MethodParameter parameter) {
+//                return Stream.of(ParameterDescription.outOf(parameter));
+//            }
+//
+//            @Override
+//            public List<CompletionProposal> complete(MethodParameter parameter, CompletionContext context) {
+//                return Collections.emptyList();
+//            }
+//        };
+//    }
 
     public String ask(String question) {
         question = "\n" + question + " > ";
