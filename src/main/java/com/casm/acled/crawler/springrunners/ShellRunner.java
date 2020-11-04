@@ -215,25 +215,18 @@ public class ShellRunner {
 
     }
 
-    public Set<Source> getSourcesFromNameCSV(Path csvPath, boolean includesHeader, String headerName) throws IOException {
+    public Set<Source> getSourcesFromNameCSV(Path csvPath) throws IOException {
         Set<Source> sources = new HashSet<>();
 
-
-        String header;
-        // If header is present, then we take headerName as the column of interest, unless it is null, then we default to STANDARD_NAME
-        if (includesHeader){
-            header = headerName == null? Source.STANDARD_NAME : headerName;
-        } else {
-            header = null;
-        }
-
-        try (Reader reader = java.nio.file.Files.newBufferedReader(csvPath);
-             CSVParser csvReader = new CSVParser(reader, includesHeader? CSVFormat.EXCEL.withFirstRecordAsHeader() : CSVFormat.EXCEL)){
+        try (
+                Reader reader = java.nio.file.Files.newBufferedReader(csvPath);
+                CSVParser csvReader = new CSVParser(reader,  CSVFormat.EXCEL )
+        ){
 
             for (CSVRecord record : csvReader) {
 
                 // If header name is specified, use it. Otherwise, get the first column value.
-                String name = headerName != null ? record.get(headerName) : record.get(0);
+                String name = record.get(Source.STANDARD_NAME);
 
                 // If name is present, look up source by name and add if found to results.
                 if (name != null && !name.trim().isEmpty()) {
@@ -246,38 +239,38 @@ public class ShellRunner {
         return sources;
     }
 
-    @ShellMethod(value = "link a Source (-s) to a source list (-sl). Sources can be read from CSV (-p), use -h if CSV has a header, -hn NAME to specify column (assumes STANDARD_NAME)", key="link")
-    public void linkSourceToSourceList(@ShellOption(value = {"-s", "--source"}, defaultValue = ShellOption.NULL) String source,
-                                       @ShellOption(value = {"-sl", "--source-list"}, defaultValue = ShellOption.NULL) String sourceList,
-                                       @ShellOption(value = {"-h", "--includes-header"}, defaultValue = "false") boolean includesHeader,
-                                       @ShellOption(value = {"-hn", "--header-name"}, defaultValue = ShellOption.NULL) String headerName,
-                                       @ShellOption(value = {"-p", "--csv-path"}, defaultValue = ShellOption.NULL) String path) throws Exception{
+    private void checkNull(Object value, String message) {
+        if(value == null) {
+            logger.error(message);
+            throw new RuntimeException(message);
+        }
+    }
 
-        SourceList sl = null;
-        if (sourceList != null && !sourceList.isEmpty()) {
-            Optional<SourceList> maybeSourceList = sourceListDAO.byName(sourceList);
-            if (maybeSourceList.isPresent()) {
-                sl = maybeSourceList.get();
-            }
-        }
-        if (sl == null){
-            System.err.println("Must specify source list.");
-            return;
-        }
+    @ShellMethod(value = "Link a Source to a source list (-sl). Either using -s or sources can be read from CSV (-P).", key="link")
+    public void linkSourceToSourceList(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args
+//            @ShellOption(value = {"-s", "--source"}, defaultValue = ShellOption.NULL) String source,
+//           @ShellOption(value = {"-sl", "--source-list"}, defaultValue = ShellOption.NULL) String sourceList,
+//           @ShellOption(value = {"-p", "--csv-path"}, defaultValue = ShellOption.NULL) String path
+    ) throws Exception{
+
+        CrawlArgs crawlArgs = argsService.get(args);
+        crawlArgs.init();
+        checkNull(crawlArgs.sourceLists, "Source List required");
+
+        SourceList sourceList = crawlArgs.sourceLists.get(0);
 
         Set<Source> sources = new HashSet<>();
 
-        if (path != null && !path.isEmpty()){
-            sources.addAll(getSourcesFromNameCSV(Paths.get(path), includesHeader, headerName));
-            System.out.printf("Found %d sources from CSV%n", sources.size());
+        if (crawlArgs.path != null){
+            sources.addAll(getSourcesFromNameCSV(crawlArgs.path));
+            logger.info("Found {} sources from CSV {}", sources.size(), crawlArgs.path);
         }
 
-        if (source != null && !source.isEmpty()){
-            Optional<Source> maybeSource = sourceDAO.byName(source);
-            maybeSource.ifPresent(sources::add);
+        if (crawlArgs.source != null ){
+            sources.add(crawlArgs.source);
         }
 
-        checkListService.linkSourceToSourceList(sources, sl);
+        checkListService.linkSourceToSourceList(sources, sourceList);
     }
 
     @ShellMethod(value = "unlink a Source (-s) from a source list (-sl). Sources can be read from CSV (-p), use -h if CSV has a header, -hn NAME to specify column (assumes STANDARD_NAME)", key="unlink")
@@ -302,7 +295,7 @@ public class ShellRunner {
         Set<Source> sources = new HashSet<>();
 
         if (path != null && !path.isEmpty()){
-            sources.addAll(getSourcesFromNameCSV(Paths.get(path), includesHeader, headerName));
+            sources.addAll(getSourcesFromNameCSV(Paths.get(path)));
             System.out.printf("Found %d sources from CSV%n", sources.size());
         }
 
