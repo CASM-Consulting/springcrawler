@@ -247,11 +247,7 @@ public class ShellRunner {
     }
 
     @ShellMethod(value = "Link a Source to a source list (-sl). Either using -s or sources can be read from CSV (-P).", key="link")
-    public void linkSourceToSourceList(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args
-//            @ShellOption(value = {"-s", "--source"}, defaultValue = ShellOption.NULL) String source,
-//           @ShellOption(value = {"-sl", "--source-list"}, defaultValue = ShellOption.NULL) String sourceList,
-//           @ShellOption(value = {"-p", "--csv-path"}, defaultValue = ShellOption.NULL) String path
-    ) throws Exception{
+    public void linkSourceToSourceList(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) throws Exception{
 
         CrawlArgs crawlArgs = argsService.get(args);
         crawlArgs.init();
@@ -273,38 +269,29 @@ public class ShellRunner {
         checkListService.linkSourceToSourceList(sources, sourceList);
     }
 
-    @ShellMethod(value = "unlink a Source (-s) from a source list (-sl). Sources can be read from CSV (-p), use -h if CSV has a header, -hn NAME to specify column (assumes STANDARD_NAME)", key="unlink")
-    public void unlinkSourceFromSourceList(@ShellOption(value = {"-s", "--source"}, defaultValue = ShellOption.NULL) String source,
-                                           @ShellOption(value = {"-sl", "--source-list"}, defaultValue = ShellOption.NULL) String sourceList,
-                                           @ShellOption(value = {"-h", "--includes-header"}, defaultValue = "false") boolean includesHeader,
-                                           @ShellOption(value = {"-hn", "--header-name"}, defaultValue = ShellOption.NULL) String headerName,
-                                           @ShellOption(value = {"-p", "--csv-path"}, defaultValue = ShellOption.NULL) String path) throws Exception{
+    @ShellMethod(value = "unlink a Source (-s) from a source list (-sl). Either using -s or sources can be read from CSV (-P)", key="unlink")
+    public void unlinkSourceFromSourceList(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) throws Exception {
 
-        SourceList sl = null;
-        if (sourceList != null && !sourceList.isEmpty()) {
-            Optional<SourceList> maybeSourceList = sourceListDAO.byName(sourceList);
-            if (maybeSourceList.isPresent()) {
-                sl = maybeSourceList.get();
-            }
-        }
-        if (sl == null){
-            System.err.println("Must specify source list.");
-            return;
-        }
+        CrawlArgs crawlArgs = argsService.get(args);
+        crawlArgs.init();
+
+        checkNull(crawlArgs.sourceLists, "Source List required");
+
+        SourceList sourceList = crawlArgs.sourceLists.get(0);
 
         Set<Source> sources = new HashSet<>();
 
-        if (path != null && !path.isEmpty()){
-            sources.addAll(getSourcesFromNameCSV(Paths.get(path)));
-            System.out.printf("Found %d sources from CSV%n", sources.size());
+        if (crawlArgs.path != null) {
+            sources.addAll(getSourcesFromNameCSV(crawlArgs.path));
+            logger.info("Found {} sources from CSV {}", sources.size(), crawlArgs.path);
         }
 
-        if (source != null && !source.isEmpty()){
-            Optional<Source> maybeSource = sourceDAO.byName(source);
-            maybeSource.ifPresent(sources::add);
+        if (crawlArgs.source != null ) {
+            sources.add(crawlArgs.source);
         }
 
-        checkListService.unlinkSourceFromSourceList(sources, sl);
+        checkListService.unlinkSourceFromSourceList(sources, sourceList);
+
     }
 
 //    @ShellMethod
@@ -339,10 +326,11 @@ public class ShellRunner {
 
     // generic set / get commands for sources and source lists, in the form
     // generic, only handle single instance
+    // this method cannot be compatible with CrawlArgs parameters for now.
     @ShellMethod(value = "get specific value from the corresponding field; usage: get type name field", key = "get")
     public String getField(@ShellOption({"-t", "--type"}) String type,
-                         @ShellOption({"-n", "--name"}) String name,
-                         @ShellOption({"-f", "--field"}) String field) {
+                           @ShellOption({"-n", "--name"}) String name,
+                           @ShellOption({"-f", "--field"}) String field) {
 
         if (type.equals("source")) {
             Optional<Source> maybeSource = sourceDAO.byName(name);
@@ -375,11 +363,11 @@ public class ShellRunner {
 
     @ShellMethod(value = "set specific value to the corresponding field; usage: set type name field [value]", key = "set")
     // generic, only handle single instance
-    // in the set method, probably need to update DAO???
+    // this method cannot be compatible with CrawlArgs parameters for now.
     public <T> String setField(@ShellOption({"-t", "--type"}) String type,
-                         @ShellOption({"-n", "--name"}) String name,
-                         @ShellOption({"-f", "--field"}) String field,
-                         @ShellOption({"-v", "--value"}) String value) {
+                               @ShellOption({"-n", "--name"}) String name,
+                               @ShellOption({"-f", "--field"}) String field,
+                               @ShellOption({"-v", "--value"}) String value) {
 
         CrawlArgs crawlArgs = argsService.get();
 
@@ -416,6 +404,7 @@ public class ShellRunner {
         }
     }
 
+    // this method cannot be compatible with CrawlArgs parameters for now.
     @ShellMethod(value = "add field/property value to existing list; usage: add type name field [value]", key = "add")
     public String addValue(@ShellOption({"-t", "--type"}) String type,
                            @ShellOption({"-n", "--name"}) String name,
@@ -470,54 +459,41 @@ public class ShellRunner {
         }
     }
 
-    @ShellMethod(value = "show source/sourcelist names and entries, if sourcelist, will show all source names and ids under it. usage: show source/sourcelist NAME", key = "show")
-    public String showValue(@ShellOption({"-t", "--type"}) String type,
-                           @ShellOption({"-n", "--name"}) String name) {
+    @ShellMethod(value = "show source/sourcelist names and entries, if sourcelist(-sl), will show all source names and ids under it. usage: show -s/sl NAME", key = "show")
+    public String showValue(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) {
 
-        // test sample: show source "Imagen del Golfo"
-        // test sample: show sourcelist "mexico-1"
+        // test sample: show -s "Imagen del Golfo"
+        // test sample: show -sl "mexico-1"
 
-        CrawlArgs crawlArgs = argsService.get();
+        CrawlArgs crawlArgs = argsService.get(args);
+        crawlArgs.init();
 
-        if (type.equals("source")) {
-            Optional<Source> maybeSource = sourceDAO.byName(name);
-            if(maybeSource.isPresent()) {
-                Source source =  maybeSource.get();
-                return source.toString();
-            }
-            else {
-                return String.format("source name does not exist");
+        if (crawlArgs.source!=null) {
+            Source source = crawlArgs.source;
+            return source.toString();
 
-            }
         }
-        else if (type.equals("sourcelist")){
+        else if (!crawlArgs.sourceLists.isEmpty()) {
             StringBuilder printStr = new StringBuilder(String.format("%-30.30s  %-30.30s%n", "Source Name", "ID"));
-            Optional<SourceList> maybeSourceList = sourceListDAO.byName(name);
-            if(maybeSourceList.isPresent()) {
-                SourceList sourceList =  maybeSourceList.get();
-                List<Source> sources = sourceDAO.byList(sourceList);
-                for (Source source: sources) {
-//                    String str = String.format("Source Name: %s, Source ID: %s \n", source.get(Source.STANDARD_NAME), source.id());
-                    String str = String.format("%-30.30s  %-30.30s%n", source.get(Source.STANDARD_NAME), source.id());
-                    printStr.append(str);
-                }
-
-                return printStr.toString();
+            SourceList sourceList = crawlArgs.sourceLists.get(0);
+            List<Source> sources = sourceDAO.byList(sourceList);
+            for (Source source: sources) {
+                String str = String.format("%-30.30s  %-30.30s%n", source.get(Source.STANDARD_NAME), source.id());
+                printStr.append(str);
             }
-            else {
-                return String.format("source list name does not exist");
-            }
+            return printStr.toString();
         }
         else {
-            return String.format("wrong type value, should be source or sourcelist");
+            return String.format("source or sourcelist should be provided");
         }
 
     }
 
+    // this method cannot be compatible with CrawlArgs parameters for now.
     @ShellMethod(value = "delete source/sourcelist field value. usage: delete source/sourcelist name field", key = "delete")
     public String deleteValue(@ShellOption({"-t", "--type"}) String type,
-                            @ShellOption({"-n", "--name"}) String name,
-                             @ShellOption({"-f", "--field"}) String field) {
+                              @ShellOption({"-n", "--name"}) String name,
+                              @ShellOption({"-f", "--field"}) String field) {
 
         // test sample: delete source "Imagen del Golfo" WATER
 
@@ -567,7 +543,7 @@ public class ShellRunner {
         }
     }
 
-
+    // this method cannot be compatible with CrawlArgs parameters for now.
     @ShellMethod(value = "batch update all source values via sourcelist, modify all source under given sourcelist. usage: update name field value", key = "update")
     public String updateValue(@ShellOption({"-n", "--name"}) String name,
                               @ShellOption({"-f", "--field"}) String field,
@@ -592,6 +568,7 @@ public class ShellRunner {
         }
     }
 
+    // this method cannot be compatible with CrawlArgs parameters for now.
     @ShellMethod(value = "download html from link provided, run the Jsoup pattern and print the results. usage: jsoup -l LINK -p JSOUP_PATTERN", key = "jsoup")
     public String jsoupSearch(@ShellOption({"-l","--link"}) String url,
                               @ShellOption({"-p","--pattern"}) String pattern) {
@@ -640,77 +617,54 @@ public class ShellRunner {
 
     }
 
-    @ShellMethod(value = "dump articles to local csv file. Usage: dump -t TYPE -n NAME -f FROM-DATE -t TO-DATE -od OUTPUT-DIR", key = "dump")
-    public String dump(@ShellOption({"-t", "--type"}) String type,
-                       @ShellOption({"-n", "--name"}) String name,
-                       @ShellOption(value = {"-f", "--from-date"}, defaultValue = "null") String from,
-                       @ShellOption(value = {"-t", "--to-date"}, defaultValue = "null") String to,
-                       @ShellOption({"-od", "--output-dir"}) String dir) throws Exception{
+    @ShellMethod(value = "dump articles to local csv file, path should be specified to file. Usage: dump -s/sl name -f FROM-DATE -t TO-DATE -P OUTPUT-DIR", key = "dump")
+    public String dump(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) throws Exception{
 
-        // test sample: dump source "Imagen del Golfo" "2020-09-01" "2020-09-24" "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports/compare"
-        // test sample: dump sourcelist "mexico-1" "2020-09-01" "2020-09-24" "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports"
-        // test sample: dump source "Imagen del Golfo" null null "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports"
-        // test sample: dump sourcelist "mexico-1" null null "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports"
-        // test sample: dump sourcelist "mexico-1" null "2020-09-24" "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports"
+        // test sample: dump -s "Imagen del Golfo" -f "2020-09-01" -t "2020-09-24" -P "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports/compare/Image_del_Golfo_2020-09-01-2020-09-24.csv"
+        // test sample: dump -sl "mexico-1" -f "2020-09-01" -t "2020-09-24" -P "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports/meixco-1-2020-09-01-2020-09-24.csv"
+        // test sample: dump -s "Imagen del Golfo" -P "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports/Imagen_del_Golfo.csv"
+        // test sample: dump -sl "mexico-1" -P "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports/mexico-1.csv"
+        // test sample: dump -sl "mexico-1" -t "2020-09-24" -P "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports/mexico-1-from-null-to-2020-09-24.csv"
 
+        CrawlArgs crawlArgs = argsService.get(args);
+        crawlArgs.init();
 
-        CrawlArgs crawlArgs = argsService.get();
-
-        LocalDate fromDate = from.equals("null") ? null : LocalDate.parse(from);
-        LocalDate toDate = to.equals("null") ? null : LocalDate.parse(to);
-
-        Path path = Paths.get(dir, name+"-"+from+"-"+to+".csv");
+        LocalDate fromDate = crawlArgs.from;
+        LocalDate toDate = crawlArgs.to;
 
         List<String> columns = Arrays.asList(Source.STANDARD_NAME,
                 Article.URL, Article.TEXT, Article.DATE, Article.TITLE, Article.SCRAPE_KEYWORD_HIGHLIGHT);
 
-        if (type.equals("source")) {
-            Optional<Source> maybeSource = sourceDAO.byName(name);
-            if (maybeSource.isPresent()) {
-                List<Article> articles = articleDAO.bySource(maybeSource.get());
+        if (crawlArgs.source != null) {
+            Source source = crawlArgs.source;
+            List<Article> articles = articleDAO.bySource(source);
 
-                List<Map<String, String>> filteredArticles = articles.stream()
-                        .filter(d -> inbetween(d.get(Article.DATE), fromDate, toDate))
-                        .filter(distinctByKey(d->d.get(Article.URL)))
-                        .map(d -> toMapWithColumn(d, columns))
-                        .collect(Collectors.toList());
+            List<Map<String, String>> filteredArticles = articles.stream()
+                    .filter(d -> inbetween(d.get(Article.DATE), fromDate, toDate))
+                    .filter(distinctByKey(d->d.get(Article.URL)))
+                    .map(d -> toMapWithColumn(d, columns))
+                    .collect(Collectors.toList());
 
-                mapToCSV(filteredArticles, path);
+            mapToCSV(filteredArticles, crawlArgs.path);
 
-                return String.format("export to %s successfully", path.toString());
-
-            }
-
-            else {
-                return String.format("source name does not exist");
-            }
-
+            return String.format("export to %s successfully", crawlArgs.path.toString());
         }
-        else if (type.equals("sourcelist")) {
-            Optional<SourceList> maybeSourceList = sourceListDAO.byName(name);
-            if (maybeSourceList.isPresent()) {
-                SourceList sourceList = maybeSourceList.get();
-                List<Source> sources = sourceDAO.byList(sourceList);
-                List<Article> allArticles = new ArrayList<>();;
-                for (Source source: sources) {
-                    List<Article> articles = articleDAO.bySource(source);
-                    allArticles.addAll(articles);
-                }
-
-                List<Map<String, String>> filteredArticles = allArticles.stream().filter(d -> inbetween(d.get("DATE"), fromDate, toDate)).filter(distinctByKey(d->d.get("URL"))).map(d -> toMapWithColumn(d, columns)).collect(Collectors.toList());
-                mapToCSV(filteredArticles, path);
-
-                return String.format("export to %s successfully", path.toString());
-
-            }
-            else {
-                return String.format("source list name does not exist");
+        else if (!crawlArgs.sourceLists.isEmpty()) {
+            SourceList sourceList = crawlArgs.sourceLists.get(0);
+            List<Source> sources = sourceDAO.byList(sourceList);
+            List<Article> allArticles = new ArrayList<>();
+            for (Source source: sources) {
+                List<Article> articles = articleDAO.bySource(source);
+                allArticles.addAll(articles);
             }
 
+            List<Map<String, String>> filteredArticles = allArticles.stream().filter(d -> inbetween(d.get("DATE"), fromDate, toDate)).filter(distinctByKey(d->d.get("URL"))).map(d -> toMapWithColumn(d, columns)).collect(Collectors.toList());
+            mapToCSV(filteredArticles, crawlArgs.path);
 
+            return String.format("export to %s successfully", crawlArgs.path.toString());
         }
         else {
-            return String.format("wrong type value, should be source or sourcelist");
+            return String.format("source or sourcelist should be provided");
         }
 
     }
