@@ -37,10 +37,13 @@ import com.norconex.importer.handler.tagger.impl.*;
 
 import com.norconex.collector.http.robot.RobotsTxt;
 import com.norconex.collector.http.robot.impl.StandardRobotsTxtProvider;
+import com.norconex.jef4.job.IJobErrorListener;
+import com.norconex.jef4.mail.ErrorMailNotifier;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import com.norconex.collector.http.delay.IDelayResolver;
 import com.norconex.collector.http.delay.impl.GenericDelayResolver;
+import org.springframework.stereotype.Component;
 
 
 public class Crawl {
@@ -298,9 +301,11 @@ public class Crawl {
     }
 
     public void run() {
-        // remove the finalise, already added filters in previous step;
-//        config.finalise();
+
         collector = new HttpCollector(config.collector());
+//        ErrorMailNotifier errorMailNotifier = new ErrorMailNotifier();
+//        collector.getCollectorConfig().setJobErrorListeners(errorMailNotifier);
+        collector.getCollectorConfig().setSuiteLifeCycleListeners();
         collector.start(true);
     }
 }
