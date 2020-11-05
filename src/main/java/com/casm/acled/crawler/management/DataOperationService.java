@@ -253,7 +253,7 @@ public class DataOperationService {
 
         if (crawlArgs.source!=null) {
             Source source = crawlArgs.source;
-            return source.toString();
+            return String.format("ID: %s%nData: %s", source.id(), source);
 
         }
         else if (!crawlArgs.sourceLists.isEmpty()) {

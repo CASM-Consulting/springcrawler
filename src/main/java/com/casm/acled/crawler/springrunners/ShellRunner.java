@@ -8,6 +8,10 @@ import com.casm.acled.dao.entities.SourceDAO;
 import com.casm.acled.dao.entities.SourceListDAO;
 import com.casm.acled.dao.entities.SourceSourceListDAO;
 import com.casm.acled.dao.util.ExportCSV;
+import com.casm.acled.entities.article.Article;
+import com.casm.acled.entities.source.Source;
+import com.casm.acled.entities.sourcelist.SourceList;
+import org.apache.commons.csv.*;
 
 import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
 import org.camunda.bpm.spring.boot.starter.rest.CamundaBpmRestJerseyAutoConfiguration;
@@ -21,18 +25,16 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
 import org.springframework.boot.autoconfigure.validation.ValidationAutoConfiguration;
 import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
 
-import org.springframework.core.MethodParameter;
-import org.springframework.shell.*;
 import org.springframework.shell.standard.ShellMethod;
 import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellOption;
 
-
+import java.time.LocalDate;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.validation.Valid;
@@ -91,6 +93,13 @@ public class ShellRunner {
     @Autowired
     private ExportCSV exportCSV;
 
+    @Autowired
+    private EmailService emailService;
+
+    @ShellMethod(value = "Test a method", key="test")
+    public void test(){
+        emailService.sendSimpleMessage("andrewr@casmtechnology.com", "Test", "A working example. " + LocalDate.now() );
+    }
 
     @ShellMethod(value = "Copy a Source (-s) or SourceList (-sl) to a with a new name (-N) or suffix if flag 'S' is provided")
     public void copy(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) {
@@ -201,6 +210,18 @@ public class ShellRunner {
 
         reporter.getRunReports().stream().forEach(r -> logger.info(r.toString()));
 
+    }
+
+    @ShellMethod(value = "Check crawl reports, usage: check-reports -s/sl -r value", key = "check-reports")
+    public void checkSourceCrawlRuns(@ShellOption(value = {"-sl"}, defaultValue = ShellOption.NULL) String sourceListName,
+                                     @ShellOption(value = {"-s"}, defaultValue = ShellOption.NULL) String sourceName,
+                                     @ShellOption(value = {"-r", "--runs"}, defaultValue = "10") int numRuns,
+                                     @ShellOption(optOut = true) @Valid CrawlArgs.Raw args) {
+
+        CrawlArgs crawlArgs = argsService.get(args);
+        crawlArgs.init();
+
+        checkListService.checkCrawlReports(crawlArgs, numRuns);
     }
 
     // generic set / get commands for sources and source lists, in the form
@@ -348,35 +369,35 @@ public class ShellRunner {
 
     }
 
-    @Bean
-    public ParameterResolver commandParameterResolver() {
-        return new ParameterResolver(){
-
-            @Override
-            public boolean supports(MethodParameter parameter) {
-                return parameter.getParameterType().isAssignableFrom(List.class);
-            }
-
-            /**
-             * This implementation simply returns all the words (arguments) present
-             * 'Infinite arity'
-             */
-            @Override
-            public ValueResult resolve(MethodParameter methodParameter, List<String> words) {
-                return new ValueResult(methodParameter, words);
-            }
-
-            @Override
-            public Stream<ParameterDescription> describe(MethodParameter parameter) {
-                return Stream.of(ParameterDescription.outOf(parameter));
-            }
-
-            @Override
-            public List<CompletionProposal> complete(MethodParameter parameter, CompletionContext context) {
-                return Collections.emptyList();
-            }
-        };
-    }
+//    @Bean
+//    public ParameterResolver commandParameterResolver() {
+//        return new ParameterResolver(){
+//
+//            @Override
+//            public boolean supports(MethodParameter parameter) {
+//                return parameter.getParameterType().isAssignableFrom(List.class);
+//            }
+//
+//            /**
+//             * This implementation simply returns all the words (arguments) present
+//             * 'Infinite arity'
+//             */
+//            @Override
+//            public ValueResult resolve(MethodParameter methodParameter, List<String> words) {
+//                return new ValueResult(methodParameter, words);
+//            }
+//
+//            @Override
+//            public Stream<ParameterDescription> describe(MethodParameter parameter) {
+//                return Stream.of(ParameterDescription.outOf(parameter));
+//            }
+//
+//            @Override
+//            public List<CompletionProposal> complete(MethodParameter parameter, CompletionContext context) {
+//                return Collections.emptyList();
+//            }
+//        };
+//    }
 
     public static void main(String[] args) {
 
