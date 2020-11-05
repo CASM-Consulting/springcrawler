@@ -664,7 +664,7 @@ public class ShellRunner {
     public String dump(@ShellOption({"-t", "--type"}) String type,
                        @ShellOption({"-n", "--name"}) String name,
                        @ShellOption(value = {"-f", "--from-date"}, defaultValue = "null") String from,
-                       @ShellOption(value = {"-t", "--to-date"}, defaultValue = "null") String to,
+                       @ShellOption(value = {"-u", "--to-date"}, defaultValue = "null") String to,
                        @ShellOption({"-od", "--output-dir"}) String dir) throws Exception{
 
         // test sample: dump source "Imagen del Golfo" "2020-09-01" "2020-09-24" "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports/compare"
@@ -672,6 +672,7 @@ public class ShellRunner {
         // test sample: dump source "Imagen del Golfo" null null "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports"
         // test sample: dump sourcelist "mexico-1" null null "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports"
         // test sample: dump sourcelist "mexico-1" null "2020-09-24" "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports"
+        // dump -t sourcelist -n "mexico-1" -from-date "2020-11-03" -to-date "2020-11-04" -od "/storage/acled/output"
 
 
         CrawlArgs crawlArgs = argsService.get();
