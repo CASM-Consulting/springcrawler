@@ -91,6 +91,9 @@ public class DateTagger implements IDocumentTagger{
 //            return true;
             }
         } else {
+//            reporter.report(Report.of(Event.DATE_PARSE_FAILED, source.id(), importerMetadata.getReference()));
+            importerMetadata.addBoolean(ScraperFields.DATE_PASSED, false);
+//            return true;
             LOG.warn("date not found " + importerMetadata.getReference());
         }
     }

@@ -37,10 +37,13 @@ import com.norconex.importer.handler.tagger.impl.*;
 
 import com.norconex.collector.http.robot.RobotsTxt;
 import com.norconex.collector.http.robot.impl.StandardRobotsTxtProvider;
+import com.norconex.jef4.job.IJobErrorListener;
+import com.norconex.jef4.mail.ErrorMailNotifier;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import com.norconex.collector.http.delay.IDelayResolver;
 import com.norconex.collector.http.delay.impl.GenericDelayResolver;
+import org.springframework.stereotype.Component;
 
 
 public class Crawl {
@@ -138,22 +141,8 @@ public class Crawl {
         }
 
 
-        // as Simon mentioned before, want two different pipelines exist at the same time; so added to switch between them;
-        // probably need to add a new parameter for it;
-        String processFlag = "norconex";
-
-        List<AbstractDocumentFilter> filters = new ArrayList<>();
         List<IImporterHandler> preParsers = new ArrayList<>();
-        List<IImporterHandler> postParse = new ArrayList<>();
-        List<IImporterHandler> handlers = new ArrayList<>();
-
-//        filters.add(new AcceptFilter());
-//
-//        EmptyMetadataFilter emptyArticle = new EmptyMetadataFilter(OnMatch.EXCLUDE,
-//                ScraperFields.SCRAPED_ARTICLE,
-//                ScraperFields.SCRAPED_DATE);
-//
-//        filters.add(emptyArticle);
+        List<IImporterHandler> postParsers = new ArrayList<>();
 
         if(from != null && to != null ) {
 
@@ -165,33 +154,18 @@ public class Crawl {
                 zoneId = ZoneId.of(zid);
             }
 
-//            DateMetadataFilter dateFilter = dateFilter(source,
-//                    ZonedDateTime.of(from.atTime(0,0,0), zoneId),
-//                    ZonedDateTime.of(to.atTime(0,0,0), zoneId)
-//            );
-//
-//            filters.add(dateFilter);
-
-
-            // here we use dateMetadataTagger
             DateTagger dateTagger = dateTagger(source,
                     ZonedDateTime.of(from.atTime(0,0,0), zoneId),
                     ZonedDateTime.of(to.atTime(0,0,0), zoneId));
-            handlers.add(dateTagger);
+            postParsers.add(dateTagger);
 
         }
 
         if(!args.skipKeywords) {
-//            ExcludingKeywordFilter keywordFilter = keywordFilter(args.sourceList, source);
-//            filters.add(keywordFilter);
-
-            // here use keywordTagger to write corresponding fields;
             KeywordTagger keywordTagger = keywordTagger(args.sourceLists.get(0), source);
-            handlers.add(keywordTagger);
+            postParsers.add(keywordTagger);
 
         }
-
-        filters.forEach(config::addFilter);
 
         List<String> seedUrls = source.get(Source.SEED_URLS);
 
@@ -203,29 +177,16 @@ public class Crawl {
             startURLs = ((String) source.get(Source.LINK)).split(",");
         }
 
-//        String scraperName = Util.getID(startURLs[0]);
 
-        if (processFlag.equals("scraper")) {
-            ACLEDScraper scraper = ACLEDScraper.load(args.scrapersDir, source, reporter);
-            ACLEDMetadataPreProcessor metadata = new ACLEDMetadataPreProcessor(startURLs[0]);
-            config.setScraper(scraper, metadata);
-            handlers.addAll(filters);
-            config.importer().setPreParseHandlers(handlers.toArray(new IImporterHandler[handlers.size()]));
-        }
+        DOMTagger documentTagger = new ACLEDTagger(args.scrapersDir, source).get();
+        ReplaceTransformer documentTransfomer = new ReplaceTransformer();
+        documentTransfomer.addReplacement("<script.*?>.*?<\\/script>", "");
 
-        if (processFlag.equals("norconex")) {
-            DOMTagger documentTagger = new ACLEDTagger(args.scrapersDir, source).get();
-            Map<String, String> replacementParams = new HashMap<String, String>();
-            replacementParams.put("<script.*?>.*?<\\/script>", "");
-            ACLEDTransformer tempTransformer = new ACLEDTransformer(replacementParams);
-            ReplaceTransformer documentTransfomer = tempTransformer.transformer;
+        preParsers.add(documentTransfomer);
+        preParsers.add(documentTagger);
 
-            handlers.add(0,documentTransfomer);
-            handlers.add(1,documentTagger);
-            handlers.addAll(filters);
-            config.importer().setPreParseHandlers(handlers.toArray(new IImporterHandler[handlers.size()]));
-        }
-
+        config.importer().setPreParseHandlers(preParsers.toArray(new IImporterHandler[]{}));
+        config.importer().setPostParseHandlers(postParsers.toArray(new IImporterHandler[]{}));
 
         if(source.hasValue(Source.CRAWL_EXCLUDE_PATTERN)) {
             String pattern = source.get(Source.CRAWL_EXCLUDE_PATTERN);
@@ -244,13 +205,11 @@ public class Crawl {
         config.crawler().setMaxDepth(args.depth);
 
         config.crawler().setStartURLs(startURLs);
-//        config.collector();
         if(args.crawlId != null && !args.crawlId.isEmpty()) {
             config.setId(args.crawlId);
         } else {
             config.setId(id);
         }
-//        config.crawler().setPostImportProcessors(importer);
         // use committer for testing
         config.crawler().setCommitter(committer);
     }
@@ -342,9 +301,11 @@ public class Crawl {
     }
 
     public void run() {
-        // remove the finalise, already added filters in previous step;
-//        config.finalise();
+
         collector = new HttpCollector(config.collector());
+//        ErrorMailNotifier errorMailNotifier = new ErrorMailNotifier();
+//        collector.getCollectorConfig().setJobErrorListeners(errorMailNotifier);
+        collector.getCollectorConfig().setSuiteLifeCycleListeners();
         collector.start(true);
     }
 }

@@ -187,6 +187,8 @@ public class NorconexConfiguration {
         XMLFeedLinkExtractor xmlfle = new XMLFeedLinkExtractor();
         crawler.setLinkExtractors(gle, xmlfle);
 
+        crawler.setLinkExtractorQuitAtDepth(true);
+
         // create the url filters - e.g. regex filters
         // url regex match
         // parent link prevention
