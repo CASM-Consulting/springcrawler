@@ -87,7 +87,7 @@ public class Crawl {
         }
     }
 
-    public Crawl(CrawlArgs args, ACLEDCommitter committer, Reporter reporter, List<String> discoveredSitemaps) {
+    public Crawl(CrawlArgs args, ACLEDCommitter committer, Reporter reporter, List<String> sitemaps) {
         this.source = args.source;
         this.from = args.from;
         this.to = args.to;
@@ -128,17 +128,17 @@ public class Crawl {
         }
 
 
-        List<String> sitemaps = new ArrayList<>();
+        config.crawler().setStartSitemapURLs(sitemaps.toArray(new String[]{}));
 
-        if(source.isFalse(Source.CRAWL_DISABLE_SITEMAPS)) {
-            if(source.isFalse(Source.CRAWL_DISABLE_SITEMAP_DISCOVERY)) {
-                sitemaps.addAll(discoveredSitemaps);
-            }
-            if(source.hasValue(Source.CRAWL_SITEMAP_LOCATIONS)) {
-                sitemaps.addAll(source.get(Source.CRAWL_SITEMAP_LOCATIONS));
-            }
-            config.crawler().setStartSitemapURLs(sitemaps.toArray(new String[]{}));
-        }
+//        List<String> sitemaps = new ArrayList<>();
+//        if(source.isFalse(Source.CRAWL_DISABLE_SITEMAPS)) {
+//            if(source.isFalse(Source.CRAWL_DISABLE_SITEMAP_DISCOVERY)) {
+//                sitemaps.addAll(discoveredSitemaps);
+//            }
+//            if(source.hasValue(Source.CRAWL_SITEMAP_LOCATIONS)) {
+//                sitemaps.addAll(source.get(Source.CRAWL_SITEMAP_LOCATIONS));
+//            }
+//        }
 
 
         List<IImporterHandler> preParsers = new ArrayList<>();

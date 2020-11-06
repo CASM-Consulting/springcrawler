@@ -147,7 +147,17 @@ public class CheckListService {
     }
 
     public boolean checkConnection(Source source) {
-        String url = source.get(Source.LINK);
+        List<String> seedUrls = source.get(Source.SEED_URLS);
+
+        String[] startURLs;
+
+        if(seedUrls != null && !seedUrls.isEmpty()) {
+            startURLs = seedUrls.toArray(new String[]{});
+        } else {
+            startURLs = ((String) source.get(Source.LINK)).split(",");
+        }
+        String url = startURLs[0];
+
         Client client = ClientBuilder.newClient();
 
         boolean pass = true;
