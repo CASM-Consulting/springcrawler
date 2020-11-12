@@ -6,7 +6,7 @@
 
     <groupId>com.casm</groupId>
     <artifactId>acled-spring-crawler</artifactId>
-    <version>1.3.80</version>
+    <version>1.3.81</version>
 
     <packaging>jar</packaging>
 

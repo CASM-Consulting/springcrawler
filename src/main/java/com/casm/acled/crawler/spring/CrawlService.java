@@ -153,6 +153,8 @@ public class CrawlService {
 
             configureLogging(args.workingDir, Crawl.id(args.source));
 
+            reporter.randomRunId();
+
 //            ACLEDImporter importer = new ACLEDImporter(articleDAO, source, sourceListDAO, true);
             ACLEDCommitter committer = new ACLEDCommitter(articleDAO, source, sourceListDAO, true, true, reporter);
 
