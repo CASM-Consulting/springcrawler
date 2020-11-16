@@ -20,7 +20,6 @@ import com.norconex.importer.handler.tagger.impl.DOMTagger.DOMExtractDetails;
 import com.norconex.importer.util.DOMUtil;
 
 import com.norconex.importer.handler.tagger.impl.*;
-import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.ac.susx.tag.norconex.scraping.GeneralSplitterFactory;
