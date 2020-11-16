@@ -55,7 +55,7 @@ public class DateTagger implements IDocumentTagger{
         this.source = source;
     }
 
-    private List<ULocale> getLocales(Source source) {
+    private static List<ULocale> getLocales(Source source) {
         return ((List<String>)source.get(Source.LOCALES)).stream().map(ULocale::new).collect(Collectors.toList());
     }
 

@@ -13,12 +13,14 @@ import com.casm.acled.crawler.ScraperNotFoundException;
 import com.casm.acled.crawler.util.Util;
 import com.casm.acled.entities.source.Source;
 
+import com.google.common.collect.ImmutableMap;
 import com.norconex.importer.doc.ImporterMetadata;
 import com.norconex.importer.handler.ImporterHandlerException;
 import com.norconex.importer.handler.tagger.impl.DOMTagger.DOMExtractDetails;
 import com.norconex.importer.util.DOMUtil;
 
 import com.norconex.importer.handler.tagger.impl.*;
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.ac.susx.tag.norconex.scraping.GeneralSplitterFactory;
@@ -100,9 +102,35 @@ public class ACLEDTagger {
 
     }
 
-    public DOMTagger get()  {
+    /**
+     * Simple wrapper for the DOMTagger class to provide convenient public access to the
+     * underlying protected tagApplicableDocument() method of the DOMTagger.
+     * Returned by the ACLEDTagger.get() method.
+     */
+    public static class DomTaggerOpenAccess extends DOMTagger {
+
+        /**
+         * Convenience method for directly tagging a String of html.
+         * Permits public availability of the functionality of the protected tagApplicableDocument() method.
+         */
+        public Map<String, String> tag(String html) throws ImporterHandlerException {
+
+            ImporterMetadata metadata = new ImporterMetadata();
+
+            // URL param left blank and parsed set to true - so assuming already UTF-8
+            super.tagApplicableDocument("", new ByteArrayInputStream(html.getBytes()), metadata, true);
+
+            return new ImmutableMap.Builder<String, String>()
+                    .put(ScraperFields.SCRAPED_ARTICLE, metadata.getString(ScraperFields.SCRAPED_ARTICLE))
+                    .put(ScraperFields.SCRAPED_DATE, metadata.getString(ScraperFields.SCRAPED_DATE))
+                    .put(ScraperFields.SCRAPED_TITLE, metadata.getString(ScraperFields.SCRAPED_TITLE))
+                    .build();
+        }
+    }
+
+    public DomTaggerOpenAccess get()  {
         // hoow to separate them.. all from file; all from source; part from file and part from source;
-        DOMTagger tagger = new DOMTagger();
+        DomTaggerOpenAccess tagger = new DomTaggerOpenAccess();
 
         Map<String, List<Map<String, String>>> scraperDef = getDef();
 
@@ -112,7 +140,6 @@ public class ACLEDTagger {
 
         return tagger;
     }
-
 
 
     public static String constructRoot(Map<String, List<Map<String, String>>> entry) {

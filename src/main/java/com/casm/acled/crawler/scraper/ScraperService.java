@@ -28,6 +28,7 @@ import com.norconex.collector.http.fetch.impl.GenericDocumentFetcher;
 import com.norconex.collector.http.pipeline.importer.HttpImporterPipelineUtilProxy;
 import com.norconex.commons.lang.io.CachedInputStream;
 import com.norconex.commons.lang.io.CachedStreamFactory;
+import com.norconex.importer.handler.ImporterHandlerException;
 import com.opencsv.CSVReader;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
@@ -129,6 +130,14 @@ public class ScraperService {
         List<HttpDocument> docs = checkExampleURLs(scraper, source);
 
         return docs;
+    }
+
+    public Map<String, String> scrapeHTML(String html, Source source, Path scraperDir) throws ImporterHandlerException {
+        return getScraper(source, scraperDir).tag(html);
+    }
+
+    public ACLEDTagger.DomTaggerOpenAccess getScraper(Source source, Path scraperDir){
+        return new ACLEDTagger(scraperDir, source).get();
     }
 
     public HttpDocument scrapeURL(ACLEDScraper scraper, String url, Source source) {

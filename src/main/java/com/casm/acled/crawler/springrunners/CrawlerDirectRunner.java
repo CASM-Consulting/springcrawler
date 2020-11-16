@@ -106,7 +106,7 @@ public class CrawlerDirectRunner implements CommandLineRunner {
 //        crawlArgs.raw.source = "La Verdad";
 //        crawlArgs.raw.source = "Animal Politico";
 //        crawlArgs.raw.source = "El Proceso";
-        crawlArgs.raw.source = "E-Consulta";
+//        crawlArgs.raw.source = "E-Consulta";
 //        crawlArgs.raw.source = "La Silla Rota";
 //        crawlArgs.raw.source = "Imagen del Golfo";
 //        crawlArgs.raw.source = "Sintesis";

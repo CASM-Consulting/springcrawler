@@ -3,6 +3,11 @@ import com.casm.acled.configuration.ObjectMapperConfiguration;
 import com.casm.acled.crawler.Crawl;
 import com.casm.acled.crawler.management.*;
 import com.casm.acled.crawler.reporting.Reporter;
+import com.casm.acled.crawler.scraper.ACLEDTagger;
+import com.casm.acled.crawler.scraper.ScraperFields;
+import com.casm.acled.crawler.scraper.ScraperService;
+import com.casm.acled.crawler.scraper.dates.CompositeDateParser;
+import com.casm.acled.crawler.scraper.dates.DateTimeService;
 import com.casm.acled.dao.entities.ArticleDAO;
 import com.casm.acled.dao.entities.SourceDAO;
 import com.casm.acled.dao.entities.SourceListDAO;
@@ -11,6 +16,7 @@ import com.casm.acled.dao.util.ExportCSV;
 import com.casm.acled.entities.article.Article;
 import com.casm.acled.entities.source.Source;
 import com.casm.acled.entities.sourcelist.SourceList;
+import com.norconex.importer.handler.ImporterHandlerException;
 import org.apache.commons.csv.*;
 import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
 import org.camunda.bpm.spring.boot.starter.rest.CamundaBpmRestJerseyAutoConfiguration;
@@ -37,6 +43,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.StandardOpenOption;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import javax.validation.Valid;
@@ -113,10 +120,11 @@ public class ShellRunner {
     @Autowired
     private EmailService emailService;
 
-    @ShellMethod(value = "Test a method", key="test")
-    public void test(){
-        emailService.sendSimpleMessage("andrewr@casmtechnology.com", "Test", "A working example. " + LocalDate.now() );
-    }
+    @Autowired
+    private ScraperService scraperService;
+
+    @Autowired
+    private DateTimeService dateTimeService;
 
     @ShellMethod(value = "Copy a Source (-s) or SourceList (-sl) to a with a new name (-N) or suffix if flag 'S' is provided")
     public void copy(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) {
@@ -271,6 +279,76 @@ public class ShellRunner {
 
         checkListService.linkSourceToSourceList(sources, sourceList);
     }
+
+    @ShellMethod(value = "Re-scrape the articles for a given source (-s), be sure to specify the scraper dir (-sd). Optionally use -f and -t to constrain to only articles within a from-to date. Articles that have no existing date will always be attempted.", key="re-scrape")
+    public void rescrapeSource(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) throws ImporterHandlerException {
+        reporter.randomRunId();
+
+        CrawlArgs crawlArgs = argsService.get();
+        crawlArgs.raw = args;
+        crawlArgs.init();
+
+        // Get all articles from this source
+        List<Article> articles = articleDAO.bySource(crawlArgs.source);
+
+        boolean hasDateFormat = crawlArgs.source.hasValue(Source.DATE_FORMAT);
+        if (!hasDateFormat){
+            System.err.println("Source does not have date format specifications - only scraped fields will be updated.");
+        } else {
+            System.err.println("Source date format present - will attempt to re-parse scraped dates.");
+        }
+
+        int changed = 0;
+
+        ACLEDTagger.DomTaggerOpenAccess scraper = scraperService.getScraper(crawlArgs.source, crawlArgs.scrapersDir);
+
+        for (ListIterator<Article> iterator = articles.listIterator(); iterator.hasNext(); ) {
+            Article article = iterator.next();
+
+            String html = article.get(Article.SCRAPE_RAW_HTML);
+
+            // Only update articles that :
+            //   1. have raw html data to work with, and
+            //   2. fall within requested dates or have a missing Article.DATE value
+            if (html != null && (!article.hasValue(Article.DATE) || dateTimeService.isInRange(article.get(Article.DATE), crawlArgs.from, crawlArgs.to))) {
+
+                // Perform scrape
+                Map<String, String> scraped = scraper.tag(html);
+
+                // Make updated article
+                Article updated = article
+                        .put(Article.TITLE, scraped.getOrDefault(ScraperFields.SCRAPED_TITLE, ""))
+                        .put(Article.TEXT, scraped.getOrDefault(ScraperFields.SCRAPED_ARTICLE, ""))
+                        .put(Article.SCRAPE_DATE, scraped.getOrDefault(ScraperFields.SCRAPED_DATE, ""));
+
+                // If article has a scraped date, try re-parsing it
+                if (hasDateFormat && updated.hasValue(Article.SCRAPE_DATE)) {
+                    Optional<LocalDate> parsed = dateTimeService.parseDate(updated.get(Article.SCRAPE_DATE), crawlArgs.source);
+                    if (parsed.isPresent()){
+                        updated = updated.put(Article.DATE, parsed.get());
+                    }
+                }
+
+                // If article has been updated, prepare to upsert it
+                if (!article.equals(updated)) {
+                    iterator.set(updated);
+                    changed++;
+                }
+            }
+        }
+
+
+        if (changed > 0) {
+            // If any changes were made, then merge them in
+            System.out.println(changed + " articles have updates. Committing to database...");
+            articleDAO.upsert(articles);
+            System.out.println("Done.");
+
+        } else {
+            System.err.println("No changes found.");
+        }
+    }
+
 
     @ShellMethod(value = "unlink a Source (-s) from a source list (-sl). Sources can be read from CSV (-p), use -h if CSV has a header, -hn NAME to specify column (assumes STANDARD_NAME)", key="unlink")
     public void unlinkSourceFromSourceList(@ShellOption(value = {"-s", "--source"}, defaultValue = ShellOption.NULL) String source,
