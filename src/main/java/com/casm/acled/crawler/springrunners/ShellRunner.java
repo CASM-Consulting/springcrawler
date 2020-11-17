@@ -295,7 +295,7 @@ public class ShellRunner {
         if (!hasDateFormat){
             System.err.println("Source does not have date format specifications - only scraped fields will be updated.");
         } else {
-            System.err.println("Source date format present - will attempt to re-parse scraped dates.");
+            System.out.println("Source date format present - will attempt to re-parse scraped dates.");
         }
 
         int changed = 0;
@@ -341,7 +341,7 @@ public class ShellRunner {
         if (changed > 0) {
             // If any changes were made, then merge them in
             System.out.println(changed + " articles have updates. Committing to database...");
-            articleDAO.upsert(articles);
+            articleDAO.overwrite(articles);
             System.out.println("Done.");
 
         } else {
