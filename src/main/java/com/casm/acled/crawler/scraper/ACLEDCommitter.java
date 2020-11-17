@@ -204,7 +204,7 @@ public class ACLEDCommitter implements ICommitter {
         String title = properties.getString(SCRAPED_TITLE);
         String date = properties.getString(SCRAPED_DATE);
         String standardDate = properties.getString( STANDARD_DATE);
-        String keywordHighlight = properties.getString(ScraperFields.KEYWORD_HIGHLIGHT);
+        List<String> keywordHighlights = properties.getStrings(ScraperFields.KEYWORD_HIGHLIGHT);
         String rawHtml = null;
         int depth = properties.getInt("collector.depth");
 
@@ -212,9 +212,10 @@ public class ACLEDCommitter implements ICommitter {
             rawHtml = getRaw(inputStream, properties, url);
         }
 
-        boolean keywordPassed = properties.getBoolean(KEYWORD_PASSED);
+        List<String> keywordPassingSourceLists = properties.getStrings(KEYWORD_PASSED);
+        boolean anySourceListPassedKeywords = !keywordPassingSourceLists.isEmpty();
         boolean datePassed = properties.getBoolean(DATE_PASSED);
-        boolean scrapedPassed = keywordPassed && datePassed;
+        boolean scrapedPassed = datePassed && anySourceListPassedKeywords;
 
         /* =============================
          * Reporting
@@ -223,7 +224,7 @@ public class ACLEDCommitter implements ICommitter {
         reportACCEPTED(report);
 
         // Report if article text wasn't scraped
-        reportArticle(report, articleText, keywordPassed);
+        reportArticle(report, articleText, anySourceListPassedKeywords);
 
         // Report if article title wasn't scraped
         reportTitle(report, title);
@@ -236,9 +237,16 @@ public class ACLEDCommitter implements ICommitter {
 
         /* ============================ */
 
-        if (scrapedPassed) {
+        if (datePassed) {
 
-            commitArticle(url, date, standardDate, title, keywordHighlight, articleText, rawHtml, depth);
+            for (int i = 0; i < keywordPassingSourceLists.size(); i++) {
+                // we could annotate the article with what sourcelist keywords matched it here?
+                String passingSourceList = keywordPassingSourceLists.get(i);
+
+                String keywordHighlight = keywordHighlights.get(i);
+
+                commitArticle(url, date, standardDate, title, keywordHighlight, articleText, rawHtml, depth);
+            }
         }
     }
 
