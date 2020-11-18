@@ -288,62 +288,17 @@ public class ShellRunner {
         crawlArgs.raw = args;
         crawlArgs.init();
 
-        // Get all articles from this source
-        List<Article> articles = articleDAO.bySource(crawlArgs.source);
-
-        boolean hasDateFormat = crawlArgs.source.hasValue(Source.DATE_FORMAT);
-        if (!hasDateFormat){
-            System.err.println("Source does not have date format specifications - only scraped fields will be updated.");
+        if (crawlArgs.source.hasValue(Source.DATE_FORMAT)){
+            System.out.println("Source has date format specified - will attempt to re-parse scraped dates.");
         } else {
-            System.out.println("Source date format present - will attempt to re-parse scraped dates.");
+            System.err.println("Source does not have date format specifications - only scraped fields will be updated.");
         }
 
-        int changed = 0;
-
-        ACLEDTagger.DomTaggerOpenAccess scraper = scraperService.getScraper(crawlArgs.source, crawlArgs.scrapersDir);
-
-        for (ListIterator<Article> iterator = articles.listIterator(); iterator.hasNext(); ) {
-            Article article = iterator.next();
-
-            String html = article.get(Article.SCRAPE_RAW_HTML);
-
-            // Only update articles that :
-            //   1. have raw html data to work with, and
-            //   2. fall within requested dates or have a missing Article.DATE value
-            if (html != null && (!article.hasValue(Article.DATE) || dateTimeService.isInRange(article.get(Article.DATE), crawlArgs.from, crawlArgs.to))) {
-
-                // Perform scrape
-                Map<String, String> scraped = scraper.tag(html);
-
-                // Make updated article
-                Article updated = article
-                        .put(Article.TITLE, scraped.getOrDefault(ScraperFields.SCRAPED_TITLE, ""))
-                        .put(Article.TEXT, scraped.getOrDefault(ScraperFields.SCRAPED_ARTICLE, ""))
-                        .put(Article.SCRAPE_DATE, scraped.getOrDefault(ScraperFields.SCRAPED_DATE, ""));
-
-                // If article has a scraped date, try re-parsing it
-                if (hasDateFormat && updated.hasValue(Article.SCRAPE_DATE)) {
-                    Optional<LocalDate> parsed = dateTimeService.parseDate(updated.get(Article.SCRAPE_DATE), crawlArgs.source);
-                    if (parsed.isPresent()){
-                        updated = updated.put(Article.DATE, parsed.get());
-                    }
-                }
-
-                // If article has been updated, prepare to upsert it
-                if (!article.equals(updated)) {
-                    iterator.set(updated);
-                    changed++;
-                }
-            }
-        }
-
+        // Rescrape
+        int changed = scraperService.reScrape(crawlArgs.source, crawlArgs.from, crawlArgs.to, crawlArgs.scrapersDir);
 
         if (changed > 0) {
-            // If any changes were made, then merge them in
-            System.out.println(changed + " articles have updates. Committing to database...");
-            articleDAO.overwrite(articles);
-            System.out.println("Done.");
-
+            System.out.println(changed + " articles were updated.");
         } else {
             System.err.println("No changes found.");
         }

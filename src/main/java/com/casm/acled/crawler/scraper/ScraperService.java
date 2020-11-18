@@ -5,6 +5,7 @@ import com.casm.acled.camunda.variables.Process;
 import com.casm.acled.crawler.reporting.*;
 import com.casm.acled.crawler.scraper.dates.CompositeDateParser;
 import com.casm.acled.crawler.scraper.dates.DateParser;
+import com.casm.acled.crawler.scraper.dates.DateTimeService;
 import com.casm.acled.crawler.scraper.keywords.KeywordsService;
 import com.casm.acled.crawler.util.Util;
 import com.casm.acled.dao.entities.ArticleDAO;
@@ -78,6 +79,9 @@ public class ScraperService {
     @Autowired
     private CrawlReportDAO crawlReportDAO;
 
+    @Autowired
+    private DateTimeService dateTimeService;
+
 
     public void checkScraperCoverage(Path scraperDir, SourceList sourceList) {
 
@@ -138,6 +142,60 @@ public class ScraperService {
 
     public ACLEDTagger.DomTaggerOpenAccess getScraper(Source source, Path scraperDir){
         return new ACLEDTagger(scraperDir, source).get();
+    }
+
+    public int reScrape(Source source, LocalDate from, LocalDate to, Path scraperDir) throws ImporterHandlerException {
+        // Get all articles from this source, we'll constrain date by from/to if specified.
+        List<Article> articles = articleDAO.bySource(source);
+
+        // Only both re-parsing if source has a date format specified
+        boolean hasDateFormat = source.hasValue(Source.DATE_FORMAT);
+
+        // Track number of changed articles after re-scrape
+        int changed = 0;
+
+        ACLEDTagger.DomTaggerOpenAccess scraper = getScraper(source, scraperDir);
+
+        for (ListIterator<Article> iterator = articles.listIterator(); iterator.hasNext();){
+            Article article = iterator.next();
+
+            String html = article.get(Article.SCRAPE_RAW_HTML);
+
+            // Only update articles that :
+            //   1. have raw html data to work with, and
+            //   2. fall within requested dates or have a missing Article.DATE value
+            if (html != null && (!article.hasValue(Article.DATE) || dateTimeService.isInRange(article.get(Article.DATE), from, to))) {
+
+                // Perform scrape
+                Map<String, String> scraped = scraper.tag(html);
+
+                // Make updated article
+                Article updated = article
+                        .put(Article.TITLE, scraped.getOrDefault(ScraperFields.SCRAPED_TITLE, ""))
+                        .put(Article.TEXT, scraped.getOrDefault(ScraperFields.SCRAPED_ARTICLE, ""))
+                        .put(Article.SCRAPE_DATE, scraped.getOrDefault(ScraperFields.SCRAPED_DATE, ""));
+
+                // If article has a scraped date, try re-parsing it
+                if (hasDateFormat && updated.hasValue(Article.SCRAPE_DATE)) {
+                    Optional<LocalDate> parsed = dateTimeService.parseDate(updated.get(Article.SCRAPE_DATE), source);
+                    if (parsed.isPresent()){
+                        updated = updated.put(Article.DATE, parsed.get());
+                    }
+                }
+
+                // If article has been updated, prepare to upsert it
+                if (!article.equals(updated)) {
+                    iterator.set(updated);
+                    changed++;
+                }
+            }
+        }
+
+        if (changed > 0){
+            articleDAO.overwrite(articles);
+        }
+
+        return changed;
     }
 
     public HttpDocument scrapeURL(ACLEDScraper scraper, String url, Source source) {
