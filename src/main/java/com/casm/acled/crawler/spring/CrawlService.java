@@ -150,12 +150,14 @@ public class CrawlService {
 
             configureLogging(args.workingDir, Crawl.id(args.source));
 
+            reporter.randomRunId();
+
 //            ACLEDImporter importer = new ACLEDImporter(articleDAO, source, sourceListDAO, true);
             ACLEDCommitter committer = new ACLEDCommitter(articleDAO, source, sourceListDAO, true, true, reporter);
 
-            List<String> discoveredSitemaps = getSitemaps(source);
+            List<String> sitemaps = getSitemaps(source);
 
-            Crawl crawl = new Crawl(args, committer, reporter, discoveredSitemaps);
+            Crawl crawl = new Crawl(args, committer, reporter, sitemaps);
 
             crawl.run();
         });
@@ -346,6 +348,10 @@ public class CrawlService {
      */
     public List<String> getSitemaps(Source source) {
 
+        if(source.isTrue(Source.CRAWL_DISABLE_SITEMAPS)) {
+            return ImmutableList.of();
+        }
+
         String url = source.get(Source.LINK);
 
         url = Util.ensureHTTP(url, false);
@@ -354,18 +360,25 @@ public class CrawlService {
 
         Set<String> sitemaps = new HashSet<>();
 
-        // Attempt to discover sitemap location from robots.txt
-        SitemapParser sitemapParser = new SitemapParser();
+        if(source.isFalse(Source.CRAWL_DISABLE_SITEMAP_DISCOVERY)) {
 
-        String userAgent = configService.getUserAgent();
+            // Attempt to discover sitemap location from robots.txt
+            SitemapParser sitemapParser = new SitemapParser();
 
-        sitemapParser.setUserAgent(userAgent);
-        try {
-            Set<String> sitemapLocations = sitemapParser.getSitemapLocations(url);
-            sitemaps.addAll(sitemapLocations);
-        } catch (InvalidSitemapUrlException e) {
-            logger.warn(e.getMessage(), e);
-            //pass
+            String userAgent = configService.getUserAgent();
+
+            sitemapParser.setUserAgent(userAgent);
+            try {
+                Set<String> sitemapLocations = sitemapParser.getSitemapLocations(url);
+                sitemaps.addAll(sitemapLocations);
+            } catch (InvalidSitemapUrlException e) {
+                logger.warn(e.getMessage(), e);
+                //pass
+            }
+        }
+        if(source.hasValue(Source.CRAWL_SITEMAP_LOCATIONS)) {
+            List<String> sitemapSeeds = source.get(Source.CRAWL_SITEMAP_LOCATIONS);
+            sitemaps.addAll(sitemapSeeds);
         }
 
         if(sitemaps.isEmpty()) {
