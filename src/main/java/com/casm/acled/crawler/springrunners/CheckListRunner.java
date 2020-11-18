@@ -73,12 +73,13 @@ public class CheckListRunner implements CommandLineRunner{
         crawlArgs.init();
 
         switch(crawlArgs.program) {
-            case "import":
-                checkListService.importCrawlerSourceList(crawlArgs);
-                break;
-            case "export":
-                checkListService.exportCrawlerSourceList(crawlArgs);
-                break;
+            // remove import and export from checklistrunner because they do not exist in checklist service anymore.
+//            case "import":
+//                checkListService.importCrawlerSourceList(crawlArgs);
+//                break;
+//            case "export":
+//                checkListService.exportCrawlerSourceList(crawlArgs);
+//                break;
             case "check":
                 checkListService.checkSourceList(crawlArgs);
                 break;
