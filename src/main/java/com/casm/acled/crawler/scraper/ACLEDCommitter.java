@@ -1,5 +1,7 @@
 package com.casm.acled.crawler.scraper;
 
+import com.casm.acled.camunda.BusinessKeys;
+import com.casm.acled.camunda.variables.Process;
 import com.casm.acled.crawler.reporting.Event;
 import com.casm.acled.crawler.reporting.Report;
 import com.casm.acled.crawler.reporting.Reporter;
@@ -161,7 +163,8 @@ public class ACLEDCommitter implements ICommitter {
     }
 
     private void commitArticle(String url, String date, String standardDate, String title, String keywordHighlight,
-                               String articleText, String rawHtml, int depth) {
+                               String articleText, String rawHtml, int depth, String sourceListName) {
+
         Article article = EntityVersions.get(Article.class)
                 .current()
                 .put(Article.TEXT, articleText)
@@ -182,6 +185,10 @@ public class ACLEDCommitter implements ICommitter {
         if (standardDate != null) {
             LocalDateTime parsedDate = ExcludingCustomDateMetadataFilter.toDate(standardDate);
             article = article.put(Article.DATE, parsedDate.toLocalDate());
+
+            // Add the business key for the relevant week and source list
+            String businessKey = BusinessKeys.generate(sourceListName, parsedDate.toLocalDate());
+            article = article.put(Process.BUSINESS_KEY, businessKey);
         }
 
         if (recordRaw) {
@@ -240,12 +247,10 @@ public class ACLEDCommitter implements ICommitter {
         if (datePassed) {
 
             for (int i = 0; i < keywordPassingSourceLists.size(); i++) {
-                // we could annotate the article with what sourcelist keywords matched it here?
                 String passingSourceList = keywordPassingSourceLists.get(i);
-
                 String keywordHighlight = keywordHighlights.get(i);
 
-                commitArticle(url, date, standardDate, title, keywordHighlight, articleText, rawHtml, depth);
+                commitArticle(url, date, standardDate, title, keywordHighlight, articleText, rawHtml, depth, passingSourceList);
             }
         }
     }
