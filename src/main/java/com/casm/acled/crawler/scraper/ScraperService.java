@@ -144,6 +144,10 @@ public class ScraperService {
         return new ACLEDTagger(scraperDir, source).get();
     }
 
+    /**
+     * Rescrape articles from raw html for a given source between two dates.
+     * Dates can be null to ignore upper/lower bound.
+     */
     public int reScrape(Source source, LocalDate from, LocalDate to, Path scraperDir) throws ImporterHandlerException {
         // Get all articles from this source, we'll constrain date by from/to if specified.
         List<Article> articles = articleDAO.bySource(source);
