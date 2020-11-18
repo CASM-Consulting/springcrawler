@@ -123,7 +123,7 @@ public class CrawlerDirectRunner implements CommandLineRunner {
 //        crawlArgs.raw.source = "24 Horas (Mexico)";
 //        crawlArgs.raw.source = "nncMX";
 //        crawlArgs.raw.source = "Tribuna Campeche";
-        crawlArgs.raw.sourceLists = ImmutableList.of("mexico-1", "mexico-2");
+        crawlArgs.raw.sourceLists = ImmutableList.of("mexico-1");
 //        crawlArgs.raw.sourceLists = ImmutableList.of("fake-net");
         crawlArgs.raw.from = "2020-10-29";
         crawlArgs.raw.to =  "2021-01-01";
