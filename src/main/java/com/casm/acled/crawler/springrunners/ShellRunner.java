@@ -1,23 +1,16 @@
 package com.casm.acled.crawler.springrunners;
 import com.casm.acled.configuration.ObjectMapperConfiguration;
-import com.casm.acled.crawler.Crawl;
 import com.casm.acled.crawler.management.*;
 import com.casm.acled.crawler.reporting.Reporter;
-import com.casm.acled.crawler.scraper.ACLEDTagger;
-import com.casm.acled.crawler.scraper.ScraperFields;
 import com.casm.acled.crawler.scraper.ScraperService;
-import com.casm.acled.crawler.scraper.dates.CompositeDateParser;
 import com.casm.acled.crawler.scraper.dates.DateTimeService;
 import com.casm.acled.dao.entities.ArticleDAO;
 import com.casm.acled.dao.entities.SourceDAO;
 import com.casm.acled.dao.entities.SourceListDAO;
 import com.casm.acled.dao.entities.SourceSourceListDAO;
 import com.casm.acled.dao.util.ExportCSV;
-import com.casm.acled.entities.article.Article;
 import com.casm.acled.entities.source.Source;
-import com.casm.acled.entities.sourcelist.SourceList;
 import com.norconex.importer.handler.ImporterHandlerException;
-import org.apache.commons.csv.*;
 
 import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
 import org.camunda.bpm.spring.boot.starter.rest.CamundaBpmRestJerseyAutoConfiguration;
@@ -37,12 +30,6 @@ import org.springframework.context.annotation.Import;
 import org.springframework.shell.standard.ShellMethod;
 import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellOption;
-
-import java.time.LocalDate;
-import java.util.*;
-import java.util.function.Consumer;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import javax.validation.Valid;
 import org.jline.reader.LineReader;

@@ -7,9 +7,8 @@ import com.casm.acled.crawler.reporting.Report;
 import com.casm.acled.crawler.reporting.ReportQueryService;
 import com.casm.acled.crawler.reporting.ReportQueryService.EventCountSummary;
 import com.casm.acled.crawler.reporting.Reporter;
-import com.casm.acled.crawler.scraper.ACLEDCommitter;
 import com.casm.acled.crawler.scraper.ACLEDScraper;
-import com.casm.acled.crawler.scraper.ACLEDTagger;
+import com.casm.acled.crawler.scraper.ACLEDTaggerFactory;
 import com.casm.acled.crawler.scraper.ScraperFields;
 import com.casm.acled.crawler.scraper.ScraperService;
 import com.casm.acled.crawler.scraper.dates.DateParser;
@@ -18,18 +17,14 @@ import com.casm.acled.crawler.scraper.dates.DateTimeService;
 import com.casm.acled.crawler.spring.CrawlService;
 import com.casm.acled.crawler.util.Util;
 import com.casm.acled.dao.entities.*;
-import com.casm.acled.entities.EntityVersions;
 import com.casm.acled.entities.VersionedEntity;
 import com.casm.acled.entities.article.Article;
 import com.casm.acled.entities.source.Source;
 import com.casm.acled.entities.sourcelist.SourceList;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 import com.norconex.collector.http.doc.HttpDocument;
-import com.norconex.importer.handler.tagger.impl.DOMTagger;
 import org.apache.commons.csv.*;
-import org.apache.commons.lang3.BooleanUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,7 +39,6 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.*;
@@ -241,7 +235,7 @@ public class CheckListService {
     public boolean datesParse(CrawlArgs args, Source source) {
         ACLEDScraper scraper = ACLEDScraper.load(args.scrapersDir, source, reporter);
 
-        ACLEDTagger acledTagger = new ACLEDTagger(args.scrapersDir, source);
+        ACLEDTaggerFactory acledTagger = new ACLEDTaggerFactory(args.scrapersDir, source);
 
 //        DOMTagger domTagger = acledTagger.get();
 

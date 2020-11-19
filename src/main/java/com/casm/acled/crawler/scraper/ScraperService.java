@@ -19,7 +19,6 @@ import com.casm.acled.entities.sourcelist.SourceList;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import com.ibm.icu.util.ULocale;
 import com.norconex.collector.core.CollectorException;
 import com.norconex.collector.http.client.impl.GenericHttpClientFactory;
@@ -34,7 +33,6 @@ import com.opencsv.CSVReader;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.QuoteMode;
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.http.client.HttpClient;
@@ -140,8 +138,8 @@ public class ScraperService {
         return getScraper(source, scraperDir).tag(html);
     }
 
-    public ACLEDTagger.DomTaggerOpenAccess getScraper(Source source, Path scraperDir){
-        return new ACLEDTagger(scraperDir, source).get();
+    public ACLEDTagger getScraper(Source source, Path scraperDir){
+        return new ACLEDTaggerFactory(scraperDir, source).get();
     }
 
     /**
@@ -158,7 +156,7 @@ public class ScraperService {
         // Track number of changed articles after re-scrape
         int changed = 0;
 
-        ACLEDTagger.DomTaggerOpenAccess scraper = getScraper(source, scraperDir);
+        ACLEDTagger scraper = getScraper(source, scraperDir);
 
         for (ListIterator<Article> iterator = articles.listIterator(); iterator.hasNext();){
             Article article = iterator.next();

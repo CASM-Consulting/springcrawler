@@ -14,10 +14,8 @@ import com.norconex.collector.http.HttpCollector;
 import com.norconex.collector.http.url.IURLNormalizer;
 import com.norconex.collector.http.url.impl.GenericURLNormalizer;
 import com.norconex.importer.handler.IImporterHandler;
-import com.norconex.importer.handler.filter.AbstractDocumentFilter;
 import com.norconex.importer.handler.filter.OnMatch;
 import com.norconex.importer.handler.filter.impl.DateMetadataFilter;
-import com.norconex.importer.handler.filter.impl.EmptyMetadataFilter;
 import com.norconex.importer.handler.transformer.impl.ReplaceTransformer;
 
 import java.nio.file.Path;
@@ -27,9 +25,7 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
@@ -37,13 +33,9 @@ import com.norconex.importer.handler.tagger.impl.*;
 
 import com.norconex.collector.http.robot.RobotsTxt;
 import com.norconex.collector.http.robot.impl.StandardRobotsTxtProvider;
-import com.norconex.jef4.job.IJobErrorListener;
-import com.norconex.jef4.mail.ErrorMailNotifier;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
-import com.norconex.collector.http.delay.IDelayResolver;
 import com.norconex.collector.http.delay.impl.GenericDelayResolver;
-import org.springframework.stereotype.Component;
 
 
 public class Crawl {
@@ -178,7 +170,7 @@ public class Crawl {
         }
 
 
-        DOMTagger documentTagger = new ACLEDTagger(args.scrapersDir, source).get();
+        DOMTagger documentTagger = new ACLEDTaggerFactory(args.scrapersDir, source).get();
         ReplaceTransformer documentTransfomer = new ReplaceTransformer();
         documentTransfomer.addReplacement("<script.*?>.*?<\\/script>", "");
 
