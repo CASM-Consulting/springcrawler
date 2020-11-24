@@ -1,18 +1,12 @@
 package com.casm.acled.crawler.reporting;
 
-import com.casm.acled.crawler.management.CrawlerSweep;
-import com.casm.acled.dao.entities.CrawlReportDAO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.UUID;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public interface Reporter {
