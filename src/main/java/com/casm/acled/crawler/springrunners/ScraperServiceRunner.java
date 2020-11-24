@@ -123,7 +123,7 @@ public class ScraperServiceRunner {
 
     public void run(String... args) {
 
-        String runId = reporter.randomRunId();
+//        String runId = reporter.randomRunId();
 
 //        Map<String, Event> playThrough = new LinkedHashMap<>();
 

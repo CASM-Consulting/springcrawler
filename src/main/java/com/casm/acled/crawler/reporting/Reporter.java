@@ -25,13 +25,13 @@ public interface Reporter {
 
     List<Report> reports();
 
-    default String randomRunId() {
-        if(runId() == null){
-            runId(UUID.randomUUID().toString());
-            logger.info("reporter run id : " + runId());
-        }
-        return runId();
-    }
+//    default String randomRunId() {
+//        if(runId() == null){
+//            runId(UUID.randomUUID().toString());
+//            logger.info("reporter run id : " + runId());
+//        }
+//        return runId();
+//    }
 //    Reporter runId(String runId);
 //    String runId();
 
