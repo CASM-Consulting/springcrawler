@@ -142,7 +142,7 @@ public class ShellRunner {
 
         importExportService.importCrawlerSourceList(crawlArgs);
 
-        reporter.getRunReports().stream().forEach(r -> logger.info(r.toString()));
+//        reporter.getRunReports().stream().forEach(r -> logger.info(r.toString()));
 
     }
 
@@ -159,7 +159,7 @@ public class ShellRunner {
 
         importExportService.exportCrawlerSourceList(crawlArgs);
 
-        reporter.getRunReports().stream().forEach(r -> logger.info(r.toString()));
+//        reporter.getRunReports().stream().forEach(r -> logger.info(r.toString()));
 
     }
 
@@ -208,7 +208,7 @@ public class ShellRunner {
 
         checkListService.outputExampleURLCheck(crawlArgs);
 
-        reporter.getRunReports().stream().forEach(r -> logger.info(r.toString()));
+//        reporter.getRunReports().stream().forEach(r -> logger.info(r.toString()));
 
     }
 

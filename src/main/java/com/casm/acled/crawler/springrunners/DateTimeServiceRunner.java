@@ -179,7 +179,7 @@ public class DateTimeServiceRunner {
 
 
 
-        reporter.getRunReports().stream().forEach(r -> logger.info(r.toString()));
+//        reporter.getRunReports().stream().forEach(r -> logger.info(r.toString()));
 
     }
 

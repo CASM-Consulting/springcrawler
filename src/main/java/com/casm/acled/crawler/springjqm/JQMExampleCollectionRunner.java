@@ -44,6 +44,6 @@ public class JQMExampleCollectionRunner implements Runnable {
 
         crawlService.collectExamples(sourceListId, sourceId);
 
-        reporter.getRunReports().stream().forEach(r -> logger.info(r.toString()));
+        reporter.getRunReports(sourceId).forEach(r -> logger.info(r.toString()));
     }
 }

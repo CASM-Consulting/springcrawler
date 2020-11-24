@@ -42,12 +42,8 @@ public class DBReporter implements Reporter {
     }
 
     @Override
-    public List<Report> getRunReports() {
-        if(runId == null) {
-            throw new RuntimeException("null runId");
-        } else {
-            return crawlReportDAO.getBy(CrawlReport.RUN_ID, runId).stream().map(Report::of).collect(Collectors.toList());
-        }
+    public List<Report> getRunReports(String runId) {
+        return crawlReportDAO.getBy(CrawlReport.RUN_ID, runId).stream().map(Report::of).collect(Collectors.toList());
     }
 
     private static DBReporter reporter;

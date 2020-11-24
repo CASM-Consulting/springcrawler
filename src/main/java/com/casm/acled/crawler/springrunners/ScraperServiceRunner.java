@@ -148,7 +148,7 @@ public class ScraperServiceRunner {
 //        scraperService.eval(Paths.get("allscrapers2"), Paths.get("mexico-bc-GT.csv"),
 //                sourceListDAO.getByUnique(SourceList.LIST_NAME, "mexico-back-code-2018").get());
 
-        reporter.getRunReports().stream().forEach(r -> logger.info(r.toString()));
+//        reporter.getRunReports().stream().forEach(r -> logger.info(r.toString()));
 
     }
     private static Map<String, Event> playThrough = new LinkedHashMap<>();
