@@ -30,16 +30,6 @@ public class InMemoryReporter implements Reporter {
         return this;
     }
 
-    @Override
-    public String runId() {
-        return runId;
-    }
-
-    @Override
-    public Reporter runId(String runId) {
-        this.runId = runId;
-        return this;
-    }
     private static InMemoryReporter reporter;
 
     public static synchronized InMemoryReporter get() {

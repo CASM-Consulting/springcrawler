@@ -89,7 +89,7 @@ public class KeywordsServiceRunner implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        reporter.randomRunId();
+//        reporter.randomRunId();
 
 //        testURL("mexico-1", "MiMorelia", "https://www.mimorelia.com/localizan-cuerpo-de-una-mujer-en-la-carretera-zamora-morelia/");
 //        testURL("balkans", "Politika", "http://www.politika.rs/sr/clanak/453708/Protest-ispred-Predsednistva");

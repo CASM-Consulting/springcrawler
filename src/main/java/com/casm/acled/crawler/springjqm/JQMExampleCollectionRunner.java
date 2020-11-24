@@ -31,7 +31,7 @@ public class JQMExampleCollectionRunner implements Runnable {
     @Override
     public void run()  {
 
-        reporter.randomRunId();
+//        reporter.randomRunId();
 
         runtimeParameters = jmp.getObject().parameters();
 

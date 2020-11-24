@@ -6,6 +6,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -30,8 +32,14 @@ public interface Reporter {
         }
         return runId();
     }
-    Reporter runId(String runId);
-    String runId();
+//    Reporter runId(String runId);
+//    String runId();
+
+    default Report assignRunId(Report report) {
+        String date = DateTimeFormatter.ISO_LOCAL_DATE.withZone(ZoneId.systemDefault()).format(report.timestamp());
+        String runId = report.id() + "-" + date;
+        return report.runId(runId);
+    }
 
     List<Report> getRunReports();
 

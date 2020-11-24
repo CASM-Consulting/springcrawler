@@ -59,7 +59,7 @@ public class LocaleServiceRunner {
 
 
     public void run(String[] args) throws Exception {
-        reporter.randomRunId();
+//        reporter.randomRunId();
 
 //        localeHelper.allS                return Optional.empty();
         localeService.determineSourceLocalesAndListTimeZones("Balkans");

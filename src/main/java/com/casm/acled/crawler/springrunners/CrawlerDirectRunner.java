@@ -94,7 +94,7 @@ public class CrawlerDirectRunner implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
 
-        reporter.randomRunId();
+//        reporter.randomRunId();
 
         crawlArgs = argsService.get();
 
