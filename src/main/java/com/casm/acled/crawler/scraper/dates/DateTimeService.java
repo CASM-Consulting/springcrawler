@@ -10,6 +10,7 @@ import com.casm.acled.dao.entities.DeskDAO;
 import com.casm.acled.dao.entities.SourceDAO;
 import com.casm.acled.dao.entities.SourceListDAO;
 import com.casm.acled.dao.entities.SourceSourceListDAO;
+import com.casm.acled.entities.article.Article;
 import com.casm.acled.entities.desk.Desk;
 import com.casm.acled.entities.source.Source;
 import com.casm.acled.entities.sourcelist.SourceList;
@@ -22,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.nio.file.Path;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
@@ -53,6 +55,35 @@ public class DateTimeService {
     private Path scrapersPath;
 
     public DateTimeService() {
+    }
+
+    /**
+     * Parse the scraped date of an article according to how we generate the
+     * Article.DATE field from ScrapedFields.SCRAPED_DATE field.
+     */
+    public Optional<LocalDate> parseDate(String scrapedDate, Source src){
+        // Ready parser on Source-defined format
+        DateParser parser = CompositeDateParser.of(src.get(Source.DATE_FORMAT));
+        // Pay attention to Source's locale definition
+        List<String> locales = src.get(Source.LOCALES);
+        parser.locale(locales.stream().map(ULocale::new).collect(Collectors.toList()));
+        // Perform parse
+        Optional<LocalDateTime> date = parser.parse(scrapedDate);
+        return date.map(LocalDateTime::toLocalDate);
+    }
+
+    /**
+     * Check date is in range of inclusive lower (from) and inclusive upper (to) bounds.
+     * If date is null, then return false.
+     * If from is null then it's always passing the lower bound.
+     * If to is null then it's always passing the upper bound.
+     */
+    public boolean isInRange(LocalDate date, LocalDate from, LocalDate to){
+        if (date != null){
+            boolean validForLowerBound = from == null || date.isAfter(from) || date.isEqual(from);
+            boolean validForUpperBound = to == null || date.isBefore(to) || date.isEqual(to);
+            return validForLowerBound && validForUpperBound;
+        } else return false;
     }
 
     public void setScrapersPath(Path scrapersPath ) {
