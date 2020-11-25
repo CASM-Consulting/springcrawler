@@ -154,8 +154,10 @@ public class Crawl {
         }
 
         if(!args.skipKeywords) {
-            KeywordTagger keywordTagger = keywordTagger(args.sourceLists.get(0), source);
-            postParsers.add(keywordTagger);
+            for (SourceList sourceList : args.sourceLists) {
+                KeywordTagger keywordTagger = keywordTagger(sourceList, source);
+                postParsers.add(keywordTagger);
+            }
 
         }
 
@@ -221,8 +223,8 @@ public class Crawl {
 
     private KeywordTagger keywordTagger(SourceList sourceList, Source source) {
 
-        String query = resolveQuery(sourceList, source);
-        KeywordTagger keywordTagger = new KeywordTagger(ScraperFields.SCRAPED_ARTICLE, query);
+//        String query = resolveQuery(sourceList, source);
+        KeywordTagger keywordTagger = new KeywordTagger(ScraperFields.SCRAPED_ARTICLE, sourceList);
 
         return keywordTagger;
     }
