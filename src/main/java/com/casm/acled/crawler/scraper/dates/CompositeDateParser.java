@@ -99,6 +99,35 @@ public class CompositeDateParser implements DateParser {
         return dateParser;
     }
 
+    public static DateParser of(List<String> formatSpecs, String timezone) {
+
+        List<DateParser> parsers = new ArrayList<>();
+
+        for(String formatSpec : formatSpecs) {
+            int n = formatSpec.indexOf(":");
+            String protocol = formatSpec.substring(0, n);
+            String spec = formatSpec.substring(n+1);
+            switch (protocol) {
+                case DateFormatParser.PROTOCOL: {
+                    DateFormatParser dfp = new DateFormatParser(spec);
+                    parsers.add(dfp);
+                    break;
+                }
+                case NaturalLanguageDateParser.PROTOCOL:
+                    NaturalLanguageDateParser nldp = new NaturalLanguageDateParser(spec, timezone);
+                    parsers.add(nldp);
+                    break;
+                default:{
+                    throw new RuntimeException("Date parser protocol not found: " + protocol);
+                }
+            }
+        }
+
+        DateParser dateParser = new CompositeDateParser(parsers);
+
+        return dateParser;
+    }
+
     @Override
     public List<String> getFormatSpec() {
         return parsers.stream().flatMap(p->p.getFormatSpec().stream()).collect(Collectors.toList());

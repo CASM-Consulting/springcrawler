@@ -121,7 +121,9 @@ public class DateTimeService {
 
         if(formatSpecs != null && ! formatSpecs.isEmpty()) {
 
-            DateParser existing = CompositeDateParser.of(formatSpecs);
+            String timezone = source.get(Source.TIMEZONE);
+//            DateParser existing = CompositeDateParser.of(formatSpecs);
+            DateParser existing = CompositeDateParser.of(formatSpecs, timezone);
 
             List<String> exampleDates = exampleGetter.apply(source);
 

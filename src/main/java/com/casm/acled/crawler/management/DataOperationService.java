@@ -46,7 +46,7 @@ public class DataOperationService {
     @Autowired
     private Reporter reporter;
 
-    @Autowired
+    @Autowired(required = false)
     LineReader reader;
 
     @Autowired

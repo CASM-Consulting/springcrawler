@@ -106,7 +106,7 @@ public class CrawlerDirectRunner implements CommandLineRunner {
 //        crawlArgs.raw.source = "La Verdad";
 //        crawlArgs.raw.source = "Animal Politico";
 //        crawlArgs.raw.source = "El Proceso";
-        crawlArgs.raw.source = "E-Consulta";
+        crawlArgs.raw.source = "Articulo 66";
 //        crawlArgs.raw.source = "La Silla Rota";
 //        crawlArgs.raw.source = "Imagen del Golfo";
 //        crawlArgs.raw.source = "Sintesis";
@@ -125,14 +125,14 @@ public class CrawlerDirectRunner implements CommandLineRunner {
 //        crawlArgs.raw.source = "Tribuna Campeche";
         crawlArgs.raw.sourceLists = ImmutableList.of("mexico-1");
 //        crawlArgs.raw.sourceLists = ImmutableList.of("fake-net");
-        crawlArgs.raw.from = "2020-10-29";
+        crawlArgs.raw.from = "2020-11-23";
         crawlArgs.raw.to =  "2021-01-01";
-        crawlArgs.raw.workingDir = "test";
+//        crawlArgs.raw.workingDir = "test";
 //        crawlArgs.raw.workingDir = "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/JQM_ROOT/test";
-        crawlArgs.raw.scrapersDir = "/home/sw206/git/acled-scrapers/";
+        crawlArgs.raw.workingDir = "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports/test_with_andy";
 //        crawlArgs.raw.scrapersDir = "/Users/adr27/Documents/git/acled-scrapers/";
 //        crawlArgs.raw.scrapersDir = "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/springcrawler/testscrapers/generic/";
-//        crawlArgs.raw.scrapersDir = "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/acled-scrapers/";
+        crawlArgs.raw.scrapersDir = "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/acled-scrapers/";
 
         crawlArgs.raw.depth = 0;
 //        crawlArgs.raw.ignoreSiteMap = true;

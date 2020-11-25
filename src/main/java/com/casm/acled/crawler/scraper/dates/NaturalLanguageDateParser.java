@@ -35,12 +35,20 @@ class NaturalLanguageDateParser implements DateParser {
 
     private final String languages;
 
+    private String timezone;
+
     private final Pattern triggers;
     private final String spec;
 
     public NaturalLanguageDateParser(String spec) {
         this(spec, Lists.newArrayList(ULocale.getDefault()));
     }
+
+    public NaturalLanguageDateParser(String spec, String timezone) {
+        this(spec, Lists.newArrayList(ULocale.getDefault()));
+        this.timezone = timezone;
+    }
+
     public NaturalLanguageDateParser(String spec, List<ULocale> locales) {
         this.spec = spec;
 
@@ -78,6 +86,12 @@ class NaturalLanguageDateParser implements DateParser {
 
             webClient.query("relative_expression", date);
             webClient.query("languages", languages);
+            if (timezone==null) {
+                logger.info("if using natural language date parser, timezone should not be null.");
+            }
+            else {
+                webClient.query("timezone", timezone);
+            }
 
             Response response = webClient.get();
             int status = response.getStatus();
