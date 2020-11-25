@@ -86,12 +86,7 @@ class NaturalLanguageDateParser implements DateParser {
 
             webClient.query("relative_expression", date);
             webClient.query("languages", languages);
-            if (timezone==null) {
-                logger.info("if using natural language date parser, timezone should not be null.");
-            }
-            else {
-                webClient.query("timezone", timezone);
-            }
+            webClient.query("timezone", timezone);
 
             Response response = webClient.get();
             int status = response.getStatus();
