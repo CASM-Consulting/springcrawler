@@ -1,17 +1,16 @@
 package com.casm.acled.crawler.springrunners;
 import com.casm.acled.configuration.ObjectMapperConfiguration;
-import com.casm.acled.crawler.Crawl;
 import com.casm.acled.crawler.management.*;
 import com.casm.acled.crawler.reporting.Reporter;
+import com.casm.acled.crawler.scraper.ScraperService;
+import com.casm.acled.crawler.scraper.dates.DateTimeService;
 import com.casm.acled.dao.entities.ArticleDAO;
 import com.casm.acled.dao.entities.SourceDAO;
 import com.casm.acled.dao.entities.SourceListDAO;
 import com.casm.acled.dao.entities.SourceSourceListDAO;
 import com.casm.acled.dao.util.ExportCSV;
-import com.casm.acled.entities.article.Article;
 import com.casm.acled.entities.source.Source;
-import com.casm.acled.entities.sourcelist.SourceList;
-import org.apache.commons.csv.*;
+import com.norconex.importer.handler.ImporterHandlerException;
 
 import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
 import org.camunda.bpm.spring.boot.starter.rest.CamundaBpmRestJerseyAutoConfiguration;
@@ -31,11 +30,6 @@ import org.springframework.context.annotation.Import;
 import org.springframework.shell.standard.ShellMethod;
 import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellOption;
-
-import java.time.LocalDate;
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import javax.validation.Valid;
 import org.jline.reader.LineReader;
@@ -96,10 +90,11 @@ public class ShellRunner {
     @Autowired
     private EmailService emailService;
 
-    @ShellMethod(value = "Test a method", key="test")
-    public void test(){
-        emailService.sendSimpleMessage("andrewr@casmtechnology.com", "Test", "A working example. " + LocalDate.now() );
-    }
+    @Autowired
+    private ScraperService scraperService;
+
+    @Autowired
+    private DateTimeService dateTimeService;
 
     @ShellMethod(value = "Copy a Source (-s) or SourceList (-sl) to a with a new name (-N) or suffix if flag 'S' is provided")
     public void copy(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) {
@@ -181,6 +176,31 @@ public class ShellRunner {
         dataOperationService.unlinkSourceFromSourceList(crawlArgs);
 
     }
+
+    @ShellMethod(value = "Re-scrape the articles for a given source (-s), be sure to specify the scraper dir (-sd). Optionally use -f and -t to constrain to only articles within a from-to date. Articles that have no existing date will always be attempted.", key="re-scrape")
+    public void rescrapeSource(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) throws ImporterHandlerException {
+        reporter.randomRunId();
+
+        CrawlArgs crawlArgs = argsService.get();
+        crawlArgs.raw = args;
+        crawlArgs.init();
+
+        if (crawlArgs.source.hasValue(Source.DATE_FORMAT)){
+            System.out.println("Source has date format specified - will attempt to re-parse scraped dates.");
+        } else {
+            System.err.println("Source does not have date format specifications - only scraped fields will be updated.");
+        }
+
+        // Rescrape
+        int changed = scraperService.reScrape(crawlArgs.source, crawlArgs.from, crawlArgs.to, crawlArgs.scrapersDir);
+
+        if (changed > 0) {
+            System.out.println(changed + " articles were updated.");
+        } else {
+            System.err.println("No changes found.");
+        }
+    }
+
 
 //    @ShellMethod
 //    public void checkURL(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) {
