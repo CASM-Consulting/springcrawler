@@ -60,67 +60,70 @@ public class ScraperServiceRunner {
     @Autowired
     private Reporter reporter;
 
+    /**
+     * WARNING We no longer generate RUN IDs like this anymore, so we'd need to change how we work
+     */
     public void eval() {
 
-        String runId = reporter.randomRunId();
-        List<Article> remaining;
-
-
-        Map<String, Event> playThrough = new LinkedHashMap<>();
-
-        List<Article> previous = articleDAO.getByBusinessKey("mexico-2018-gt");
-        articleDAO.delete(previous);
-
-
-        scraperService.importEvalCsv( Paths.get("mexico-bc~GT.csv"), "mexico-2018-gt");
-        remaining = articleDAO.getByBusinessKey("mexico-2018-gt");
-
-        scraperService.matchArticlesUrlOrContent(remaining, 100); //992bff4f-1c92-444f-821c-f1fa2fb87e93
-        playThrough.put(runId, Event.ARTICLE_NO_MATCH); //da2f777c-f818-4545-abfb-8ea01546bf27
-//        scraperService.matchArticlesByUrl(remaining); //992bff4f-1c92-444f-821c-f1fa2fb87e93
-//        playThrough.put(runId, Event.ARTICLE_URL_NO_MATCH);
-
-
-//        remaining = scraperService.getRemaining(runId, Event.ARTICLE_URL_NO_MATCH);
-        remaining = scraperService.getRemaining(runId, Event.ARTICLE_NO_MATCH);
-        reporter.runId(null);
-        runId = reporter.randomRunId();
-        scraperService.checkArticlesSource(remaining); // 6926d924-bfc2-45aa-8a86-7dd1db921c0d
-        playThrough.put(runId, Event.SOURCE_FOUND);
-
-        remaining = scraperService.getRemaining(runId, Event.SOURCE_FOUND);
-        reporter.runId(null);
-        runId = reporter.randomRunId();
-        scraperService.checkArticlesScraperExists(Paths.get("allscrapers2"), remaining);
-        playThrough.put(runId, Event.SCRAPER_FOUND);
-
-//        runId = "ab20797b-1f0b-4b16-a2b6-d90986e9456f";
-        remaining = scraperService.getRemaining(runId, Event.SCRAPER_FOUND);
-        reporter.runId(null);
-        runId = reporter.randomRunId();
-        scraperService.checkArticlesScraperFunction(Paths.get("allscrapers2"), remaining); //a3cdebfa-456b-49dc-befc-e78380d0a4d7
-        playThrough.put(runId, Event.SCRAPE_PASS);
-//        runId = "257f826e-3396-4e56-966e-6e5a5de804ed";
-
-//        runId = "fd0bf839-e4d7-4a3b-ad67-27d6dbcb0373";
-        remaining = scraperService.getRemaining(runId, Event.SCRAPE_PASS);
-        reporter.runId(null);
-
-        runId = reporter.randomRunId();
-        scraperService.checkArticlesDateParse(remaining, ImmutableMap.of(
-                LocalDateTime.of(2018, 6, 10, 0,0,0),LocalDateTime.of(2018, 6, 12, 0,0,0),
-                LocalDateTime.of(2018, 9, 23, 0,0,0),LocalDateTime.of(2018, 9, 25, 0,0,0)
-        ));
-        playThrough.put(runId, Event.DATE_PARSE_SUCCESS);
-
-
-        Map<Article, CrawlReport> explained = compileReport(playThrough, "mexico-2018-gt");
-        scraperService.outputResults(Paths.get("mexico-bc-2018-gt-content-analysis.csv"), explained);
+//        String runId = reporter.randomRunId();
+//        List<Article> remaining;
+//
+//
+//        Map<String, Event> playThrough = new LinkedHashMap<>();
+//
+//        List<Article> previous = articleDAO.getByBusinessKey("mexico-2018-gt");
+//        articleDAO.delete(previous);
+//
+//
+//        scraperService.importEvalCsv( Paths.get("mexico-bc~GT.csv"), "mexico-2018-gt");
+//        remaining = articleDAO.getByBusinessKey("mexico-2018-gt");
+//
+//        scraperService.matchArticlesUrlOrContent(remaining, 100); //992bff4f-1c92-444f-821c-f1fa2fb87e93
+//        playThrough.put(runId, Event.ARTICLE_NO_MATCH); //da2f777c-f818-4545-abfb-8ea01546bf27
+////        scraperService.matchArticlesByUrl(remaining); //992bff4f-1c92-444f-821c-f1fa2fb87e93
+////        playThrough.put(runId, Event.ARTICLE_URL_NO_MATCH);
+//
+//
+////        remaining = scraperService.getRemaining(runId, Event.ARTICLE_URL_NO_MATCH);
+//        remaining = scraperService.getRemaining(runId, Event.ARTICLE_NO_MATCH);
+//        reporter.runId(null);
+//        runId = reporter.randomRunId();
+//        scraperService.checkArticlesSource(remaining); // 6926d924-bfc2-45aa-8a86-7dd1db921c0d
+//        playThrough.put(runId, Event.SOURCE_FOUND);
+//
+//        remaining = scraperService.getRemaining(runId, Event.SOURCE_FOUND);
+//        reporter.runId(null);
+//        runId = reporter.randomRunId();
+//        scraperService.checkArticlesScraperExists(Paths.get("allscrapers2"), remaining);
+//        playThrough.put(runId, Event.SCRAPER_FOUND);
+//
+////        runId = "ab20797b-1f0b-4b16-a2b6-d90986e9456f";
+//        remaining = scraperService.getRemaining(runId, Event.SCRAPER_FOUND);
+//        reporter.runId(null);
+//        runId = reporter.randomRunId();
+//        scraperService.checkArticlesScraperFunction(Paths.get("allscrapers2"), remaining); //a3cdebfa-456b-49dc-befc-e78380d0a4d7
+//        playThrough.put(runId, Event.SCRAPE_PASS);
+////        runId = "257f826e-3396-4e56-966e-6e5a5de804ed";
+//
+////        runId = "fd0bf839-e4d7-4a3b-ad67-27d6dbcb0373";
+//        remaining = scraperService.getRemaining(runId, Event.SCRAPE_PASS);
+//        reporter.runId(null);
+//
+//        runId = reporter.randomRunId();
+//        scraperService.checkArticlesDateParse(remaining, ImmutableMap.of(
+//                LocalDateTime.of(2018, 6, 10, 0,0,0),LocalDateTime.of(2018, 6, 12, 0,0,0),
+//                LocalDateTime.of(2018, 9, 23, 0,0,0),LocalDateTime.of(2018, 9, 25, 0,0,0)
+//        ));
+//        playThrough.put(runId, Event.DATE_PARSE_SUCCESS);
+//
+//
+//        Map<Article, CrawlReport> explained = compileReport(playThrough, "mexico-2018-gt");
+//        scraperService.outputResults(Paths.get("mexico-bc-2018-gt-content-analysis.csv"), explained);
     }
 
     public void run(String... args) {
 
-        String runId = reporter.randomRunId();
+//        String runId = reporter.randomRunId();
 
 //        Map<String, Event> playThrough = new LinkedHashMap<>();
 
@@ -145,7 +148,7 @@ public class ScraperServiceRunner {
 //        scraperService.eval(Paths.get("allscrapers2"), Paths.get("mexico-bc-GT.csv"),
 //                sourceListDAO.getByUnique(SourceList.LIST_NAME, "mexico-back-code-2018").get());
 
-        reporter.getRunReports().stream().forEach(r -> logger.info(r.toString()));
+//        reporter.getRunReports().stream().forEach(r -> logger.info(r.toString()));
 
     }
     private static Map<String, Event> playThrough = new LinkedHashMap<>();

@@ -141,7 +141,7 @@ public class DateTimeServiceRunner {
     }
 
     public void run(String... args) throws Exception {
-        reporter.randomRunId();
+//        reporter.randomRunId();
 
 //        attemptSourceListExistingArticles("balkans");
 //        dateTimeService.checkExistingPasses(sourceListDAO.getByUnique(SourceList.LIST_NAME, "balkans").get(), getFromArticles);
@@ -179,7 +179,7 @@ public class DateTimeServiceRunner {
 
 
 
-        reporter.getRunReports().stream().forEach(r -> logger.info(r.toString()));
+//        reporter.getRunReports().stream().forEach(r -> logger.info(r.toString()));
 
     }
 

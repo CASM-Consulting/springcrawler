@@ -6,6 +6,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -27,24 +30,6 @@ public class DBReporter implements Reporter {
         reports = new ArrayList<>();
     }
 
-    @Override
-    public String runId() {
-        return runId;
-    }
-
-    @Override
-    public Reporter runId(String runId) {
-        this.runId = runId;
-        return this;
-    }
-
-    private Report assignRunId(Report report) {
-        if(runId != null) {
-            report = report.runId(runId);
-        }
-        return report;
-    }
-
     public DBReporter report(Report report) {
         report = assignRunId(report);
         crawlReportDAO.create(report.toCrawlReport());
@@ -57,12 +42,8 @@ public class DBReporter implements Reporter {
     }
 
     @Override
-    public List<Report> getRunReports() {
-        if(runId == null) {
-            throw new RuntimeException("null runId");
-        } else {
-            return crawlReportDAO.getBy(CrawlReport.RUN_ID, runId).stream().map(Report::of).collect(Collectors.toList());
-        }
+    public List<Report> getRunReports(String runId) {
+        return crawlReportDAO.getBy(CrawlReport.RUN_ID, runId).stream().map(Report::of).collect(Collectors.toList());
     }
 
     private static DBReporter reporter;

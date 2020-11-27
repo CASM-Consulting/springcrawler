@@ -47,9 +47,6 @@ public class DataOperationService {
     private Reporter reporter;
 
     @Autowired
-    LineReader reader;
-
-    @Autowired
     private SourceDAO sourceDAO;
 
     @Autowired
@@ -275,31 +272,25 @@ public class DataOperationService {
     // in which sense it means to set null to corresponding field.
     public String deleteValue(CrawlArgs crawlArgs, String field) {
 
-        String question = "Confirm to delete? \nyes/no";
-        String result = ask(question);
 
-        if (result.equals("yes")) {
-            if (crawlArgs.source != null) {
-                Source source = crawlArgs.source;
-                source = source.put(field, null);
-                sourceDAO.upsert(source);
+        if (crawlArgs.source != null) {
+            Source source = crawlArgs.source;
+            source = source.put(field, null);
+            sourceDAO.upsert(source);
 
-                return String.format("successfully delete value");
+            return String.format("successfully delete value");
 
-            } else if (!crawlArgs.sourceLists.isEmpty()) {
-                SourceList sourceList = crawlArgs.sourceLists.get(0);
-                sourceList = sourceList.put(field, null);
-                sourceListDAO.upsert(sourceList);
+        } else if (!crawlArgs.sourceLists.isEmpty()) {
+            SourceList sourceList = crawlArgs.sourceLists.get(0);
+            sourceList = sourceList.put(field, null);
+            sourceListDAO.upsert(sourceList);
 
-                return String.format("successfully delete value");
-            }
-            else {
-                return String.format("source or sourcelist should be provided");
-            }
+            return String.format("successfully delete value");
         }
         else {
-            return String.format("deletion cancelled");
+            return String.format("source or sourcelist should be provided");
         }
+
 
     }
 
@@ -446,11 +437,6 @@ public class DataOperationService {
         } else {
             return false;
         }
-    }
-
-    public String ask(String question) {
-        question = "\n" + question + " > ";
-        return this.reader.readLine(question);
     }
 
     private static void mapToCSV(List<Map<String, String>> list, Path path){

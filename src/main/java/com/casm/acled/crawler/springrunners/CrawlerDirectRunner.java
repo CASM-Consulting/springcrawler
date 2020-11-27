@@ -94,7 +94,7 @@ public class CrawlerDirectRunner implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
 
-        reporter.randomRunId();
+//        reporter.randomRunId();
 
         crawlArgs = argsService.get();
 
@@ -107,7 +107,6 @@ public class CrawlerDirectRunner implements CommandLineRunner {
 //        crawlArgs.raw.source = "Animal Politico";
 //        crawlArgs.raw.source = "El Proceso";
 //        crawlArgs.raw.source = "E-Consulta";
-//        crawlArgs.raw.source = "La Silla Rota";
 //        crawlArgs.raw.source = "Imagen del Golfo";
 //        crawlArgs.raw.source = "Sintesis";
 //        crawlArgs.raw.source = "8 Columnas";
@@ -125,7 +124,7 @@ public class CrawlerDirectRunner implements CommandLineRunner {
 //        crawlArgs.raw.source = "Tribuna Campeche";
         crawlArgs.raw.sourceLists = ImmutableList.of("mexico-1");
 //        crawlArgs.raw.sourceLists = ImmutableList.of("fake-net");
-        crawlArgs.raw.from = "2020-10-29";
+        crawlArgs.raw.from = "2020-11-10";
         crawlArgs.raw.to =  "2021-01-01";
         crawlArgs.raw.workingDir = "test";
 //        crawlArgs.raw.workingDir = "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/JQM_ROOT/test";
@@ -152,7 +151,7 @@ public class CrawlerDirectRunner implements CommandLineRunner {
 
 //        crawlService.getRobots("https://www.elsoldesinaloa.com.mx");
 
-        reporter.getRunReports().stream().forEach(r -> logger.info(r.toString()));
+        reporter.getRunReports(crawlArgs.source.id()).forEach(r -> logger.info(r.toString()));
 
     }
 

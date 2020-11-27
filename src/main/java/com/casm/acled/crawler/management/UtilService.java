@@ -49,9 +49,6 @@ public class UtilService {
     private Reporter reporter;
 
     @Autowired
-    LineReader reader;
-
-    @Autowired
     private SourceDAO sourceDAO;
 
     @Autowired

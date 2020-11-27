@@ -109,7 +109,7 @@ public class ShellRunner {
     // the help command still not working:
     // Action: Correct the classpath of your application so that it contains a single, compatible version of com.beust.jcommander.JCommander
     public void checkSourceList(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) {
-        reporter.randomRunId();
+//        reporter.randomRunId();
 
         CrawlArgs crawlArgs = argsService.get();
         crawlArgs.raw = args;
@@ -126,7 +126,7 @@ public class ShellRunner {
 
     @ShellMethod(value = "import source list (-sl), must specify working-dir (-wd) and path to file (-P)", key = "import")
     public void importSourceList(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) throws Exception{
-        reporter.randomRunId();
+//        reporter.randomRunId();
 
         CrawlArgs crawlArgs = argsService.get();
         crawlArgs.raw = args;
@@ -137,13 +137,13 @@ public class ShellRunner {
 
         importExportService.importCrawlerSourceList(crawlArgs);
 
-        reporter.getRunReports().stream().forEach(r -> logger.info(r.toString()));
+//        reporter.getRunReports().stream().forEach(r -> logger.info(r.toString()));
 
     }
 
     @ShellMethod(value = "export source list (-sl), must specify working dir (-wd) and path to file (-P)", key = "export")
     public void exportSourceList(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) throws Exception{
-        reporter.randomRunId();
+//        reporter.randomRunId();
 
         CrawlArgs crawlArgs = argsService.get();
         crawlArgs.raw = args;
@@ -154,7 +154,7 @@ public class ShellRunner {
 
         importExportService.exportCrawlerSourceList(crawlArgs);
 
-        reporter.getRunReports().stream().forEach(r -> logger.info(r.toString()));
+//        reporter.getRunReports().stream().forEach(r -> logger.info(r.toString()));
 
     }
 
@@ -217,7 +217,7 @@ public class ShellRunner {
 
     @ShellMethod(value = "output example urls ", key = "output")
     public void outputExampleURLCheck(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) throws Exception{
-        reporter.randomRunId();
+//        reporter.randomRunId();
 
         CrawlArgs crawlArgs = argsService.get();
         crawlArgs.raw = args;
@@ -228,7 +228,7 @@ public class ShellRunner {
 
         checkListService.outputExampleURLCheck(crawlArgs);
 
-        reporter.getRunReports().stream().forEach(r -> logger.info(r.toString()));
+//        reporter.getRunReports().stream().forEach(r -> logger.info(r.toString()));
 
     }
 
@@ -352,7 +352,7 @@ public class ShellRunner {
 
     @ShellMethod(value = "run scheduler, if no source list is specified, run all. Usage: schedule -wd WORKING-DIR -sd SCRAPER-DIR -d DEPTH [-sl SOURCE-LIST]", key = "schedule")
     public String schedule(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) throws Exception{
-        reporter.randomRunId();
+//        reporter.randomRunId();
 
         CrawlArgs crawlArgs = argsService.get();
         crawlArgs.raw = args;

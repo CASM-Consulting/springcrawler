@@ -50,7 +50,7 @@ public class CrawlerScheduleRunner implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
 
-        reporter.randomRunId();
+//        reporter.randomRunId();
 
         crawlArgs = argsService.get();
 
@@ -67,7 +67,7 @@ public class CrawlerScheduleRunner implements CommandLineRunner {
         //schedulerService.clearPIDs(crawlArgs);
         schedulerService.schedule(crawlArgs);
 
-        reporter.getRunReports().stream().forEach(r -> logger.info(r.toString()));
+//        reporter.getRunReports().stream().forEach(r -> logger.info(r.toString()));
     }
 
     public static void main(String[] args){
