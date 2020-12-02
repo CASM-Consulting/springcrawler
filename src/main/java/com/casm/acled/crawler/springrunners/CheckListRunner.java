@@ -58,7 +58,7 @@ public class CheckListRunner implements CommandLineRunner{
     @Override
     public void run(String... args) throws Exception {
 
-        reporter.randomRunId();
+//        reporter.randomRunId();
 
         crawlArgs = argsService.get();
 
@@ -90,8 +90,6 @@ public class CheckListRunner implements CommandLineRunner{
                 logger.error("program {} not recognised", crawlArgs.program);
                 break;
         }
-
-        reporter.getRunReports().stream().forEach(r -> logger.info(r.toString()));
     }
 
     public static void main(String[] args) {

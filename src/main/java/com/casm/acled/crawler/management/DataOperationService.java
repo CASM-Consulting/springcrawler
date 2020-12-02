@@ -439,7 +439,6 @@ public class DataOperationService {
         }
     }
 
-
     private static void mapToCSV(List<Map<String, String>> list, Path path){
         try {
 

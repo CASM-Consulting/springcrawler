@@ -1,16 +1,13 @@
 package com.casm.acled.crawler.reporting;
 
-import com.casm.acled.crawler.management.CrawlerSweep;
-import com.casm.acled.dao.entities.CrawlReportDAO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.Collection;
 import java.util.List;
-import java.util.UUID;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public interface Reporter {
@@ -23,33 +20,39 @@ public interface Reporter {
 
     List<Report> reports();
 
-    default String randomRunId() {
-        if(runId() == null){
-            runId(UUID.randomUUID().toString());
-            logger.info("reporter run id : " + runId());
-        }
-        return runId();
-    }
-    Reporter runId(String runId);
-    String runId();
+//    default String randomRunId() {
+//        if(runId() == null){
+//            runId(UUID.randomUUID().toString());
+//            logger.info("reporter run id : " + runId());
+//        }
+//        return runId();
+//    }
+//    Reporter runId(String runId);
+//    String runId();
 
-    List<Report> getRunReports();
+    default Report assignRunId(Report report) {
+        return report.runId(getRunId(report.id(), report.timestamp()));
+    }
+
+    default String getRunId(Integer id, Instant timestamp){
+        String date = DateTimeFormatter.ISO_LOCAL_DATE.withZone(ZoneId.systemDefault()).format(timestamp);
+        return id + "~" + date;
+    }
+
+    List<Report> getRunReports(String runId);
 
     default List<Report> getRunReports(Integer id, Event event) {
-        return getRunReports().stream()
-                .filter(r -> r.id().equals(id) && r.event().equals(event.toString()))
-                .collect(Collectors.toList());
-    }
-
-    default List<Report> getRunReports(Integer id) {
-        return getRunReports().stream()
-                .filter(r -> r.id().equals(id))
-                .collect(Collectors.toList());
-    }
-
-    default List<Report> getRunReports(Event event) {
-        return getRunReports().stream()
+        return getRunReports(id).stream()
                 .filter(r -> r.event().equals(event.toString()))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Get all reports for events concerning a particular source that happened today.
+     */
+    default List<Report> getRunReports(Integer id) {
+        return getRunReports(getRunId(id, Instant.now())).stream()
+                .filter(r -> r.id().equals(id))
                 .collect(Collectors.toList());
     }
 

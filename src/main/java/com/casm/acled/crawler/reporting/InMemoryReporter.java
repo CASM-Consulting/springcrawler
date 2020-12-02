@@ -12,7 +12,6 @@ import java.util.stream.Collectors;
 public class InMemoryReporter implements Reporter {
 
     private final List<Report> reports;
-    private String runId;
 
     public InMemoryReporter() {
         reports = new ArrayList<>();
@@ -30,16 +29,6 @@ public class InMemoryReporter implements Reporter {
         return this;
     }
 
-    @Override
-    public String runId() {
-        return runId;
-    }
-
-    @Override
-    public Reporter runId(String runId) {
-        this.runId = runId;
-        return this;
-    }
     private static InMemoryReporter reporter;
 
     public static synchronized InMemoryReporter get() {
@@ -50,7 +39,7 @@ public class InMemoryReporter implements Reporter {
     }
 
     @Override
-    public List<Report> getRunReports() {
+    public List<Report> getRunReports(String runId) {
         return reports.stream().filter(r -> r.runId().equals(runId)).collect(Collectors.toList());
     }
 

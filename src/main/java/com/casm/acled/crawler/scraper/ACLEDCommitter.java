@@ -1,5 +1,7 @@
 package com.casm.acled.crawler.scraper;
 
+import com.casm.acled.camunda.BusinessKeys;
+import com.casm.acled.camunda.variables.Process;
 import com.casm.acled.crawler.reporting.Event;
 import com.casm.acled.crawler.reporting.Report;
 import com.casm.acled.crawler.reporting.Reporter;
@@ -161,7 +163,8 @@ public class ACLEDCommitter implements ICommitter {
     }
 
     private void commitArticle(String url, String date, String standardDate, String title, String keywordHighlight,
-                               String articleText, String rawHtml, int depth) {
+                               String articleText, String rawHtml, int depth, String sourceListName) {
+
         Article article = EntityVersions.get(Article.class)
                 .current()
                 .put(Article.TEXT, articleText)
@@ -182,6 +185,10 @@ public class ACLEDCommitter implements ICommitter {
         if (standardDate != null) {
             LocalDateTime parsedDate = ExcludingCustomDateMetadataFilter.toDate(standardDate);
             article = article.put(Article.DATE, parsedDate.toLocalDate());
+
+            // Add the business key for the relevant week and source list
+            String businessKey = BusinessKeys.generate(sourceListName, parsedDate.toLocalDate());
+            article = article.put(Process.BUSINESS_KEY, businessKey);
         }
 
         if (recordRaw) {
@@ -206,7 +213,7 @@ public class ACLEDCommitter implements ICommitter {
         String title = properties.getString(SCRAPED_TITLE);
         String date = properties.getString(SCRAPED_DATE);
         String standardDate = properties.getString( STANDARD_DATE);
-        String keywordHighlight = properties.getString(ScraperFields.KEYWORD_HIGHLIGHT);
+        List<String> keywordHighlights = properties.getStrings(ScraperFields.KEYWORD_HIGHLIGHT);
         String rawHtml = null;
         int depth = properties.getInt("collector.depth");
 
@@ -214,9 +221,10 @@ public class ACLEDCommitter implements ICommitter {
             rawHtml = getRaw(inputStream, properties, url);
         }
 
-        boolean keywordPassed = properties.getBoolean(KEYWORD_PASSED);
+        List<String> keywordPassingSourceLists = properties.getStrings(KEYWORD_PASSED);
+        boolean anySourceListPassedKeywords = !keywordPassingSourceLists.isEmpty();
         boolean datePassed = properties.getBoolean(DATE_PASSED);
-        boolean scrapedPassed = keywordPassed && datePassed;
+        boolean scrapedPassed = datePassed && anySourceListPassedKeywords;
 
         /* =============================
          * Reporting
@@ -225,7 +233,7 @@ public class ACLEDCommitter implements ICommitter {
         reportACCEPTED(report);
 
         // Report if article text wasn't scraped
-        reportArticle(report, articleText, keywordPassed);
+        reportArticle(report, articleText, anySourceListPassedKeywords);
 
         // Report if article title wasn't scraped
         reportTitle(report, title);
@@ -238,9 +246,14 @@ public class ACLEDCommitter implements ICommitter {
 
         /* ============================ */
 
-        if (scrapedPassed) {
+        if (datePassed) {
 
-            commitArticle(url, date, standardDate, title, keywordHighlight, articleText, rawHtml, depth);
+            for (int i = 0; i < keywordPassingSourceLists.size(); i++) {
+                String passingSourceList = keywordPassingSourceLists.get(i);
+                String keywordHighlight = keywordHighlights.get(i);
+
+                commitArticle(url, date, standardDate, title, keywordHighlight, articleText, rawHtml, depth, passingSourceList);
+            }
         }
     }
 
