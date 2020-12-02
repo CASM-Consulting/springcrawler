@@ -7,10 +7,7 @@ import com.casm.acled.crawler.reporting.Report;
 import com.casm.acled.crawler.reporting.ReportQueryService;
 import com.casm.acled.crawler.reporting.ReportQueryService.EventCountSummary;
 import com.casm.acled.crawler.reporting.Reporter;
-import com.casm.acled.crawler.scraper.ACLEDScraper;
-import com.casm.acled.crawler.scraper.ACLEDTaggerFactory;
-import com.casm.acled.crawler.scraper.ScraperFields;
-import com.casm.acled.crawler.scraper.ScraperService;
+import com.casm.acled.crawler.scraper.*;
 import com.casm.acled.crawler.scraper.dates.DateParser;
 import com.casm.acled.crawler.scraper.dates.DateParsers;
 import com.casm.acled.crawler.scraper.dates.DateTimeService;
@@ -218,14 +215,14 @@ public class CheckListService {
         }
     }
 
-    public final Function<Source, List<String>> exampleGetter (ACLEDScraper scraper) {
+    public final Function<Source, List<String>> exampleGetter (ACLEDTagger tagger) {
         return (s) -> {
 
-            List<HttpDocument> docs = scraperService.checkExampleURLs(scraper, s);
+            List<Map<String,String>> docs = scraperService.checkExampleURLs(tagger, s);
             List<String> dateExamples = docs.stream()
-                    .filter(doc -> doc.getMetadata().containsKey(ScraperFields.SCRAPED_DATE) &&
-                            !doc.getMetadata().getString(ScraperFields.SCRAPED_DATE).isEmpty())
-                    .map(doc -> doc.getMetadata().getString(ScraperFields.SCRAPED_DATE))
+                    .filter(doc -> doc.containsKey(ScraperFields.SCRAPED_DATE) &&
+                            !doc.get(ScraperFields.SCRAPED_DATE).isEmpty())
+                    .map(doc -> doc.get(ScraperFields.SCRAPED_DATE))
                     .collect(Collectors.toList());
 
             return dateExamples;
@@ -233,13 +230,13 @@ public class CheckListService {
     }
 
     public boolean datesParse(CrawlArgs args, Source source) {
-        ACLEDScraper scraper = ACLEDScraper.load(args.scrapersDir, source, reporter);
+//        ACLEDScraper scraper = ACLEDScraper.load(args.scrapersDir, source, reporter);
 
-        ACLEDTaggerFactory acledTagger = new ACLEDTaggerFactory(args.scrapersDir, source);
+        ACLEDTaggerFactory acledTaggerFactory = new ACLEDTaggerFactory(args.scrapersDir, source);
 
-//        DOMTagger domTagger = acledTagger.get();
+        ACLEDTagger tagger = acledTaggerFactory.get();
 
-        return dateTimeService.checkExistingPasses(source, exampleGetter(scraper));
+        return dateTimeService.checkExistingPasses(source, exampleGetter(tagger));
     }
 
 
@@ -319,11 +316,11 @@ public class CheckListService {
 
         Check dateParsed = Check.bool(()-> canScrapeExamples && datesParse(args, source));
 
-        List<HttpDocument> scraped = canScrapeExamples? scraperService.checkExampleURLs(args.scrapersDir, source) : new ArrayList<>();
+        List<Map<String,String>> scraped = canScrapeExamples? scraperService.checkExampleURLs(args.scrapersDir, source) : new ArrayList<>();
 
-        Check titleScraped = Check.bool(() -> canScrapeExamples && scraped.stream().noneMatch(doc -> Strings.isNullOrEmpty(doc.getMetadata().getString(SCRAPED_TITLE))));
-        Check dateScraped = Check.bool(() -> canScrapeExamples && scraped.stream().noneMatch(doc -> Strings.isNullOrEmpty(doc.getMetadata().getString(SCRAPED_DATE))));
-        Check articleScraped = Check.bool(() -> canScrapeExamples && scraped.stream().noneMatch(doc -> Strings.isNullOrEmpty(doc.getMetadata().getString(SCRAPED_ARTICLE))));
+        Check titleScraped = Check.bool(() -> canScrapeExamples && scraped.stream().noneMatch(doc -> Strings.isNullOrEmpty(doc.get(SCRAPED_TITLE))));
+        Check dateScraped = Check.bool(() -> canScrapeExamples && scraped.stream().noneMatch(doc -> Strings.isNullOrEmpty(doc.get(SCRAPED_DATE))));
+        Check articleScraped = Check.bool(() -> canScrapeExamples && scraped.stream().noneMatch(doc -> Strings.isNullOrEmpty(doc.get(SCRAPED_ARTICLE))));
 
         return CheckList.of(connection, scraperExists, hasExamples, hasDateFormat,
                             hasSitemaps, hasRecentSitemaps, dateScraped, dateParsed,
@@ -409,17 +406,17 @@ public class CheckListService {
                 dateParsed = false;
             }
 
-            List<HttpDocument> scraped = scraperService.checkExampleURLs(args.scrapersDir, source);
+            List<Map<String,String>> scraped = scraperService.checkExampleURLs(args.scrapersDir, source);
 
             titleScraped = dateScraped = articleScraped = true;
-            for (HttpDocument doc : scraped){
-                if (Strings.isNullOrEmpty(doc.getMetadata().getString(SCRAPED_TITLE))){
+            for (Map<String,String> doc : scraped){
+                if (Strings.isNullOrEmpty(doc.get(SCRAPED_TITLE))){
                     titleScraped = false;
                 }
-                if (Strings.isNullOrEmpty(doc.getMetadata().getString(SCRAPED_DATE))){
+                if (Strings.isNullOrEmpty(doc.get(SCRAPED_DATE))){
                     dateScraped = false;
                 }
-                if (Strings.isNullOrEmpty(doc.getMetadata().getString(SCRAPED_ARTICLE))){
+                if (Strings.isNullOrEmpty(doc.get(SCRAPED_ARTICLE))){
                     articleScraped = false;
                 }
             }
@@ -705,14 +702,14 @@ public class CheckListService {
 
             if(scraperExists(args, source)) {
 
-                List<HttpDocument> docs = scraperService.checkExampleURLs(args.scrapersDir, source);
+                List<Map<String,String>> docs = scraperService.checkExampleURLs(args.scrapersDir, source);
 
                 List<List<String>> lines = docs.stream().map(d -> ImmutableList.of(
-                        d.getMetadata().getString(SCRAPED_TITLE, ""),
-                        d.getMetadata().getString(ScraperFields.SCRAPED_ARTICLE, ""),
-                        d.getMetadata().getString(ScraperFields.SCRAPED_DATE, ""),
-                        d.getMetadata().getString("collector.url", "")
-                )).collect(Collectors.toList());
+                        d.getOrDefault(SCRAPED_TITLE, ""),
+                        d.getOrDefault(ScraperFields.SCRAPED_ARTICLE, ""),
+                        d.getOrDefault(ScraperFields.SCRAPED_DATE, ""),
+                        d.getOrDefault("collector.url", "")
+                        )).collect(Collectors.toList());
 
                 data.put(source, lines);
             }
