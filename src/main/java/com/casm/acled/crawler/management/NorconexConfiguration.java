@@ -35,6 +35,7 @@ public class NorconexConfiguration {
     private final HttpCollectorConfig collector;
     private final HttpCrawlerConfig crawler;
     private final ImporterConfig importer;
+    private final boolean stayOnDomain;
 
     private Path workingDir;
     private String userAgent = "CASM Consulting LLP";
@@ -62,6 +63,7 @@ public class NorconexConfiguration {
         this.args = args;
 
         ignoreSiteMap = args.ignoreSiteMap;
+        stayOnDomain = !args.crawlOffDomain;
 
         filters = new ArrayList<>();
         importer = new ImporterConfig();
@@ -136,7 +138,8 @@ public class NorconexConfiguration {
         crawler.setOrphansStrategy(ICrawlerConfig.OrphansStrategy.PROCESS);
         // Keeps the crawler within the same domain
         URLCrawlScopeStrategy ucs = new URLCrawlScopeStrategy();
-        ucs.setStayOnDomain(true);
+
+        ucs.setStayOnDomain(stayOnDomain);
         ucs.setIncludeSubdomains(true);
         ucs.setStayOnPort(false);
         ucs.setStayOnProtocol(false);
