@@ -233,7 +233,9 @@ public class Crawl {
 
         List<String> dateFormatSpecs = source.get(Source.DATE_FORMAT);
 
-        DateParser dateParser = CompositeDateParser.of(dateFormatSpecs);
+        String timezone = source.get(Source.TIMEZONE);
+        DateParser dateParser = CompositeDateParser.of(dateFormatSpecs, timezone);
+//        DateParser dateParser = CompositeDateParser.of(dateFormatSpecs);
 
         DateMetadataFilter dateMetadataFilter = new ExcludingCustomDateMetadataFilter(source, ScraperFields.SCRAPED_DATE, dateParser, reporter);
 
@@ -246,7 +248,8 @@ public class Crawl {
     private DateTagger dateTagger(Source source, ZonedDateTime from, ZonedDateTime to) {
         List<String> dateFormatSpecs = source.get(Source.DATE_FORMAT);
 
-        DateParser dateParser = CompositeDateParser.of(dateFormatSpecs);
+        String timezone = source.get(Source.TIMEZONE);
+        DateParser dateParser = CompositeDateParser.of(dateFormatSpecs, timezone);
 
         DateTagger dateMetadataTagger = new DateTagger(source, ScraperFields.SCRAPED_DATE, dateParser, reporter);
         dateMetadataTagger.setFromTime(from);
