@@ -72,6 +72,11 @@ public class CompositeDateParser implements DateParser {
 
     public static DateParser of(List<String> formatSpecs) {
 
+        return of(formatSpecs, null);
+    }
+
+    public static DateParser of(List<String> formatSpecs, String timezone) {
+
         List<DateParser> parsers = new ArrayList<>();
 
         for(String formatSpec : formatSpecs) {
@@ -85,9 +90,15 @@ public class CompositeDateParser implements DateParser {
                     break;
                 }
                 case NaturalLanguageDateParser.PROTOCOL:
-                    NaturalLanguageDateParser nldp = new NaturalLanguageDateParser(spec);
-                    parsers.add(nldp);
-                    break;
+                    if (timezone == null) {
+                        throw new RuntimeException("If using natural language date parser, timezone should not be null.");
+                    }
+                    else {
+                        NaturalLanguageDateParser nldp = new NaturalLanguageDateParser(spec, timezone);
+                        parsers.add(nldp);
+                        break;
+                    }
+
                 default:{
                     throw new RuntimeException("Date parser protocol not found: " + protocol);
                 }

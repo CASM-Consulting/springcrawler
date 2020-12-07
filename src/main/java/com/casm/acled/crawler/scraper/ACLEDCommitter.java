@@ -199,6 +199,8 @@ public class ACLEDCommitter implements ICommitter {
             article = article.put(Article.SOURCE_ID, source.id());
             articleDAO.create(article);
         }
+
+//        saveToLocal(article, Paths.get("/Users/pengqiwei/Downloads/My/PhDs/acled_thing/exports/test_with_andy/Articulo 66_test111.csv"));
     }
 
     @Override
@@ -263,7 +265,7 @@ public class ACLEDCommitter implements ICommitter {
             PrintWriter writer = new PrintWriter(new BufferedWriter(new OutputStreamWriter(outputStream, StandardCharsets.UTF_8)), false);
             CSVPrinter csv = new CSVPrinter(writer, CSVFormat.EXCEL.withQuoteMode(QuoteMode.NON_NUMERIC));
 
-            Map<String, String> map = toMapWithColumn(article, Arrays.asList("URL", "TEXT", "DATE", "TITLE","SCRAPE_RAW_HTML"));
+            Map<String, String> map = toMapWithColumn(article, Arrays.asList("URL", "TEXT", "DATE", "TITLE"));
             List<String> list = new ArrayList<String>(map.values());
             csv.printRecord(list);
             csv.close();

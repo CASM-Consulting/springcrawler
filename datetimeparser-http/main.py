@@ -10,12 +10,10 @@ app = Flask(__name__)
 @app.route('/parse', )
 def hello_world():
     relative_expression = request.args.get('relative_expression')
-    #languages = json.loads(request.args.get('languages'))
+    languages = json.loads(request.args.get('languages'))
+    timezone = request.args.get('timezone')
 
-    print(relative_expression)
-    #print(languages)
-
-    parsed = dateparser.parse(relative_expression)
+    parsed = dateparser.parse(relative_expression, languages=languages, settings={'TIMEZONE': timezone})
 
     response = {
         'parsed' : parsed.strftime("%Y-%m-%d %H:%M:%S")

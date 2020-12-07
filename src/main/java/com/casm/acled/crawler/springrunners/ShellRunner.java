@@ -66,8 +66,8 @@ public class ShellRunner {
 
 //    private CrawlArgs crawlArgs;
 
-    @Autowired
-    LineReader reader;
+//    @Autowired
+//    LineReader reader;
 
     @Autowired
     private ArticleDAO articleDAO;
