@@ -213,7 +213,11 @@ public class Crawl {
 
         applySourceIdiosyncrasies(source, config);
 
-        config.crawler().setRecrawlableResolver(new DontRecrawlResolver(startURLs, source.hasValue(Source.CRAWL_RECRAWL_PATTERN)? Pattern.compile(source.get(Source.CRAWL_RECRAWL_PATTERN)) : null));
+        // Only use the DontCrawlResolver if we're using the sitemap method (i.e. when depth is 0).
+        // Depth param is found on the Source, but can be overridden, see CrawlArgs.toJobRequest().
+        if (args.depth == 0) {
+            config.crawler().setRecrawlableResolver(new DontRecrawlResolver(startURLs, source.hasValue(Source.CRAWL_RECRAWL_PATTERN) ? Pattern.compile(source.get(Source.CRAWL_RECRAWL_PATTERN)) : null));
+        }
 
         config.crawler().setMaxDepth(args.depth);
 

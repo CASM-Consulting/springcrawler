@@ -107,6 +107,7 @@ public class CrawlerDirectRunner implements CommandLineRunner {
 //        crawlArgs.raw.source = "Animal Politico";
 //        crawlArgs.raw.source = "El Proceso";
 //        crawlArgs.raw.source = "E-Consulta";
+//        crawlArgs.raw.source = "La Silla Rota";
 //        crawlArgs.raw.source = "Imagen del Golfo";
 //        crawlArgs.raw.source = "Sintesis";
 //        crawlArgs.raw.source = "8 Columnas";
@@ -114,6 +115,7 @@ public class CrawlerDirectRunner implements CommandLineRunner {
         crawlArgs.raw.source = "Siglo de Durango";
 //        crawlArgs.raw.source = "Imagen del Golfo";
 //         crawlArgs.raw.source = "Independiente de Hidalgo";
+//        crawlArgs.raw.source = "Colima Noticias";
 //        crawlArgs.raw.source = "Milenio";
 //        crawlArgs.raw.source = "La Prensa de Monclova";
 //        crawlArgs.raw.source = "MiMorelia";
@@ -135,6 +137,7 @@ public class CrawlerDirectRunner implements CommandLineRunner {
 
         crawlArgs.raw.depth = 2;
 //        crawlArgs.raw.ignoreSiteMap = true;
+//        crawlArgs.raw.crawlOffDomain = true;
 
         crawlArgs.init();
 

@@ -68,6 +68,9 @@ public class CrawlArgs {
         @Parameter(names = "-sk", description = "Skip keyword matching")
         public Boolean skipKeywords = false;
 
+        @Parameter(names = "-cod", description = "Crawl off domain")
+        public Boolean crawlOffDomain = false;
+
         @Parameter(names = "-f", description = "From date [yyyy-mm-dd]")
         public String from = null;
 
@@ -120,6 +123,9 @@ public class CrawlArgs {
 
 //    public Boolean onlySiteMap;
 //    public static final String ONLY_SITE_MAP = "ONLY_SITE_MAP";
+
+    public Boolean crawlOffDomain;
+    public static final String CRAWL_OFF_DOMAIN = "CRAWL_OFF_DOMAIN";
 
     public Boolean skipKeywords;
     public static final String SKIP_KEYWORDS = "SKIP_KEYWORDS";
@@ -190,6 +196,8 @@ public class CrawlArgs {
         politeness = raw.politeness;
         ignoreSiteMap = raw.ignoreSiteMap;
 //        onlySiteMap = raw.onlySiteMap;
+        crawlOffDomain = raw.crawlOffDomain;
+
         skipKeywords = raw.skipKeywords;
         if(raw.workingDir != null) {
             workingDir = Paths.get(raw.workingDir);
@@ -263,6 +271,13 @@ public class CrawlArgs {
         } else {
             jobRequest.addParameter( DEPTH, Integer.toString( depth ) );
         }
+
+        if(source.hasValue(Source.CRAWL_OFF_DOMAIN)){
+            jobRequest.addParameter(CRAWL_OFF_DOMAIN, Boolean.toString(source.get(Source.CRAWL_OFF_DOMAIN)));
+        } else {
+            jobRequest.addParameter(CRAWL_OFF_DOMAIN, Boolean.toString(crawlOffDomain));
+        }
+
         jobRequest.addParameter( MAX_ARTICLES, Integer.toString( maxArticle ) );
         jobRequest.addParameter( POLITENESS, Integer.toString( politeness ) );
         jobRequest.addParameter( WORKING_DIR, workingDir.toString() );
@@ -310,6 +325,7 @@ public class CrawlArgs {
         raw.skipKeywords = Boolean.parseBoolean(runtimeParameters.get(SKIP_KEYWORDS));
         raw.ignoreSiteMap = Boolean.parseBoolean(runtimeParameters.get(IGNORE_SITE_MAP));
 //        raw.onlySiteMap = Boolean.parseBoolean(runtimeParameters.get(ONLY_SITE_MAP));
+        raw.crawlOffDomain = Boolean.parseBoolean(runtimeParameters.get(CRAWL_OFF_DOMAIN));
         raw.from = runtimeParameters.get(FROM);
         raw.to = runtimeParameters.get(TO);
         raw.workingDir = runtimeParameters.get(WORKING_DIR);
