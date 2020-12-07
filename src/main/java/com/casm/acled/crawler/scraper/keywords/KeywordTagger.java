@@ -27,7 +27,11 @@ public class KeywordTagger implements IDocumentTagger{
         this.name = name;
         this.field = field;
 
-        matcher = new LuceneMatcher(queryConfig);
+        if(query.isEmpty()) {
+            matcher = null;
+        } else {
+            matcher = new LuceneMatcher(queryConfig);
+        }
     }
 
     @Override

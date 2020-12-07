@@ -35,9 +35,6 @@ public class ImportExportService {
     protected static final Logger logger = LoggerFactory.getLogger(ImportExportService.class);
 
     @Autowired
-    private ImportExportService importExportService;
-
-    @Autowired
     private Reporter reporter;
 
     @Autowired

@@ -12,6 +12,7 @@ import com.casm.acled.entities.VersionedEntity;
 import com.casm.acled.entities.article.Article;
 import com.casm.acled.entities.source.Source;
 import com.casm.acled.entities.sourcelist.SourceList;
+import com.google.common.collect.ImmutableList;
 import org.apache.commons.csv.*;
 import org.apache.commons.lang3.BooleanUtils;
 import org.jline.reader.LineReader;
@@ -172,7 +173,7 @@ public class DataOperationService {
                 source = source.put(field, BooleanUtils.toBoolean(value));
             }
             else if (isList(source, field)) {
-                return String.format("set List field is not supported by set method, please use add method");
+                source = source.put(field, ImmutableList.of(value));
             }
             else {
                 source = source.put(field, value);

@@ -3,9 +3,7 @@ package com.casm.acled.crawler.springrunners;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Strings;
 import com.casm.acled.configuration.ObjectMapperConfiguration;
-import com.casm.acled.crawler.management.CheckListService;
-import com.casm.acled.crawler.management.CrawlArgs;
-import com.casm.acled.crawler.management.CrawlArgsService;
+import com.casm.acled.crawler.management.*;
 import com.casm.acled.crawler.reporting.Reporter;
 import com.google.common.collect.ImmutableList;
 import net.sf.extjwnl.data.Exc;
@@ -48,6 +46,9 @@ public class CheckListRunner implements CommandLineRunner{
     private CheckListService checkListService;
 
     @Autowired
+    private ImportExportService importExportService;
+
+    @Autowired
     private Reporter reporter;
 
     @Autowired
@@ -57,8 +58,6 @@ public class CheckListRunner implements CommandLineRunner{
 
     @Override
     public void run(String... args) throws Exception {
-
-//        reporter.randomRunId();
 
         crawlArgs = argsService.get();
 
@@ -74,12 +73,12 @@ public class CheckListRunner implements CommandLineRunner{
 
         switch(crawlArgs.program) {
             // remove import and export from checklistrunner because they do not exist in checklist service anymore.
-//            case "import":
-//                checkListService.importCrawlerSourceList(crawlArgs);
-//                break;
-//            case "export":
-//                checkListService.exportCrawlerSourceList(crawlArgs);
-//                break;
+            case "import":
+                importExportService.importCrawlerSourceList(crawlArgs);
+                break;
+            case "export":
+                importExportService.exportCrawlerSourceList(crawlArgs);
+                break;
             case "check":
                 checkListService.checkSourceList(crawlArgs);
                 break;

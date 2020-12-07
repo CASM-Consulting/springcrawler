@@ -26,9 +26,13 @@ import com.norconex.collector.http.doc.HttpDocument;
 import com.norconex.collector.http.fetch.HttpFetchResponse;
 import com.norconex.collector.http.fetch.impl.GenericDocumentFetcher;
 import com.norconex.collector.http.pipeline.importer.HttpImporterPipelineUtilProxy;
+import com.norconex.commons.lang.file.ContentType;
 import com.norconex.commons.lang.io.CachedInputStream;
 import com.norconex.commons.lang.io.CachedStreamFactory;
+import com.norconex.importer.doc.ImporterDocument;
 import com.norconex.importer.handler.ImporterHandlerException;
+import com.norconex.importer.parser.GenericDocumentParserFactory;
+import com.norconex.importer.parser.IDocumentParser;
 import com.opencsv.CSVReader;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
@@ -125,11 +129,11 @@ public class ScraperService {
         return article;
     }
 
-    public List<HttpDocument> checkExampleURLs(Path scraperDir, Source source) {
-//        String id = Util.getID(source);
+    public List<Map<String,String>> checkExampleURLs(Path scraperDir, Source source) {
 
-        ACLEDScraper scraper = ACLEDScraper.load(scraperDir, source, reporter);
-        List<HttpDocument> docs = checkExampleURLs(scraper, source);
+        ACLEDTagger tagger = new ACLEDTaggerFactory(scraperDir, source).get();
+
+        List<Map<String,String>> docs = checkExampleURLs(tagger, source);
 
         return docs;
     }
@@ -231,26 +235,27 @@ public class ScraperService {
         }
     }
 
-    public List<HttpDocument> checkExampleURLs(ACLEDScraper scraper, Source source) {
+    public List<Map<String, String>> checkExampleURLs(ACLEDTagger tagger, Source source) {
 
         GenericDocumentFetcher fetcher = new GenericDocumentFetcher();
+        fetcher.setDetectCharset(true);
 
         HttpClient client = new GenericHttpClientFactory().createHTTPClient("www.acleddata.com");
         CachedInputStream inputStream = new CachedStreamFactory(10 * 1024, 10 * 1024).newInputStream("");
         List<String> exampleURLs = source.get(Source.EXAMPLE_URLS);
 
-        List<HttpDocument> docs = new ArrayList<>();
+        List<Map<String,String>> docs = new ArrayList<>();
+
 
         for(String exampleURL : exampleURLs) {
             try {
-
                 HttpDocument document = new HttpDocument(exampleURL, inputStream);
                 fetcher.fetchDocument(client, document);
                 HttpImporterPipelineUtilProxy.enhanceHTTPHeaders(document.getMetadata());
                 HttpImporterPipelineUtilProxy.applyMetadataToDocument(document);
-                scraper.processDocument(client, document);
-                docs.add(document);
-            } catch (IllegalStateException | CollectorException e){
+                Map<String,String> tags = tagger.tag(document.getContent());
+                docs.add(tags);
+            } catch (IllegalStateException | CollectorException | ImporterHandlerException e){
                 reporter.report(Report.of(Event.ERROR)
                         .type(Source.class.getName())
                         .id(source.id())

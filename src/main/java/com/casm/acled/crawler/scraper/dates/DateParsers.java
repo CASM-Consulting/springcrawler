@@ -688,13 +688,13 @@ public class DateParsers {
     //Por: Noe Gea/Reynosa El Día Lunes 24 de Septiembre del 2018 a las 16:39
     //Por: Mesa de Redacción El Día Lunes 23 de Septiembre del 2019 a las 16:20
     public static void main(String... args) {
-        runParser();
+        test();
     }
 
-    public void test() {
-        String date = "Xalapa | 2020-09-24 | Cortesía";
+    public static void test() {
+        String date = "2020-10-02 07:36";
         DateParser dp = CompositeDateParser.of(ImmutableList.of(
-                "ISO:/yyyy-MM-dd//RE.*| (.*) |.*"
+                "ISO:/yyyy-MM-dd//RE(\\d{4}-\\d{2}-\\d{2}).*"
         ));
 
 //        dp = dp140;

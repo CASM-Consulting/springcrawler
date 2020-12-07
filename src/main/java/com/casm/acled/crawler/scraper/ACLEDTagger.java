@@ -6,6 +6,7 @@ import com.norconex.importer.handler.ImporterHandlerException;
 import com.norconex.importer.handler.tagger.impl.DOMTagger;
 
 import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.util.Map;
 
 /**
@@ -21,10 +22,14 @@ public class ACLEDTagger extends DOMTagger {
      */
     public Map<String, String> tag(String html) throws ImporterHandlerException {
 
+        return tag(new ByteArrayInputStream(html.getBytes()));
+    }
+
+    public Map<String, String> tag(InputStream html) throws ImporterHandlerException {
+
         ImporterMetadata metadata = new ImporterMetadata();
 
-        // URL param left blank and parsed set to true - so assuming already UTF-8
-        super.tagApplicableDocument("", new ByteArrayInputStream(html.getBytes()), metadata, true);
+        super.tagApplicableDocument("", html, metadata, false);
 
         return new ImmutableMap.Builder<String, String>()
                 .put(ScraperFields.SCRAPED_ARTICLE, metadata.getString(ScraperFields.SCRAPED_ARTICLE))
