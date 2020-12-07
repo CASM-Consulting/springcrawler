@@ -26,11 +26,11 @@ public class ScraperServiceTest {
     @Test
     public void testScraper() {
         Source source = EntityVersions.get(Source.class).current()
-                .put(Source.EXAMPLE_URLS, ImmutableList.of("http://www.0.com:5000", "http://www.1.com:5000"))
+                .put(Source.EXAMPLE_URLS, ImmutableList.of("http://www.0.com:5555", "http://www.1.com:5555"))
                 .id(0);
 
-        ACLEDScraper scraper = ACLEDScraper.load(Paths.get("testscrapers/generic"), source, reporter);
+        ACLEDTagger tagger = new ACLEDTaggerFactory(Paths.get("testscrapers/generic"), source).get();
 
-        scraperService.checkExampleURLs(scraper, source);
+        scraperService.checkExampleURLs(tagger, source);
     }
 }

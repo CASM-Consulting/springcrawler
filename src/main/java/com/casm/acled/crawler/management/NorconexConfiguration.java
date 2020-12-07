@@ -2,9 +2,12 @@ package com.casm.acled.crawler.management;
 
 import com.casm.acled.crawler.scraper.ACLEDMetadataPreProcessor;
 import com.casm.acled.crawler.scraper.ACLEDScraper;
+import com.casm.acled.entities.source.Source;
 import com.norconex.collector.core.crawler.ICrawlerConfig;
 import com.norconex.collector.core.data.store.impl.mvstore.MVStoreCrawlDataStoreFactory;
+import com.norconex.collector.core.filter.IReferenceFilter;
 import com.norconex.collector.core.filter.impl.ExtensionReferenceFilter;
+import com.norconex.collector.core.filter.impl.RegexReferenceFilter;
 import com.norconex.collector.http.HttpCollectorConfig;
 import com.norconex.collector.http.crawler.HttpCrawlerConfig;
 import com.norconex.collector.http.crawler.URLCrawlScopeStrategy;
@@ -27,6 +30,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class NorconexConfiguration {
@@ -204,6 +208,13 @@ public class NorconexConfiguration {
 
     public NorconexConfiguration addFilter(AbstractDocumentFilter filter) {
         filters.add(filter);
+        return this;
+    }
+
+    public NorconexConfiguration addReferenceFilter(IReferenceFilter filter) {
+        List<IReferenceFilter> filters = new ArrayList<>(Arrays.asList(crawler.getReferenceFilters()));
+        filters.add(filter);
+        crawler.setReferenceFilters(filters.toArray(new IReferenceFilter[]{}));
         return this;
     }
 

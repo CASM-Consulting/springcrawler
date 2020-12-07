@@ -9,6 +9,8 @@ import com.casm.acled.crawler.scraper.keywords.ExcludingKeywordFilter;
 import com.casm.acled.crawler.scraper.keywords.KeywordTagger;
 import com.casm.acled.entities.source.Source;
 import com.casm.acled.entities.sourcelist.SourceList;
+import com.google.common.collect.ImmutableList;
+import com.norconex.collector.core.filter.IReferenceFilter;
 import com.norconex.collector.core.filter.impl.RegexReferenceFilter;
 import com.norconex.collector.http.HttpCollector;
 import com.norconex.collector.http.url.IURLNormalizer;
@@ -25,6 +27,7 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
@@ -33,6 +36,7 @@ import com.norconex.importer.handler.tagger.impl.*;
 
 import com.norconex.collector.http.robot.RobotsTxt;
 import com.norconex.collector.http.robot.impl.StandardRobotsTxtProvider;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import com.norconex.collector.http.delay.impl.GenericDelayResolver;
@@ -151,14 +155,29 @@ public class Crawl {
                     ZonedDateTime.of(to.atTime(0,0,0), zoneId));
             postParsers.add(dateTagger);
 
+        } else {
+            String zid = source.get(Source.TIMEZONE);
+            ZoneId zoneId;
+            if(zid==null) {
+                zoneId = ZoneId.systemDefault();
+            } else {
+                zoneId = ZoneId.of(zid);
+            }
+
+            DateTagger dateTagger = dateTagger(source,
+                    ZonedDateTime.of(0,1,1,0,0,0,0, zoneId),
+                    ZonedDateTime.now(zoneId));
+            postParsers.add(dateTagger);
+
         }
 
         if(!args.skipKeywords) {
             for (SourceList sourceList : args.sourceLists) {
-                KeywordTagger keywordTagger = keywordTagger(sourceList, source);
+                KeywordTagger keywordTagger = keywordTagger(sourceList);
                 postParsers.add(keywordTagger);
             }
-
+        } else {
+            postParsers.add(new KeywordTagger(ScraperFields.SCRAPED_ARTICLE, "", "pass"));
         }
 
         List<String> seedUrls = source.get(Source.SEED_URLS);
@@ -185,7 +204,7 @@ public class Crawl {
         if(source.hasValue(Source.CRAWL_EXCLUDE_PATTERN)) {
             String pattern = source.get(Source.CRAWL_EXCLUDE_PATTERN);
             RegexReferenceFilter filter = new RegexReferenceFilter(pattern, OnMatch.EXCLUDE);
-            config.crawler().setReferenceFilters(filter);
+            config.addReferenceFilter(filter);
         }
 
         if(!args.ignoreSiteMap && from != null) {
@@ -221,7 +240,7 @@ public class Crawl {
         return keywordFilter;
     }
 
-    private KeywordTagger keywordTagger(SourceList sourceList, Source source) {
+    private KeywordTagger keywordTagger(SourceList sourceList) {
 
 //        String query = resolveQuery(sourceList, source);
         KeywordTagger keywordTagger = new KeywordTagger(ScraperFields.SCRAPED_ARTICLE, sourceList);
