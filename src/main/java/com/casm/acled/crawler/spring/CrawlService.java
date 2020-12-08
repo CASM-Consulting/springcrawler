@@ -53,6 +53,7 @@ import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalUnit;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -454,7 +455,10 @@ public class CrawlService {
     }
 
     public String followRedirects(String url)  {
-        Client client = ClientBuilder.newClient();
+        Client client = ClientBuilder.newBuilder()
+//                .connectTimeout(10, TimeUnit.SECONDS)
+                .build();
+
 
         WebTarget target = client.target(url);
 //        target.property(ClientProperties.FOLLOW_REDIRECTS, Boolean.TRUE);

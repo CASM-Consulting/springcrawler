@@ -32,7 +32,6 @@ import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellOption;
 
 import javax.validation.Valid;
-import org.jline.reader.LineReader;
 
 
 @EnableAutoConfiguration(exclude={HibernateJpaAutoConfiguration.class, CamundaBpmAutoConfiguration.class, CamundaBpmRestJerseyAutoConfiguration.class, ValidationAutoConfiguration.class})
@@ -100,7 +99,6 @@ public class ShellRunner {
     public void copy(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) {
         CrawlArgs crawlArgs = argsService.get(args);
         crawlArgs.init();
-
         dataOperationService.copy(crawlArgs);
     }
 
@@ -109,59 +107,48 @@ public class ShellRunner {
     // the help command still not working:
     // Action: Correct the classpath of your application so that it contains a single, compatible version of com.beust.jcommander.JCommander
     public void checkSourceList(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) {
-//        reporter.randomRunId();
 
         CrawlArgs crawlArgs = argsService.get();
         crawlArgs.raw = args;
-
-        crawlArgs.raw.program = "check";
-
         crawlArgs.init();
 
         checkListService.checkSourceList(crawlArgs);
 
-//        reporter.getRunReports().stream().forEach(r -> logger.info(r.toString()));
-
     }
 
-    @ShellMethod(value = "import source list (-sl), must specify working-dir (-wd) and path to file (-P)", key = "import")
-    public void importSourceList(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) throws Exception{
-//        reporter.randomRunId();
+    @ShellMethod(value = "import source list (-sl), must specify working-dir (-wd) and path to file (-P) specify the L flag (-F L) to also link the sources", key = "import-source")
+    public void importSources(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) throws Exception{
 
-        CrawlArgs crawlArgs = argsService.get();
-        crawlArgs.raw = args;
-
-        crawlArgs.raw.program = "import";
-
+        CrawlArgs crawlArgs = argsService.get(args);
         crawlArgs.init();
 
-        importExportService.importCrawlerSourceList(crawlArgs);
+        importExportService.importSources(crawlArgs);
+    }
 
-//        reporter.getRunReports().stream().forEach(r -> logger.info(r.toString()));
+    @ShellMethod(value = "import source list (-sl), must specify working-dir (-wd) and path to file (-P) specify the C flag (-F C) to actually update the database", key = "import-list")
+    public void importList(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) throws Exception{
 
+        CrawlArgs crawlArgs = argsService.get(args);
+        crawlArgs.init();
+
+        importExportService.importList(crawlArgs);
     }
 
     @ShellMethod(value = "export source list (-sl), must specify working dir (-wd) and path to file (-P)", key = "export")
     public void exportSourceList(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) throws Exception{
-//        reporter.randomRunId();
 
         CrawlArgs crawlArgs = argsService.get();
         crawlArgs.raw = args;
-
-        crawlArgs.raw.program = "export";
-
         crawlArgs.init();
 
-        importExportService.exportCrawlerSourceList(crawlArgs);
-
-//        reporter.getRunReports().stream().forEach(r -> logger.info(r.toString()));
-
+        importExportService.exportSources(crawlArgs);
     }
 
     @ShellMethod(value = "Link a Source to a source list (-sl). Either using -s or sources can be read from CSV (-P).", key="link")
     public void linkSourceToSourceList(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) throws Exception{
 
         CrawlArgs crawlArgs = argsService.get(args);
+        crawlArgs.raw = args;
         crawlArgs.init();
 
         dataOperationService.linkSourceToSourceList(crawlArgs);
@@ -171,10 +158,10 @@ public class ShellRunner {
     public void unlinkSourceFromSourceList(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) throws Exception {
 
         CrawlArgs crawlArgs = argsService.get(args);
+        crawlArgs.raw = args;
         crawlArgs.init();
 
         dataOperationService.unlinkSourceFromSourceList(crawlArgs);
-
     }
 
     @ShellMethod(value = "Re-scrape the articles for a given source (-s), be sure to specify the scraper dir (-sd). Optionally use -f and -t to constrain to only articles within a from-to date. Articles that have no existing date will always be attempted.", key="re-scrape")
@@ -201,19 +188,6 @@ public class ShellRunner {
         }
     }
 
-
-//    @ShellMethod
-//    public void checkURL(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) {
-//        reporter.randomRunId();
-//        CrawlArgs crawlArgs = argsService.get();
-//        crawlArgs.raw = args;
-//        crawlArgs.init();
-//
-//        checkListService.
-//
-//
-//
-//    }
 
     @ShellMethod(value = "output example urls ", key = "output")
     public void outputExampleURLCheck(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) throws Exception{
