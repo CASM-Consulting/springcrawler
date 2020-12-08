@@ -266,7 +266,8 @@ public class ImportExportService {
                     //link match: no-op
                 } else {
 
-                    logger.warn("{}: link mismatch, existing:{} new:{}", name, link, links.get(0));
+                    logger.warn("{}: link mismatch - updating, existing:{} new:{}", name, link, links.get(0));
+                    source = source.put(Source.LINK, links.get(0));
                 }
             }
         }
