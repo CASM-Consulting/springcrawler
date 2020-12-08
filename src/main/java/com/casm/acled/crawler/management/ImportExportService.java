@@ -1,20 +1,21 @@
 package com.casm.acled.crawler.management;
 
 import com.casm.acled.crawler.reporting.Reporter;
+import com.casm.acled.crawler.spring.CrawlService;
+import com.casm.acled.crawler.util.Util;
 import com.casm.acled.dao.entities.ArticleDAO;
 import com.casm.acled.dao.entities.SourceDAO;
 import com.casm.acled.dao.entities.SourceListDAO;
 import com.casm.acled.dao.entities.SourceSourceListDAO;
 import com.casm.acled.entities.EntityVersions;
 import com.casm.acled.entities.VersionedEntity;
-import com.casm.acled.entities.article.Article;
 import com.casm.acled.entities.source.Source;
 import com.casm.acled.entities.sourcelist.SourceList;
-import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import org.apache.commons.csv.*;
 import org.apache.commons.lang3.BooleanUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,7 +23,6 @@ import org.springframework.stereotype.Service;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -49,7 +49,10 @@ public class ImportExportService {
     @Autowired
     private ArticleDAO articleDAO;
 
-    public void exportCrawlerSourceList(CrawlArgs args) throws IOException {
+    @Autowired
+    private CrawlService crawlService;
+
+    public void exportSources(CrawlArgs args) throws IOException {
 
         if (args.workingDir == null || args.path == null){
             throw new RuntimeException("Must specify a working directory (-wd) and path (-P) to export a SourceList.");
@@ -62,7 +65,7 @@ public class ImportExportService {
         exportCrawlerSourcesToCSV(path, sourceList);
     }
 
-    public void importCrawlerSourceList(CrawlArgs args) throws IOException {
+    public void importSources(CrawlArgs args) throws IOException {
 
         if (args.workingDir == null || args.path == null){
             throw new RuntimeException("Must specify a working directory (-wd) and path (-P) to find the source list import file.");
@@ -70,7 +73,7 @@ public class ImportExportService {
 
         Path path = args.workingDir.resolve(args.path);
 
-        List<Source> sources = importCrawlerSourcesFromCSV(path, EntityVersions.get(Source.class).current());
+        List<Source> sources = importSourceConfigsFromCSV(path, EntityVersions.get(Source.class).current());
 
         if(args.flagSet.contains("L")) {
 
@@ -80,6 +83,172 @@ public class ImportExportService {
                 }
             }
         }
+    }
+
+    public void importList(CrawlArgs args) throws IOException {
+
+        if (args.workingDir == null || args.path == null){
+            throw new RuntimeException("Must specify a working directory (-wd) and path (-P) to find the source list import file.");
+        }
+
+        boolean create = args.flagSet.contains("C");
+
+        Path path = args.workingDir.resolve(args.path);
+
+        List<Source> sources = loadSourceCSV(path,
+                ImmutableList.of("SOURCE", "URL"),
+                EntityVersions.get(Source.class).current(),
+                create
+        );
+
+        String listName = args.name;
+
+        //create list and link
+        if(create) {
+
+            Optional<SourceList> maybeList = sourceListDAO.byName(listName);
+            SourceList list;
+
+            if(maybeList.isPresent()) {
+                logger.warn("list exists {}", listName);
+                list = maybeList.get();
+            } else {
+                list = EntityVersions.get(SourceList.class).current();
+                list = list.put(SourceList.LIST_NAME, listName);
+                list = sourceListDAO.create(list);
+            }
+
+            for(Source source : sources) {
+                sourceSourceListDAO.link(source, list);
+            }
+        }
+    }
+
+    private List<Source> loadSourceCSV(Path path, List<String> headers, Source defaultSource, boolean create) throws IOException {
+
+        List<Source> sources = new ArrayList<>();
+
+        try (
+            Reader reader = java.nio.file.Files.newBufferedReader(path);
+            CSVParser csvReader = new CSVParser(reader, CSVFormat.EXCEL.withFirstRecordAsHeader());
+        ) {
+            Iterator<CSVRecord> itr = csvReader.iterator();
+
+            Map<String, List<String>> sourceMap = new HashMap<>();
+
+            String nameHeader = headers.get(0);
+            String linkHeader = headers.get(1);
+
+            while(itr.hasNext()) {
+                CSVRecord record = itr.next();
+
+                String name = record.get(nameHeader);
+                String link = record.get(linkHeader);
+
+                if(!sourceMap.containsKey(name)) {
+                    sourceMap.put(name, new ArrayList<>());
+                }
+
+                sourceMap.get(name).add(link);
+
+            }
+
+
+            for(Map.Entry<String, List<String>> entry : sourceMap.entrySet()) {
+
+                String name = entry.getKey();
+
+                name = name.trim();
+
+                List<String> links = entry.getValue();
+
+//                links = resolve( links );
+
+                Optional<Source> maybeSource = sourceDAO.byName(name);
+
+                Source source;
+
+                if (maybeSource.isPresent()) {
+
+                    source = maybeSource.get();
+                    logger.warn("source found {}", name);
+                } else {
+
+                    source = defaultSource
+                            .put(Source.STANDARD_NAME, name);
+                    logger.warn("source not found {}", name);
+                }
+
+                source = reconcileLinks(source, links);
+
+                if(create) {
+                    source = sourceDAO.upsert(source);
+                }
+
+                sources.add(source);
+            }
+
+            return sources;
+        }
+    }
+
+    private List<String> resolve(List<String> links) {
+        ListIterator<String> itr = links.listIterator();
+        while(itr.hasNext()) {
+            String link = itr.next();
+
+            link = link.trim();
+
+            String plink = Util.ensureHTTP(link, false);
+
+            String rlink = crawlService.followRedirects(plink);
+
+            itr.set(rlink);
+        }
+
+        return links;
+    }
+
+    private Source reconcileLinks(Source source, List<String> links) {
+        String link = null;
+        if(source.hasValue(Source.LINK)) {
+            link = source.get(Source.LINK);
+        }
+
+        if (link == null) {
+            if(links.size() > 1) {
+                logger.info("adding links {} {}",  source.get(Source.STANDARD_NAME), StringUtils.join(links, ", "));
+
+                source = source.put(Source.SEED_URLS, links);
+            } else {
+
+                logger.info("adding link {} {}",  source.get(Source.STANDARD_NAME), StringUtils.join(links, ", "));
+                source = source.put(Source.LINK, links.get(0));
+            }
+        } else {
+            if(links.size() > 1) {
+                if (links.contains(link)) {
+                    logger.info("adding links {} {}",  source.get(Source.STANDARD_NAME), StringUtils.join(links, ", "));
+
+                    source = source.put(Source.SEED_URLS, links);
+                } else {
+
+                    logger.warn("link missing {} not in {}", source.get(Source.STANDARD_NAME), StringUtils.join(links, ", "));
+                    source = source.put(Source.SEED_URLS, links);
+                }
+            } else {
+                if(links.get(0).equals(link)) {
+
+                    logger.info("links match {} {}", source.get(Source.STANDARD_NAME), link);
+                    //link match: no-op
+                } else {
+
+                    logger.warn("link mismatch {} {}", link, links.get(0));
+                }
+            }
+        }
+
+        return source;
     }
 
     public void exportCrawlerSourcesToCSV(Path path, SourceList sourceList) throws IOException {
@@ -147,7 +316,7 @@ public class ImportExportService {
         }
     }
 
-    public List<Source> importCrawlerSourcesFromCSV(Path seedsPath, Source defaultSource) throws IOException {
+    private List<Source> importSourceConfigsFromCSV(Path seedsPath, Source defaultSource) throws IOException {
         String ID = "id";
         String FIELD = "field";
         String VALUE = "value";

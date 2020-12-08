@@ -1,12 +1,10 @@
 package com.casm.acled.crawler.springrunners;
 
 import com.beust.jcommander.JCommander;
-import com.beust.jcommander.Strings;
 import com.casm.acled.configuration.ObjectMapperConfiguration;
 import com.casm.acled.crawler.management.*;
 import com.casm.acled.crawler.reporting.Reporter;
 import com.google.common.collect.ImmutableList;
-import net.sf.extjwnl.data.Exc;
 import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
 import org.camunda.bpm.spring.boot.starter.rest.CamundaBpmRestJerseyAutoConfiguration;
 import org.slf4j.Logger;
@@ -22,14 +20,6 @@ import org.springframework.boot.autoconfigure.validation.ValidationAutoConfigura
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
-
-import org.springframework.core.MethodParameter;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.Random;
-import java.util.stream.Stream;
-
 
 
 @EnableAutoConfiguration(exclude={HibernateJpaAutoConfiguration.class, CamundaBpmAutoConfiguration.class, CamundaBpmRestJerseyAutoConfiguration.class, ValidationAutoConfiguration.class})
@@ -74,10 +64,10 @@ public class CheckListRunner implements CommandLineRunner{
         switch(crawlArgs.program) {
             // remove import and export from checklistrunner because they do not exist in checklist service anymore.
             case "import":
-                importExportService.importCrawlerSourceList(crawlArgs);
+                importExportService.importSources(crawlArgs);
                 break;
             case "export":
-                importExportService.exportCrawlerSourceList(crawlArgs);
+                importExportService.exportSources(crawlArgs);
                 break;
             case "check":
                 checkListService.checkSourceList(crawlArgs);
