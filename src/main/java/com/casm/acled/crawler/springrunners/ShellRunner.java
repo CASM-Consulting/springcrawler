@@ -116,21 +116,19 @@ public class ShellRunner {
 
     }
 
-    @ShellMethod(value = "import source list (-sl), must specify working-dir (-wd) and path to file (-P)", key = "import-source")
+    @ShellMethod(value = "import source list (-sl), must specify working-dir (-wd) and path to file (-P) specify the L flag (-F L) to also link the sources", key = "import-source")
     public void importSources(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) throws Exception{
 
-        CrawlArgs crawlArgs = argsService.get();
-        crawlArgs.raw = args;
+        CrawlArgs crawlArgs = argsService.get(args);
         crawlArgs.init();
 
         importExportService.importSources(crawlArgs);
     }
 
-    @ShellMethod(value = "import source list (-sl), must specify working-dir (-wd) and path to file (-P)", key = "import-list")
+    @ShellMethod(value = "import source list (-sl), must specify working-dir (-wd) and path to file (-P) specify the C flag (-F C) to actually update the database", key = "import-list")
     public void importList(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) throws Exception{
 
-        CrawlArgs crawlArgs = argsService.get();
-        crawlArgs.raw = args;
+        CrawlArgs crawlArgs = argsService.get(args);
         crawlArgs.init();
 
         importExportService.importList(crawlArgs);

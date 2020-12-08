@@ -85,6 +85,13 @@ public class ImportExportService {
         }
     }
 
+    /**
+     * Read a CSV of Sources where column 1 is the name of the Source and column 2 is its link.
+     * Attempt to resolve the names and links to existing Sources in the database, and extract the list
+     * of merged sources (producing warnings and info about the results of merges).
+     *
+     * The if the C flag is specified, create the specified source lists and link the sources to those lists.
+     */
     public void importList(CrawlArgs args) throws IOException {
 
         if (args.workingDir == null || args.path == null){
@@ -124,6 +131,11 @@ public class ImportExportService {
         }
     }
 
+    /**
+     * Read a CSV of Sources where column 1 is the name of the Source and column 2 is its link.
+     * Attempt to resolve the names and links to existing Sources in the database, and return the list
+     * of merged sources (producing warnings and info about the results of merges).
+     */
     private List<Source> loadSourceCSV(Path path, List<String> headers, Source defaultSource, boolean create) throws IOException {
 
         List<Source> sources = new ArrayList<>();
@@ -192,6 +204,10 @@ public class ImportExportService {
         }
     }
 
+    /**
+     * Ensure all links have the protocol and follow redirects to the
+     * final link.
+     */
     private List<String> resolve(List<String> links) {
         ListIterator<String> itr = links.listIterator();
         while(itr.hasNext()) {
@@ -209,7 +225,14 @@ public class ImportExportService {
         return links;
     }
 
+    /**
+     * Given an existing source and zero or more links provided for the the source, place links on the source
+     * in the appropriate fields.
+     *
+     * Log warnings for link mismatches.
+     */
     private Source reconcileLinks(Source source, List<String> links) {
+        String name = source.get(Source.STANDARD_NAME);
         String link = null;
         if(source.hasValue(Source.LINK)) {
             link = source.get(Source.LINK);
@@ -217,33 +240,33 @@ public class ImportExportService {
 
         if (link == null) {
             if(links.size() > 1) {
-                logger.info("adding links {} {}",  source.get(Source.STANDARD_NAME), StringUtils.join(links, ", "));
+                logger.info("{}: adding links {} to SEED_URLS",  name, StringUtils.join(links, ", "));
 
                 source = source.put(Source.SEED_URLS, links);
             } else {
 
-                logger.info("adding link {} {}",  source.get(Source.STANDARD_NAME), StringUtils.join(links, ", "));
+                logger.info("{}: adding link {} to LINK",  name, StringUtils.join(links, ", "));
                 source = source.put(Source.LINK, links.get(0));
             }
         } else {
             if(links.size() > 1) {
                 if (links.contains(link)) {
-                    logger.info("adding links {} {}",  source.get(Source.STANDARD_NAME), StringUtils.join(links, ", "));
+                    logger.info("{}: adding links {} to SEED_URLS",  name, StringUtils.join(links, ", "));
 
                     source = source.put(Source.SEED_URLS, links);
                 } else {
 
-                    logger.warn("link missing {} not in {}", source.get(Source.STANDARD_NAME), StringUtils.join(links, ", "));
+                    logger.warn("{}: existing link {} not in {}", name, link, StringUtils.join(links, ", "));
                     source = source.put(Source.SEED_URLS, links);
                 }
             } else {
                 if(links.get(0).equals(link)) {
 
-                    logger.info("links match {} {}", source.get(Source.STANDARD_NAME), link);
+                    logger.info("{}: existing link matches {}", name, link);
                     //link match: no-op
                 } else {
 
-                    logger.warn("link mismatch {} {}", link, links.get(0));
+                    logger.warn("{}: link mismatch, existing:{} new:{}", name, link, links.get(0));
                 }
             }
         }
