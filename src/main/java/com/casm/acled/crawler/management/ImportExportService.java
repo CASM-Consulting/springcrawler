@@ -128,6 +128,8 @@ public class ImportExportService {
             for(Source source : sources) {
                 sourceSourceListDAO.link(source, list);
             }
+        } else {
+            logger.warn("Flag C was not specified - so no changes to the database were made (use the following to set the flag: -F C).");
         }
     }
 
