@@ -148,24 +148,26 @@ public class LocaleService {
         return locales;
     }
 
-    public Set<ULocale> determineLocale(Source source) {
+    public Set<ULocale> candidateLocales(Source source) {
         Set<ULocale> locales = new HashSet<>();
         String country = getCountry(source);
         List<String> languages = source.get(Source.LANGUAGES);
 
-        for(String language : languages) {
-            if(language.toLowerCase().equals("english")) {
-                locales.add(new ULocale("en"));
-            } else {
-                try {
-                    locales.addAll(determineLocaleByLanguage(language));
-                } catch (ReportingException e) {
-                    reporting.report(e.get().id(source.id()).type(Source.class.getName()));
+        if(languages != null) {
+            for(String language : languages) {
+                if(language.equalsIgnoreCase("english")) {
+                    locales.add(new ULocale("en"));
+                } else {
+                    try {
+                        locales.addAll(determineLocaleByLanguage(language));
+                    } catch (ReportingException e) {
+                        reporting.report(e.get().id(source.id()).type(Source.class.getName()));
+                    }
                 }
             }
         }
 
-        if(locales.isEmpty()) {
+        if(locales.isEmpty() && country != null) {
             try {
                 locales = determineLocaleByCountry(country);
             } catch (ReportingException e) {
@@ -174,6 +176,25 @@ public class LocaleService {
         }
 
         return locales;
+    }
+
+    public Set<TimeZone> candidateTimeZones(Source source) {
+
+        Set<TimeZone> possibleZones = new HashSet<>();
+
+        String country = getCountry(source);
+        if(country == null) {
+            reporting.report(Report.of(Event.COUNTRY_NOT_FOUND,  source.id(), "Source","%s - %s", source.get(Source.NAME), source.get(Source.COUNTRY)));
+        } else if(timeZonesByCountry.containsKey(country)) {
+
+            possibleZones = timeZonesByCountry.get(country);
+
+
+        } else {
+            reporting.report(Report.of(Event.COUNTRY_NOT_FOUND,  source.id(), "Source","%s - %s", source.get(Source.NAME), country));
+        }
+
+        return possibleZones;
     }
 
     public Optional<TimeZone> determineTimeZone(Source source) {
@@ -287,7 +308,7 @@ public class LocaleService {
     public void autoAssignLocalesAndTimeZones(Source source) {
 
         Optional<TimeZone> maybeTimeZone = determineTimeZone(source);
-        Set<ULocale> locales = determineLocale(source);
+        Set<ULocale> locales = candidateLocales(source);
 
         if(maybeTimeZone.isPresent()) {
             source = source.put(Source.TIMEZONE, maybeTimeZone.get().getID());

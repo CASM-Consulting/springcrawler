@@ -4,12 +4,14 @@ import com.casm.acled.crawler.management.*;
 import com.casm.acled.crawler.reporting.Reporter;
 import com.casm.acled.crawler.scraper.ScraperService;
 import com.casm.acled.crawler.scraper.dates.DateTimeService;
+import com.casm.acled.crawler.scraper.locale.LocaleService;
 import com.casm.acled.dao.entities.ArticleDAO;
 import com.casm.acled.dao.entities.SourceDAO;
 import com.casm.acled.dao.entities.SourceListDAO;
 import com.casm.acled.dao.entities.SourceSourceListDAO;
 import com.casm.acled.dao.util.ExportCSV;
 import com.casm.acled.entities.source.Source;
+import com.ibm.icu.util.ULocale;
 import com.norconex.importer.handler.ImporterHandlerException;
 
 import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
@@ -32,6 +34,8 @@ import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellOption;
 
 import javax.validation.Valid;
+import java.util.Set;
+import java.util.TimeZone;
 
 
 @EnableAutoConfiguration(exclude={HibernateJpaAutoConfiguration.class, CamundaBpmAutoConfiguration.class, CamundaBpmRestJerseyAutoConfiguration.class, ValidationAutoConfiguration.class})
@@ -95,6 +99,10 @@ public class ShellRunner {
     @Autowired
     private DateTimeService dateTimeService;
 
+
+    @Autowired
+    private LocaleService localeService;
+
     @ShellMethod(value = "Copy a Source (-s) or SourceList (-sl) to a with a new name (-N) or suffix if flag 'S' is provided")
     public void copy(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) {
         CrawlArgs crawlArgs = argsService.get(args);
@@ -102,6 +110,25 @@ public class ShellRunner {
         dataOperationService.copy(crawlArgs);
     }
 
+    @ShellMethod(key = "candidate-timezones", value = "[-s SOURCE] Requires COUNTRY to be set on source. Lists all known timezones for source country.")
+    public Set<TimeZone> candidateTimezones(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) {
+        CrawlArgs crawlArgs = argsService.get(args);
+        crawlArgs.init();
+
+        Source source = crawlArgs.source;
+
+        return localeService.candidateTimeZones(source);
+    }
+
+    @ShellMethod(key = "candidate-locales", value = "[-s SOURCE] Requires LANGUAGES or COUNTRY to be set. Lists all known locales for source languages or country.")
+    public Set<ULocale> candidateLocales(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) {
+        CrawlArgs crawlArgs = argsService.get(args);
+        crawlArgs.init();
+
+        Source source = crawlArgs.source;
+
+        return localeService.candidateLocales(source);
+    }
 
     @ShellMethod(key = "fix-links", value = "Attempt to load source links, with attempts to ensure protocol and follow any redirects. [-F U] to update database entry with resolved links.")
     public void fixLinks(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) {

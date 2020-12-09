@@ -692,9 +692,9 @@ public class DateParsers {
     }
 
     public static void test() {
-        String date = "2020-10-02 07:36";
+        String date = "December 9, 2020";
         DateParser dp = CompositeDateParser.of(ImmutableList.of(
-                "ISO:/yyyy-MM-dd//RE(\\d{4}-\\d{2}-\\d{2}).*"
+                "ISO:/EEEE d, yyyy/"
         ));
 
 //        dp = dp140;
