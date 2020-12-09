@@ -2,6 +2,7 @@ package com.casm.acled.crawler.management;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Run jobs and list currently running jobs.
@@ -11,7 +12,7 @@ public interface JobRunner {
 
     List<Job> getJobs();
 
-    Job getJob(int jobPID);
+    Optional<Job> getJob(int jobPID);
 
     void runJob(Job j);
 

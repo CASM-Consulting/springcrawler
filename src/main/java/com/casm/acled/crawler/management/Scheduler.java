@@ -21,6 +21,7 @@ import java.text.ParseException;
 import java.time.*;
 import java.util.*;
 
+@Deprecated
 @Service
 public class Scheduler implements Runnable {
 

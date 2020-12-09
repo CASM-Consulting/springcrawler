@@ -2,6 +2,8 @@ package com.casm.acled.crawler.management;
 
 import com.enioka.jqm.api.*;
 import com.google.common.collect.ImmutableMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -14,6 +16,8 @@ import java.util.*;
 
 @Component
 public class JQMJobRunner implements JobRunner {
+
+    protected static final Logger logger = LoggerFactory.getLogger(JQMJobRunner.class);
 
     private final JqmClient client;
     private final List<Job> jobs;
@@ -52,9 +56,14 @@ public class JQMJobRunner implements JobRunner {
 
 
     @Override
-    public Job getJob(int jobPID) {
-        JobInstance job = client.getJob(jobPID);
-        return new JQMJob(job);
+    public Optional<Job> getJob(int jobPID) {
+        try {
+            JobInstance job = client.getJob(jobPID);
+            return Optional.of(new JQMJob(job));
+        } catch (JqmInvalidRequestException | JqmClientException e){
+            logger.info("When getting existing JQM Job: " + e.getMessage());
+            return Optional.empty();
+        }
     }
 
     @Override

@@ -161,18 +161,7 @@ public class SchedulerService {
     }
 
     private Optional<Job> checkJobStatus(int jobPID) {
-
-        Optional<Job> maybeJob = Optional.empty();
-        try {
-
-            Job curJob = jobRunner.getJob(jobPID);
-
-            maybeJob = Optional.of(curJob);
-        } catch (JqmInvalidRequestException e) {
-            logger.info(e.getMessage());
-            //job hasn't run;
-        }
-        return maybeJob;
+        return jobRunner.getJob(jobPID);
     }
 
     public void ensureSchedule(Job job, LocalDate from, LocalDate to) {
