@@ -472,14 +472,46 @@ public class CrawlService {
                 String redirect = (String)e.getResponse().getHeaders().getFirst("Location");
 
                 return followRedirects(redirect);
+            } else {
+
+                logger.warn(url + " : " + e.getMessage());
+                return url;
             }
-            logger.warn(url + " : " + e.getMessage());
-            return url;
         } catch (ProcessingException e) {
             logger.warn(url + " : " + e.getMessage());
             return url;
         }
 
         return url;
+    }
+
+    /**
+     * Ensure all links have the protocol and follow redirects to the
+     * final link.
+     */
+    public List<String> resolveLinks(List<String> links) {
+        List<String> resolved = new ArrayList<>();
+        for(String link : links) {
+            String rlink = resolveLink(link);
+            resolved.add(rlink);
+        }
+
+        return resolved;
+    }
+
+    public String resolveLink(String link) {
+        link = link.trim();
+
+        String plink = Util.ensureHTTP(link, false);
+
+        String rlink = followRedirects(plink);
+
+        if(!link.equals(rlink)) {
+            logger.info("{} resolved to {}", link, rlink);
+        } else {
+            logger.info("{} passed", link);
+        }
+
+        return rlink;
     }
 }
