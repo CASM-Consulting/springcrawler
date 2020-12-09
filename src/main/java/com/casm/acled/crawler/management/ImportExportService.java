@@ -63,7 +63,7 @@ public class ImportExportService {
 
         Path path = args.workingDir.resolve(args.path);
 
-        exportCrawlerSourcesToCSV(path, sourceList);
+        exportSourceConfigsFromCSV(path, sourceList);
     }
 
     public void importSources(CrawlArgs args) throws IOException {
@@ -281,16 +281,18 @@ public class ImportExportService {
         return source;
     }
 
-    public void exportCrawlerSourcesToCSV(Path path, SourceList sourceList) throws IOException {
+    public void exportSourceConfigsFromCSV(Path path, SourceList sourceList) throws IOException {
         List<Source> sources = sourceDAO.byList(sourceList);
-        exportCrawlerSourcesToCSV(path, sources);
+        exportSourceConfigsFromCSV(path, sources);
     }
 
     private static final Set<String> importExportFields = ImmutableSet.of(Source.LINK, Source.EXAMPLE_URLS, Source.DATE_FORMAT,
             Source.LOCALES, Source.CRAWL_DISABLE_SITEMAPS, Source.CRAWL_DISABLE_SITEMAP_DISCOVERY, Source.CRAWL_SITEMAP_LOCATIONS,
-            Source.SEED_URLS, Source.CRAWL_SCHEDULE, Source.TIMEZONE, Source.CRAWL_DEPTH);
+            Source.SEED_URLS, Source.CRAWL_SCHEDULE, Source.TIMEZONE, Source.CRAWL_DEPTH,
+            Source.SCRAPER_RULE_ARTICLE, Source.SCRAPER_RULE_DATE, Source.SCRAPER_RULE_TITLE
+    );
 
-    public void exportCrawlerSourcesToCSV(Path path, List<Source> sources) throws IOException {
+    public void exportSourceConfigsFromCSV(Path path, List<Source> sources) throws IOException {
 
         List<String> headers = ImmutableList.of("id", "field", "value");
         Set<String> fields = importExportFields;
