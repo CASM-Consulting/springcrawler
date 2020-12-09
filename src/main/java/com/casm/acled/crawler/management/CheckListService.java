@@ -519,9 +519,48 @@ public class CheckListService {
         return table;
     }
 
-    public void testURL(Source source, SourceList list, String url) {
-//        scraperService.getText()
 
+
+    public void fixSourceLinks(CrawlArgs args) {
+        List<Source> sources = new ArrayList<>();
+        if(args.source != null ) {
+            sources.add(args.source);
+        } else if (!args.sourceLists.isEmpty()) {
+            sources = sourceDAO.byList(args.sourceLists.get(0));
+        }
+
+        sources = fixSourceLinks(sources);
+
+        if(args.flagSet.contains("U")) {
+            logger.info("updating database entries...");
+            sourceDAO.upsert(sources);
+            logger.info("done.");
+        }
+    }
+
+
+    public List<Source> fixSourceLinks(List<Source> sources) {
+        List<Source> fixed = new ArrayList<>();
+        for(Source source : sources) {
+            source = fixSourceLinks(source);
+            fixed.add(source);
+        }
+        return fixed;
+    }
+
+    public Source fixSourceLinks(Source source) {
+
+        if(source.hasValue(Source.SEED_URLS)) {
+            List<String> links = source.get(Source.SEED_URLS);
+            links = crawlService.resolveLinks(links);
+            source = source.put(Source.SEED_URLS, links);
+        } else {
+            String link = source.get(Source.LINK);
+            link = crawlService.resolveLink(link);
+            source = source.put(Source.LINK, link);
+        }
+
+        return source;
     }
 
     public static String[][] insertRow(String[][] m, int r, String[] data) {

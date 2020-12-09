@@ -103,6 +103,15 @@ public class ShellRunner {
     }
 
 
+    @ShellMethod(key = "fix-links", value = "Attempt to load source links, with attempts to ensure protocol and follow any redirects. [-F U] to update database entry with resolved links.")
+    public void fixLinks(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) {
+        CrawlArgs crawlArgs = argsService.get(args);
+        crawlArgs.init();
+
+        checkListService.fixSourceLinks(crawlArgs);
+    }
+
+
     @ShellMethod(value = "check source list (-sl)", key = "check")
     // the help command still not working:
     // Action: Correct the classpath of your application so that it contains a single, compatible version of com.beust.jcommander.JCommander

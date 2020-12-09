@@ -210,26 +210,7 @@ public class ImportExportService {
         }
     }
 
-    /**
-     * Ensure all links have the protocol and follow redirects to the
-     * final link.
-     */
-    private List<String> resolve(List<String> links) {
-        ListIterator<String> itr = links.listIterator();
-        while(itr.hasNext()) {
-            String link = itr.next();
 
-            link = link.trim();
-
-            String plink = Util.ensureHTTP(link, false);
-
-            String rlink = crawlService.followRedirects(plink);
-
-            itr.set(rlink);
-        }
-
-        return links;
-    }
 
     /**
      * Given an existing source and zero or more links provided for the the source, place links on the source
