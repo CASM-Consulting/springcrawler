@@ -14,6 +14,7 @@ import com.casm.acled.entities.sourcelist.SourceList;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import org.apache.commons.csv.*;
+import org.apache.commons.io.input.BOMInputStream;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -143,7 +144,8 @@ public class ImportExportService {
         List<Source> sources = new ArrayList<>();
 
         try (
-            Reader reader = java.nio.file.Files.newBufferedReader(path);
+            InputStream in = new BOMInputStream(java.nio.file.Files.newInputStream(path));
+            Reader reader = new InputStreamReader(in);
             CSVParser csvReader = new CSVParser(reader, CSVFormat.EXCEL.withFirstRecordAsHeader());
         ) {
             Iterator<CSVRecord> itr = csvReader.iterator();
