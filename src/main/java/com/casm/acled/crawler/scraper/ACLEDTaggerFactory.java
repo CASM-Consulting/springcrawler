@@ -56,8 +56,8 @@ public class ACLEDTaggerFactory {
 
         this.scraperPath = path.resolve(JOB_JSON);
         this.source = source;
-        if(Files.notExists(this.scraperPath)) {
-            throw new ScraperNotFoundException(this.scraperPath + " doesn't exist");
+        if(Files.notExists(this.scraperPath) && !source.hasValue(Source.SCRAPER_RULE_ARTICLE)) {
+            throw new ScraperNotFoundException(source.get(Source.STANDARD_NAME));
         }
     }
 
