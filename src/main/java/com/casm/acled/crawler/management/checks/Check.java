@@ -111,4 +111,12 @@ public class Check {
         return Arrays.stream(checks)
                 .allMatch(Check::isPass);
     }
+
+    @Override
+    public String toString() {
+        return "Check{" +
+                "status=" + status +
+                ", message='" + message + '\'' +
+                '}';
+    }
 }

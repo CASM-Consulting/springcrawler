@@ -237,6 +237,13 @@ public class Util implements CommandLineRunner {
     }
 
     public static boolean scraperExists(Path scraperDir, Source source) {
+        // If the Source has all the rules defined directly, then no need to resort to checking for a scraper job.json
+        if (source.hasValue(Source.SCRAPER_RULE_ARTICLE)
+             && source.hasValue(Source.SCRAPER_RULE_TITLE)
+             && source.hasValue(Source.SCRAPER_RULE_DATE)){
+            return true;
+        }
+
         try {
             Path path;
             if(source.hasValue(Source.CRAWL_SCRAPER_PATH)) {
