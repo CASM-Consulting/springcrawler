@@ -160,7 +160,9 @@ public class ImportExportService {
 
                 name = name.trim();
 
-                List<String> links = entry.getValue();
+                List<String> links = entry.getValue().stream()
+                        .map(String::trim)
+                        .collect(Collectors.toList());
 
 //                links = resolve( links );
 
