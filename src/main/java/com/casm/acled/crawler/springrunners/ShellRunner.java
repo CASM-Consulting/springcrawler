@@ -200,6 +200,15 @@ public class ShellRunner {
         dataOperationService.unlinkSourceFromSourceList(crawlArgs);
     }
 
+    @ShellMethod(value = "unlink all sources from source list (-sl)", key="unlink-all")
+    public void unlinkAllFromSourceList(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) throws Exception {
+
+        CrawlArgs crawlArgs = argsService.get(args);
+        crawlArgs.init();
+
+        dataOperationService.unlinkAllFromSourceList(crawlArgs);
+    }
+
     @ShellMethod(value = "Re-scrape the articles for a given source (-s), be sure to specify the scraper dir (-sd). Optionally use -f and -t to constrain to only articles within a from-to date. Articles that have no existing date will always be attempted.", key="re-scrape")
     public void rescrapeSource(@ShellOption(optOut = true) @Valid CrawlArgs.Raw args) throws ImporterHandlerException {
 //        reporter.randomRunId();

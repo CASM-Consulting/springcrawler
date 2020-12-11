@@ -148,6 +148,19 @@ public class DataOperationService {
 
     }
 
+    public void unlinkAllFromSourceList(CrawlArgs crawlArgs) throws Exception {
+
+        checkNull(crawlArgs.sourceLists, "Source List required");
+
+        SourceList sourceList = crawlArgs.sourceLists.get(0);
+
+        List<Source> sources = sourceDAO.byList(sourceList);
+
+        for (Source source : sources) {
+            sourceSourceListDAO.unlink(source, sourceList);
+        }
+    }
+
     public String getFied(CrawlArgs crawlArgs, String field) {
         if (crawlArgs.source!=null) {
             Source source = crawlArgs.source;
