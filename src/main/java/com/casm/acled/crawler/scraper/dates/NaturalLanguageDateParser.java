@@ -40,17 +40,17 @@ class NaturalLanguageDateParser implements DateParser {
     private final Pattern triggers;
     private final String spec;
 
-    public NaturalLanguageDateParser(String spec) {
-        this(spec, Lists.newArrayList(ULocale.getDefault()));
-    }
+    /// for NL parser, timezone is required, so remove constructors without timezone
 
     public NaturalLanguageDateParser(String spec, String timezone) {
-        this(spec, Lists.newArrayList(ULocale.getDefault()));
-        this.timezone = timezone;
+        this(spec, Lists.newArrayList(ULocale.getDefault()), timezone);
     }
 
-    public NaturalLanguageDateParser(String spec, List<ULocale> locales) {
+    /// for NL parser, timezone is required, so remove constructors without timezone
+
+    public NaturalLanguageDateParser(String spec, List<ULocale> locales, String timezone) {
         this.spec = spec;
+        this.timezone = timezone;
 
         String delim = Pattern.quote(spec.substring(0,1));
         String[] parts = spec.split(delim);
@@ -65,10 +65,9 @@ class NaturalLanguageDateParser implements DateParser {
         languages = "[\""+locales.stream().map(ULocale::getLanguage).collect(Collectors.joining("\",\""))+"\"]";
     }
 
-
     @Override
     public NaturalLanguageDateParser locale(List<ULocale> locales) {
-        return new NaturalLanguageDateParser(spec, locales);
+        return new NaturalLanguageDateParser(spec, locales, this.timezone);
     }
 
     @Override
@@ -114,7 +113,7 @@ class NaturalLanguageDateParser implements DateParser {
 
         String relativeExpression = "4 hours ago";
 
-        NaturalLanguageDateParser nldp = new NaturalLanguageDateParser("ago");
+        NaturalLanguageDateParser nldp = new NaturalLanguageDateParser("ago", "UTC+3");
 
         Optional<LocalDateTime> maybeDate = nldp.parse(relativeExpression);
 

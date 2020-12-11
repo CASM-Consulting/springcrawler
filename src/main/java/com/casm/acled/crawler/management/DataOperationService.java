@@ -273,21 +273,21 @@ public class DataOperationService {
 
     }
 
-    // in which sense it means to set null to corresponding field.
+    // in which sense it means to remove the corresponding key-value pair
     public String deleteValue(CrawlArgs crawlArgs, String field) {
 
 
         if (crawlArgs.source != null) {
             Source source = crawlArgs.source;
-            source = source.put(field, null);
-            sourceDAO.upsert(source);
+            source = source.remove(field);
+            sourceDAO.overwrite(source);
 
             return String.format("successfully delete value");
 
         } else if (!crawlArgs.sourceLists.isEmpty()) {
             SourceList sourceList = crawlArgs.sourceLists.get(0);
-            sourceList = sourceList.put(field, null);
-            sourceListDAO.upsert(sourceList);
+            sourceList = sourceList.remove(field);
+            sourceListDAO.overwrite(sourceList);
 
             return String.format("successfully delete value");
         }
