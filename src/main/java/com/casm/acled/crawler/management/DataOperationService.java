@@ -7,6 +7,9 @@ import com.casm.acled.dao.entities.ArticleDAO;
 import com.casm.acled.dao.entities.SourceDAO;
 import com.casm.acled.dao.entities.SourceListDAO;
 import com.casm.acled.dao.entities.SourceSourceListDAO;
+import com.casm.acled.dao.sql.Jsonb;
+import com.casm.acled.dao.sql.Where;
+import com.casm.acled.dao.sql.WhereValue;
 import com.casm.acled.entities.EntityVersions;
 import com.casm.acled.entities.VersionedEntity;
 import com.casm.acled.entities.article.Article;
@@ -347,10 +350,15 @@ public class DataOperationService {
 
         if (crawlArgs.source != null) {
             Source source = crawlArgs.source;
-            List<Article> articles = articleDAO.bySource(source);
+            List<Article> articles = articleDAO.query(Where.and(
+                    WhereValue.equal(Jsonb.string(Article.SOURCE_ID), Integer.toString(source.id())),
+                    WhereValue.greaterEqual(Jsonb.string(Article.DATE), fromDate.toString()),
+                    WhereValue.lessEqual(Jsonb.string(Article.DATE), toDate.toString())
+            ));
+//            List<Article> articles = articleDAO.bySource(source);
 
             List<Map<String, String>> filteredArticles = articles.stream()
-                    .filter(d -> inbetween(d.get(Article.DATE), fromDate, toDate))
+//                    .filter(d -> inbetween(d.get(Article.DATE), fromDate, toDate))
                     .filter(distinctByKey(d->d.get(Article.URL)))
                     .map(d -> toMapWithColumn(d, columns))
                     .collect(Collectors.toList());
@@ -366,11 +374,21 @@ public class DataOperationService {
             List<Source> sources = sourceDAO.byList(sourceList);
             List<Article> allArticles = new ArrayList<>();
             for (Source source: sources) {
-                List<Article> articles = articleDAO.bySource(source);
+                List<Article> articles = articleDAO.query(Where.and(
+                        WhereValue.equal(Jsonb.string(Article.SOURCE_ID), Integer.toString(source.id())),
+                        WhereValue.greaterEqual(Jsonb.string(Article.DATE), fromDate.toString()),
+                        WhereValue.lessEqual(Jsonb.string(Article.DATE), toDate.toString())
+                ));
+//                List<Article> articles = articleDAO.bySource(source);
                 allArticles.addAll(articles);
             }
 
-            List<Map<String, String>> filteredArticles = allArticles.stream().filter(d -> inbetween(d.get("DATE"), fromDate, toDate)).filter(distinctByKey(d->d.get("URL"))).map(d -> toMapWithColumn(d, columns)).collect(Collectors.toList());
+            List<Map<String, String>> filteredArticles = allArticles
+                    .stream()
+                    .filter(d -> inbetween(d.get("DATE"), fromDate, toDate))
+                    .filter(distinctByKey(d->d.get("URL")))
+                    .map(d -> toMapWithColumn(d, columns))
+                    .collect(Collectors.toList());
 
             Path outputPath = crawlArgs.path.resolve(sourceList.get(SourceList.LIST_NAME)+"-"+crawlArgs.from+"-"+crawlArgs.to+".csv");
 
