@@ -112,7 +112,9 @@ public class CrawlerDirectRunner implements CommandLineRunner {
 //        crawlArgs.raw.source = "Sintesis";
 //        crawlArgs.raw.source = "8 Columnas";
 //        crawlArgs.raw.source = "El Sol de Acapulco";
-        crawlArgs.raw.source = "Siglo de Durango";
+//        crawlArgs.raw.source = "AFN - Tijuana";
+//        crawlArgs.raw.source = "Hoy Tamaulipas";
+        crawlArgs.raw.source = "Zona Franca";
 //        crawlArgs.raw.source = "Imagen del Golfo";
 //         crawlArgs.raw.source = "Independiente de Hidalgo";
 //        crawlArgs.raw.source = "Colima Noticias";
@@ -130,12 +132,12 @@ public class CrawlerDirectRunner implements CommandLineRunner {
 //        crawlArgs.raw.to =  "2021-01-01";
         crawlArgs.raw.workingDir = "test";
 //        crawlArgs.raw.workingDir = "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/JQM_ROOT/test";
-        crawlArgs.raw.scrapersDir = "/home/sw206/git/acled-scrapers/";
-//        crawlArgs.raw.scrapersDir = "/Users/adr27/Documents/git/acled-scrapers/";
+//        crawlArgs.raw.scrapersDir = "/home/sw206/git/acled-scrapers/";
+        crawlArgs.raw.scrapersDir = "/Users/adr27/Documents/git/acled-scrapers/";
 //        crawlArgs.raw.scrapersDir = "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/springcrawler/testscrapers/generic/";
 //        crawlArgs.raw.scrapersDir = "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/acled-scrapers/";
 
-        crawlArgs.raw.depth = 2;
+        crawlArgs.raw.depth = 6;
 //        crawlArgs.raw.ignoreSiteMap = true;
 //        crawlArgs.raw.crawlOffDomain = true;
 

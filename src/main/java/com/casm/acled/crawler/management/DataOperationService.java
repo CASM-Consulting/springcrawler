@@ -274,6 +274,11 @@ public class DataOperationService {
             StringBuilder printStr = new StringBuilder(String.format("%-30.30s  %-30.30s%n", "Source Name", "ID"));
             SourceList sourceList = crawlArgs.sourceLists.get(0);
             List<Source> sources = sourceDAO.byList(sourceList);
+            sources.sort((s1, s2) -> {
+                String name1 = s1.get(Source.STANDARD_NAME);
+                String name2 = s2.get(Source.STANDARD_NAME);
+                return name1.compareToIgnoreCase(name2);
+            });
             for (Source source: sources) {
                 String str = String.format("%-30.30s  %-30.30s%n", source.get(Source.STANDARD_NAME), source.id());
                 printStr.append(str);
@@ -428,7 +433,7 @@ public class DataOperationService {
 
         try (
                 Reader reader = java.nio.file.Files.newBufferedReader(csvPath);
-                CSVParser csvReader = new CSVParser(reader,  CSVFormat.EXCEL )
+                CSVParser csvReader = new CSVParser(reader,  CSVFormat.EXCEL.withHeader() )
         ){
 
             for (CSVRecord record : csvReader) {

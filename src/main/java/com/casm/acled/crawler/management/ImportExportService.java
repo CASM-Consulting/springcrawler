@@ -13,6 +13,7 @@ import com.casm.acled.entities.source.Source;
 import com.casm.acled.entities.sourcelist.SourceList;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableSortedSet;
 import org.apache.commons.csv.*;
 import org.apache.commons.io.input.BOMInputStream;
 import org.apache.commons.lang3.BooleanUtils;
@@ -267,7 +268,7 @@ public class ImportExportService {
         exportSourceConfigsFromCSV(path, sources);
     }
 
-    private static final Set<String> importExportFields = ImmutableSet.of(Source.LINK, Source.EXAMPLE_URLS, Source.DATE_FORMAT,
+    private static final Set<String> importExportFields = ImmutableSortedSet.of(Source.LINK, Source.EXAMPLE_URLS, Source.DATE_FORMAT,
             Source.LOCALES, Source.CRAWL_DISABLE_SITEMAPS, Source.CRAWL_DISABLE_SITEMAP_DISCOVERY, Source.CRAWL_SITEMAP_LOCATIONS,
             Source.SEED_URLS, Source.CRAWL_SCHEDULE, Source.TIMEZONE, Source.CRAWL_DEPTH,
             Source.SCRAPER_RULE_ARTICLE, Source.SCRAPER_RULE_DATE, Source.SCRAPER_RULE_TITLE
@@ -288,6 +289,12 @@ public class ImportExportService {
             csv.printRecord(headers);
 //            csv.writeNext(headers.toArray(new String[]{}));
 
+            sources.sort((s1, s2) -> {
+                String name1 = s1.get(Source.STANDARD_NAME);
+                String name2 = s2.get(Source.STANDARD_NAME);
+                return name1.compareToIgnoreCase(name2);
+            });
+
             for (Source source : sources) {
 
                 String id = source.get(Source.STANDARD_NAME);
@@ -304,6 +311,7 @@ public class ImportExportService {
                             } else {
 
                                 values = source.get(field);
+                                Collections.sort(values);
                             }
                         } else {
 
