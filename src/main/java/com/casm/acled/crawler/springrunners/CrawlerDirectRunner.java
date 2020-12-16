@@ -114,7 +114,7 @@ public class CrawlerDirectRunner implements CommandLineRunner {
 //        crawlArgs.raw.source = "El Sol de Acapulco";
 //        crawlArgs.raw.source = "AFN - Tijuana";
 //        crawlArgs.raw.source = "Hoy Tamaulipas";
-        crawlArgs.raw.source = "Zona Franca";
+        crawlArgs.raw.source = "El Mundo (El Salvador)";
 //        crawlArgs.raw.source = "Imagen del Golfo";
 //         crawlArgs.raw.source = "Independiente de Hidalgo";
 //        crawlArgs.raw.source = "Colima Noticias";
@@ -126,7 +126,7 @@ public class CrawlerDirectRunner implements CommandLineRunner {
 //        crawlArgs.raw.source = "24 Horas (Mexico)";
 //        crawlArgs.raw.source = "nncMX";
 //        crawlArgs.raw.source = "Tribuna Campeche";
-        crawlArgs.raw.sourceLists = ImmutableList.of("mexico-1");
+        crawlArgs.raw.sourceLists = ImmutableList.of("honduras-1");
 //        crawlArgs.raw.sourceLists = ImmutableList.of("fake-net");
 //        crawlArgs.raw.from = "2020-11-10";
 //        crawlArgs.raw.to =  "2021-01-01";
@@ -137,7 +137,7 @@ public class CrawlerDirectRunner implements CommandLineRunner {
 //        crawlArgs.raw.scrapersDir = "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/springcrawler/testscrapers/generic/";
 //        crawlArgs.raw.scrapersDir = "/Users/pengqiwei/Downloads/My/PhDs/acled_thing/acled-scrapers/";
 
-        crawlArgs.raw.depth = 6;
+        crawlArgs.raw.depth = 5;
 //        crawlArgs.raw.ignoreSiteMap = true;
 //        crawlArgs.raw.crawlOffDomain = true;
 

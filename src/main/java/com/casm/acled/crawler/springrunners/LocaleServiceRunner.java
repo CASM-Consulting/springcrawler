@@ -29,7 +29,7 @@ import org.springframework.context.annotation.Import;
 @Import({ObjectMapperConfiguration.class})
 // And we also need the DAOs.
 @ComponentScan(basePackages={"com.casm.acled.dao", "com.casm.acled.crawler"})
-public class LocaleServiceRunner {
+public class LocaleServiceRunner implements CommandLineRunner{
 
     protected static final Logger logger = LoggerFactory.getLogger(LocaleServiceRunner.class);
 
@@ -58,11 +58,13 @@ public class LocaleServiceRunner {
 
 
 
-    public void run(String[] args) throws Exception {
+    public void run(String... args) throws Exception {
 //        reporter.randomRunId();
 
 //        localeHelper.allS                return Optional.empty();
-        localeService.determineSourceLocalesAndListTimeZones("Balkans");
+//        localeService.determineSourceLocalesAndListTimeZones("honduras-1");
+
+        localeService.autoAssignLocalesAndTimeZones(sourceDAO.byName("El Mundo (El Salvador)").get());
 
 //        Source source = sourceDAO.getById(1262).get();
 //        Source source = sourceDAO.getById(2977).get();
