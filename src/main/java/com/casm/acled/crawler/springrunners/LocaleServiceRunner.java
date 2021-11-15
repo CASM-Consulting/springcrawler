@@ -6,8 +6,8 @@ import com.casm.acled.crawler.scraper.locale.LocaleService;
 import com.casm.acled.dao.entities.SourceDAO;
 import com.casm.acled.dao.entities.SourceListDAO;
 import com.casm.acled.entities.source.Source;
-import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
-import org.camunda.bpm.spring.boot.starter.rest.CamundaBpmRestJerseyAutoConfiguration;
+//import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
+//import org.camunda.bpm.spring.boot.starter.rest.CamundaBpmRestJerseyAutoConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +23,7 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
 
 
-@EnableAutoConfiguration(exclude={HibernateJpaAutoConfiguration.class,CamundaBpmAutoConfiguration.class, CamundaBpmRestJerseyAutoConfiguration.class, ValidationAutoConfiguration.class})
+@EnableAutoConfiguration(exclude={HibernateJpaAutoConfiguration.class, ValidationAutoConfiguration.class})
 // We need the special object mapper, though.
 //@Import({ObjectMapperConfiguration.class, CLIRunner.ShutdownConfig.class})
 @Import({ObjectMapperConfiguration.class})

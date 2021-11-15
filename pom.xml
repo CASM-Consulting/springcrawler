@@ -18,7 +18,7 @@
         <m52norconex.version>1.5.14-SNAPSHOT</m52norconex.version>
         <!--<casm.acled.version>1.5.7</casm.acled.version>-->
         <!--1.5.9 for testing source article, title and date-->
-        <casm.acled.version>1.5.14</casm.acled.version>
+<!--        <casm.acled.version>1.5.14</casm.acled.version>-->
         <lucene.version>8.5.1</lucene.version>
         <collector-http-casm.version>2.9.16</collector-http-casm.version>
     </properties>
@@ -124,6 +124,47 @@
     <dependencies>
 
         <dependency>
+            <groupId>org.ocpsoft.prettytime</groupId>
+            <artifactId>prettytime-nlp</artifactId>
+            <version>4.0.3.Final</version>
+        </dependency>
+        <dependency>
+            <groupId>com.joestelmach</groupId>
+            <artifactId>natty</artifactId>
+            <version>0.11</version>
+        </dependency>
+        <dependency>
+            <groupId>com.neovisionaries</groupId>
+            <artifactId>nv-i18n</artifactId>
+            <version>1.27</version>
+        </dependency>
+        <dependency>
+            <groupId>de.sven-jacobs</groupId>
+            <artifactId>loremipsum</artifactId>
+            <version>1.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.opencsv</groupId>
+            <artifactId>opencsv</artifactId>
+            <version>4.5</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/com.thedeanda/lorem -->
+        <dependency>
+            <groupId>com.thedeanda</groupId>
+            <artifactId>lorem</artifactId>
+            <version>2.1</version>
+<!--            <scope>test</scope>-->
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-csv</artifactId>
+            <version>1.7</version>
+        </dependency>
+
+
+
+        <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-context-support</artifactId>
             <version>5.1.7.RELEASE</version>
@@ -224,25 +265,25 @@
             <version>2.3.0</version>
         </dependency>
 
-        <dependency>
-            <groupId>com.casm</groupId>
-            <artifactId>acled</artifactId>
-            <version>${casm.acled.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>slf4j</groupId>
-                    <artifactId>slf4j</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>jcl-over</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>log4j</groupId>
-                    <artifactId>log4j</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>com.casm</groupId>-->
+<!--            <artifactId>acled</artifactId>-->
+<!--            <version>${casm.acled.version}</version>-->
+<!--            <exclusions>-->
+<!--                <exclusion>-->
+<!--                    <groupId>slf4j</groupId>-->
+<!--                    <artifactId>slf4j</artifactId>-->
+<!--                </exclusion>-->
+<!--                <exclusion>-->
+<!--                    <groupId>org.slf4j</groupId>-->
+<!--                    <artifactId>jcl-over</artifactId>-->
+<!--                </exclusion>-->
+<!--                <exclusion>-->
+<!--                    <groupId>log4j</groupId>-->
+<!--                    <artifactId>log4j</artifactId>-->
+<!--                </exclusion>-->
+<!--            </exclusions>-->
+<!--        </dependency>-->
 
         <dependency>
             <groupId>uk.ac.susx.tag.norconex.crawler</groupId>

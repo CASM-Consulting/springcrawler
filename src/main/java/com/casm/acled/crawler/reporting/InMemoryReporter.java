@@ -1,6 +1,5 @@
 package com.casm.acled.crawler.reporting;
 
-import com.casm.acled.dao.entities.CrawlReportDAO;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;

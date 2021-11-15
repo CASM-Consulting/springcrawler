@@ -3,8 +3,8 @@ package com.casm.acled.crawler.scraper.dates;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
-import com.joestelmach.natty.DateGroup;
-import com.joestelmach.natty.Parser;
+//import com.joestelmach.natty.DateGroup;
+//import com.joestelmach.natty.Parser;
 import com.mdimension.jchronic.Chronic;
 import com.mdimension.jchronic.Options;
 import com.mdimension.jchronic.tags.Pointer;
@@ -44,7 +44,7 @@ public class DateUtil {
     private static final String dmy_template = "\\d{2}{sep}\\d{2}{sep}\\d{4}.*";
     private static Options opts = new Options(Pointer.PointerType.PAST);
     private static PrettyTimeParser prettyParser = new PrettyTimeParser();
-    private static Parser nattyParser = new Parser();
+//    private static Parser nattyParser = new Parser();
     private static Map<String, String> months = ImmutableMap.<String,String>builder()
             .put("كَانُون ٱلثَّانِي",  "January")
             .put("شُبَاط", "February")
@@ -231,22 +231,22 @@ public class DateUtil {
         return result;
     }
 
-    private static Optional<LocalDate> getNatty (String date) {
-
-        Optional<LocalDate> result = Optional.empty();
-
-        List<DateGroup> dateGroups = nattyParser.parse(date);
-        if(dateGroups.size() > 0) {
-            DateGroup dateGroup = dateGroups.get(dateGroups.size() - 1);
-            List<Date> ds = dateGroup.getDates();
-            Date d = ds.get(ds.size() - 1);
-            LocalDate localDate = d.toInstant().atZone(ZoneId.of("GMT")).toLocalDate();
-            result = Optional.of(localDate);
-
-        }
-
-        return result;
-    }
+//    private static Optional<LocalDate> getNatty (String date) {
+//
+//        Optional<LocalDate> result = Optional.empty();
+//
+//        List<DateGroup> dateGroups = nattyParser.parse(date);
+//        if(dateGroups.size() > 0) {
+//            DateGroup dateGroup = dateGroups.get(dateGroups.size() - 1);
+//            List<Date> ds = dateGroup.getDates();
+//            Date d = ds.get(ds.size() - 1);
+//            LocalDate localDate = d.toInstant().atZone(ZoneId.of("GMT")).toLocalDate();
+//            result = Optional.of(localDate);
+//
+//        }
+//
+//        return result;
+//    }
 
     private static Optional<LocalDate> getDefault(String date) {
         try {

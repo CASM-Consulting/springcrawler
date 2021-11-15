@@ -1,6 +1,6 @@
 package com.casm.acled.crawler.scraper;
 
-import com.casm.acled.camunda.BusinessKeys;
+//import com.casm.acled.camunda.BusinessKeys;
 import com.casm.acled.camunda.variables.Process;
 import com.casm.acled.crawler.reporting.Event;
 import com.casm.acled.crawler.reporting.Report;
@@ -187,8 +187,8 @@ public class ACLEDCommitter implements ICommitter {
             article = article.put(Article.DATE, parsedDate.toLocalDate());
 
             // Add the business key for the relevant week and source list
-            String businessKey = BusinessKeys.generate(sourceListName, parsedDate.toLocalDate());
-            article = article.put(Process.BUSINESS_KEY, businessKey);
+//            String businessKey = BusinessKeys.generate(sourceListName, parsedDate.toLocalDate());
+//            article = article.put(Process.BUSINESS_KEY, businessKey);
         }
 
         if (recordRaw) {

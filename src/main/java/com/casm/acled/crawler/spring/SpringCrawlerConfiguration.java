@@ -1,8 +1,8 @@
 package com.casm.acled.crawler.spring;
 
 import com.casm.acled.configuration.ObjectMapperConfiguration;
-import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
-import org.camunda.bpm.spring.boot.starter.rest.CamundaBpmRestJerseyAutoConfiguration;
+//import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
+//import org.camunda.bpm.spring.boot.starter.rest.CamundaBpmRestJerseyAutoConfiguration;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
 import org.springframework.boot.autoconfigure.validation.ValidationAutoConfiguration;
@@ -17,7 +17,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 @Configuration
-@EnableAutoConfiguration(exclude={HibernateJpaAutoConfiguration.class, CamundaBpmAutoConfiguration.class, CamundaBpmRestJerseyAutoConfiguration.class, ValidationAutoConfiguration.class})
+@EnableAutoConfiguration(exclude={HibernateJpaAutoConfiguration.class, ValidationAutoConfiguration.class})
 @Import({ObjectMapperConfiguration.class})
 public class SpringCrawlerConfiguration {
 

@@ -12,8 +12,8 @@ import com.casm.acled.crawler.management.CrawlArgs;
 import com.casm.acled.crawler.management.CrawlArgsService;
 import com.casm.acled.crawler.management.CrawlerSweep;
 import com.google.common.collect.ImmutableList;
-import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
-import org.camunda.bpm.spring.boot.starter.rest.CamundaBpmRestJerseyAutoConfiguration;
+//import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
+//import org.camunda.bpm.spring.boot.starter.rest.CamundaBpmRestJerseyAutoConfiguration;
 
 // logging
 import org.slf4j.Logger;
@@ -34,7 +34,7 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
 
-@EnableAutoConfiguration(exclude={HibernateJpaAutoConfiguration.class,CamundaBpmAutoConfiguration.class, CamundaBpmRestJerseyAutoConfiguration.class, ValidationAutoConfiguration.class})
+@EnableAutoConfiguration(exclude={HibernateJpaAutoConfiguration.class, ValidationAutoConfiguration.class})
 // We need the special object mapper, though.
 //@Import({ObjectMapperConfiguration.class, CLIRunner.ShutdownConfig.class})
 @Import({ObjectMapperConfiguration.class})

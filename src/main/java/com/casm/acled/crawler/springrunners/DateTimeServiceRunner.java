@@ -16,8 +16,8 @@ import com.casm.acled.entities.article.Article;
 import com.casm.acled.entities.source.Source;
 import com.casm.acled.entities.sourcelist.SourceList;
 import com.google.common.collect.ImmutableList;
-import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
-import org.camunda.bpm.spring.boot.starter.rest.CamundaBpmRestJerseyAutoConfiguration;
+//import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
+//import org.camunda.bpm.spring.boot.starter.rest.CamundaBpmRestJerseyAutoConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,7 +39,7 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-@EnableAutoConfiguration(exclude={HibernateJpaAutoConfiguration.class, CamundaBpmAutoConfiguration.class, CamundaBpmRestJerseyAutoConfiguration.class, ValidationAutoConfiguration.class})
+@EnableAutoConfiguration(exclude={HibernateJpaAutoConfiguration.class, ValidationAutoConfiguration.class})
 // We need the special object mapper, though.
 //@Import({ObjectMapperConfiguration.class, CLIRunner.ShutdownConfig.class})
 @Import({ObjectMapperConfiguration.class})

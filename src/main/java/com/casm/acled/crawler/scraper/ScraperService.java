@@ -1,7 +1,6 @@
 package com.casm.acled.crawler.scraper;
 
 
-import com.casm.acled.camunda.variables.Process;
 import com.casm.acled.crawler.reporting.*;
 import com.casm.acled.crawler.scraper.dates.CompositeDateParser;
 import com.casm.acled.crawler.scraper.dates.DateParser;
@@ -463,7 +462,7 @@ public class ScraperService {
         ListIterator<Article> itr = articles.listIterator();
         while(itr.hasNext()) {
             Article article = itr.next();
-            article = article.put(Process.BUSINESS_KEY, businessKey);
+//            article = article.put(Process.BUSINESS_KEY, businessKey);
             itr.set(article);
         }
         articleDAO.create(articles);

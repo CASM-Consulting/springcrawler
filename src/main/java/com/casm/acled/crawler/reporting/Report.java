@@ -1,6 +1,5 @@
 package com.casm.acled.crawler.reporting;
 
-import com.casm.acled.camunda.variables.Process;
 import com.casm.acled.entities.EntityVersions;
 import com.casm.acled.entities.crawlreport.CrawlReport;
 

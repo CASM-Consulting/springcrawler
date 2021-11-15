@@ -2,7 +2,7 @@ package com.casm.acled.crawler.util;
 
 
 import com.casm.acled.AcledObjectMapper;
-import com.casm.acled.camunda.BusinessKeys;
+//import com.casm.acled.camunda.BusinessKeys;
 import com.casm.acled.configuration.ObjectMapperConfiguration;
 import com.casm.acled.crawler.scraper.ACLEDScraper;
 import com.casm.acled.crawler.scraper.dates.*;
@@ -28,8 +28,8 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.QuoteMode;
 import org.apache.commons.lang3.StringUtils;
-import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
-import org.camunda.bpm.spring.boot.starter.rest.CamundaBpmRestJerseyAutoConfiguration;
+//import org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration;
+//import org.camunda.bpm.spring.boot.starter.rest.CamundaBpmRestJerseyAutoConfiguration;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,7 +61,7 @@ import java.util.stream.Collectors;
 //import org.springframework.shell.standard.ShellComponent;
 
 // We have to exclude these classes, because they only work in a web context.
-@EnableAutoConfiguration(exclude={CamundaBpmAutoConfiguration.class, CamundaBpmRestJerseyAutoConfiguration.class})
+//@EnableAutoConfiguration(exclude={CamundaBpmAutoConfiguration.class, CamundaBpmRestJerseyAutoConfiguration.class})
 // We need the special object mapper, though.
 @Import(ObjectMapperConfiguration.class)
 // And we also need the DAOs.
@@ -292,7 +292,7 @@ public class Util implements CommandLineRunner {
 
                 for(SourceList sourceList : sourceLists) {
 
-                    article = article.businessKey(BusinessKeys.generate(sourceList.get(SourceList.LIST_NAME), localDate.get()));
+//                    article = article.businessKey(BusinessKeys.generate(sourceList.get(SourceList.LIST_NAME), localDate.get()));
                 }
             }
 
@@ -336,7 +336,7 @@ public class Util implements CommandLineRunner {
 
                     for(SourceList sourceList : sourceLists) {
 
-                        article = article.businessKey(BusinessKeys.generate(sourceList.get(SourceList.LIST_NAME), localDate));
+//                        article = article.businessKey(BusinessKeys.generate(sourceList.get(SourceList.LIST_NAME), localDate));
                     }
 
                     articleDAO.upsert(article);
