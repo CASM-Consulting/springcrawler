@@ -13,7 +13,7 @@
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
-        <version.spring.boot>2.1.5.RELEASE</version.spring.boot>
+        <version.spring.boot>2.5.12</version.spring.boot>
         <jqm.version>2.2.5</jqm.version>
         <m52norconex.version>1.5.14-SNAPSHOT</m52norconex.version>
         <!--<casm.acled.version>1.5.7</casm.acled.version>-->
